@@ -116,7 +116,7 @@ function OutsideDays({ numbers, trip, days }) {
 }
 
 // The "Days" tab: one card per trip day, built from the trip dates and stops.
-export default function DailyItinerary({ trip, days, tripLength, onFocusPlace }) {
+export default function DailyItinerary({ trip, days, tripLength, selectedDay, onSelectDay, onFocusPlace }) {
   if (trip.stops.length === 0) {
     return <p className="empty">Add a city with + or save places with ♡, then plan them day by day here.</p>
   }
@@ -139,7 +139,17 @@ export default function DailyItinerary({ trip, days, tripLength, onFocusPlace })
       <Unscheduled ids={unscheduled} days={days} trip={trip} onFocusPlace={onFocusPlace} />
       <div className="day-list">
         {days.map((day) => (
-          <ItineraryDay key={day.number} day={day} entry={trip.itinerary[day.number]} days={days} unscheduled={unscheduled} trip={trip} onFocusPlace={onFocusPlace} />
+          <ItineraryDay
+            key={day.number}
+            day={day}
+            entry={trip.itinerary[day.number]}
+            days={days}
+            unscheduled={unscheduled}
+            trip={trip}
+            selected={selectedDay === day.number}
+            onSelect={onSelectDay}
+            onFocusPlace={onFocusPlace}
+          />
         ))}
       </div>
       <OutsideDays numbers={outside} trip={trip} days={days} />

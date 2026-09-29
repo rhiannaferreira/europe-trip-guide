@@ -1,24 +1,39 @@
+import { useState } from 'react'
 import { cityById } from '../data/cities.js'
 import { countryByCode } from '../data/countries.js'
 import { placeById } from '../data/places.js'
 import { formatDuration } from '../lib/format.js'
 import { formatDay } from '../utils/tripCalculations.js'
+import { optimizeDay } from '../utils/routeOptimizer.js'
+import { formatDistance } from '../utils/distance.js'
 import DayPicker from './DayPicker.jsx'
 
 // One day of the itinerary: its date and city, the places on it (in visiting order), and a note.
-export default function ItineraryDay({ day, entry, days, unscheduled, trip, onFocusPlace }) {
+export default function ItineraryDay({ day, entry, days, unscheduled, trip, selected, onSelect, onFocusPlace }) {
+  const [optimizeMsg, setOptimizeMsg] = useState('')
   const city = cityById[day.cityId]
   const country = countryByCode[city.country]
   const placeIds = entry?.placeIds || []
   const note = entry?.note || ''
   const fromCity = day.leg ? day.leg.from : null
 
+  const optimize = () => {
+    const result = optimizeDay(placeIds.map((id) => placeById[id]))
+    if (result.changed) {
+      trip.setDayOrder(day.number, result.order.map((p) => p.id))
+      setOptimizeMsg(`Reordered by distance: ${formatDistance(result.before)} → ${formatDistance(result.after)} in straight lines.`)
+    } else {
+      setOptimizeMsg('This order already looks sensible by distance.')
+    }
+    onSelect(day.number)
+  }
+
   // Unscheduled places for the "add" menu: this day's city first.
   const here = unscheduled.filter((id) => placeById[id].cityId === day.cityId)
   const elsewhere = unscheduled.filter((id) => placeById[id].cityId !== day.cityId)
 
   return (
-    <article className={`day-card${day.leg ? ' travel-day' : ''}`} aria-labelledby={`day-${day.number}-title`}>
+    <article className={`day-card${day.leg ? ' travel-day' : ''}${selected ? ' selected' : ''}`} aria-labelledby={`day-${day.number}-title`}>
       <header className="day-header">
         <div>
           <h3 id={`day-${day.number}-title`}>
@@ -29,6 +44,9 @@ export default function ItineraryDay({ day, entry, days, unscheduled, trip, onFo
             {city.name} <span title={country.name}>{country.flag}</span>
           </p>
         </div>
+        <button type="button" className={`btn map-day-btn${selected ? ' active' : ''}`} aria-pressed={selected} onClick={() => onSelect(selected ? null : day.number)}>
+          🗺️ {selected ? 'On map' : 'Map'}
+        </button>
       </header>
 
       {day.leg && (
@@ -77,6 +95,15 @@ export default function ItineraryDay({ day, entry, days, unscheduled, trip, onFo
         </ol>
       ) : (
         <p className="no-places">Nothing planned yet. That's fine: free days are good too.</p>
+      )}
+
+      {placeIds.length >= 3 && (
+        <div className="optimize">
+          <button type="button" className="btn optimize-btn" onClick={optimize}>
+            ✨ Optimize route
+          </button>
+          <small>{optimizeMsg || 'Orders places by distance to cut backtracking. A rough guide, not a perfect route.'}</small>
+        </div>
       )}
 
       {unscheduled.length > 0 && (

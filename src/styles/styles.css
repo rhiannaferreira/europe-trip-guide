@@ -351,10 +351,12 @@ button:focus-visible, select:focus-visible, input:focus-visible, summary:focus-v
 .day-city { font-size: 0.86rem; font-weight: 600; }
 .day-leg { font-size: 0.82rem; font-weight: 600; color: var(--gem); }
 .day-places { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
-.day-places li { display: flex; align-items: center; gap: 8px; font-size: 0.88rem; }
+.day-places li { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; font-size: 0.88rem; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+.day-places li:last-child { border-bottom: none; padding-bottom: 0; }
 .day-place-number { flex: none; width: 22px; height: 22px; border-radius: 50%; background: var(--text); color: var(--bg); display: grid; place-items: center; font-size: 0.72rem; font-weight: 700; }
-.day-place-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.day-place-tools { display: flex; gap: 3px; align-items: center; flex: none; }
+.day-place-main { flex: 1 1 170px; min-width: 0; display: flex; flex-direction: column; }
+.day-place-main .link-btn { font-weight: 600; }
+.day-place-tools { display: flex; gap: 3px; align-items: center; flex: none; margin-left: auto; }
 .day-place-tools > button:not(.remove-btn) { border: 1px solid var(--border); background: var(--surface); border-radius: 6px; width: 30px; height: 30px; padding: 0; line-height: 1; }
 .day-place-tools > button:disabled { opacity: 0.35; }
 .day-place-tools .remove-btn { width: 30px; height: 30px; }
@@ -366,6 +368,17 @@ button:focus-visible, select:focus-visible, input:focus-visible, summary:focus-v
 .outside-day ul { list-style: none; padding: 0; margin: 4px 0 0; display: flex; flex-direction: column; gap: 4px; }
 .outside-day li { display: flex; align-items: center; gap: 8px; justify-content: space-between; }
 .outside-note { font-size: 0.82rem; color: var(--muted); margin-top: 4px; }
+
+/* ---------- Day on the map ---------- */
+.day-marker { background: none; border: none; }
+.day-marker span { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: #1f6f8b; color: #fff; font-weight: 700; font-size: 0.85rem; border: 2px solid #fff; box-shadow: 0 1px 4px rgb(0 0 0 / 0.35); }
+.day-banner { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); z-index: 600; display: flex; gap: 10px; align-items: center; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 999px; padding: 6px 8px 6px 14px; box-shadow: var(--shadow); font-size: 0.85rem; max-width: calc(100% - 100px); }
+.day-banner .link-btn { width: 28px; height: 28px; text-align: center; border-radius: 50%; }
+.map-day-btn { flex: none; padding: 5px 10px; font-size: 0.8rem; min-height: 34px; }
+.map-day-btn.active { background: #1f6f8b; border-color: #1f6f8b; color: #fff; }
+.optimize { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.optimize small { flex: 1; min-width: 160px; font-size: 0.75rem; color: var(--muted); }
+.optimize-btn { padding: 5px 10px; font-size: 0.8rem; min-height: 34px; }
 
 /* ---------- Responsive ---------- */
 @media (max-width: 1200px) {

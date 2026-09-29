@@ -32,6 +32,7 @@ export default function App() {
   const [shown, setShown] = useState(PAGE)
   const [fitTripRequest, setFitTripRequest] = useState(0)
   const [tripTab, setTripTab] = useState('trip')
+  const [selectedDay, setSelectedDay] = useState(null)
   const trip = useTrip()
 
   const legs = useMemo(() => tripLegs(trip.cityIds), [trip.cityIds.join(',')]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -40,6 +41,14 @@ export default function App() {
   const suggestions = tripSuggestions({ days, cityIds: trip.cityIds, legs })
   // One entry per trip day (empty without dates): date, city, and the travel leg on travel days.
   const itineraryDays = buildDays({ startDate: trip.startDate, endDate: trip.endDate, stops: trip.stops, legs })
+  // The day drawn on the map: only while the Days tab is open, and only if that day still exists.
+  const shownDay = tripTab === 'days' ? itineraryDays.find((d) => d.number === selectedDay) : null
+  const dayView = shownDay ? { day: shownDay, places: (trip.itinerary[shownDay.number]?.placeIds || []).map((id) => placeById[id]) } : null
+
+  const selectDay = (n) => {
+    setSelectedDay(n)
+    if (n && window.innerWidth <= 1200) document.querySelector('.map-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
 
   const visiblePlaces = useMemo(
     () =>
@@ -195,10 +204,22 @@ export default function App() {
           legs={legs}
           focusedId={focusedId}
           fitTripRequest={fitTripRequest}
+          dayView={dayView}
           onFocus={setFocusedId}
           onToggleSave={trip.togglePlace}
           onSelectCity={selectCity}
         />
+        {dayView && (
+          <div className="day-banner" role="status">
+            <span>
+              <strong>Day {dayView.day.number}</strong> · {cityById[dayView.day.cityId].name} ·{' '}
+              {dayView.places.length === 0 ? 'nothing planned yet' : `${dayView.places.length} place${dayView.places.length === 1 ? '' : 's'} in order`}
+            </span>
+            <button type="button" className="link-btn" onClick={() => setSelectedDay(null)} aria-label="Close day view">
+              ✕
+            </button>
+          </div>
+        )}
       </main>
 
       <section className="trip-panel">
@@ -222,7 +243,7 @@ export default function App() {
               </TripSummary>
             </>
           )}
-          {tripTab === 'days' && <DailyItinerary trip={trip} days={itineraryDays} tripLength={days} onFocusPlace={focusPlace} />}
+          {tripTab === 'days' && <DailyItinerary trip={trip} days={itineraryDays} tripLength={days} selectedDay={selectedDay} onSelectDay={selectDay} onFocusPlace={focusPlace} />}
         </TripPanel>
       </section>
     </div>

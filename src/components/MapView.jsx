@@ -6,6 +6,7 @@ import { cityById } from '../data/cities.js'
 import { interestById } from '../data/interests.js'
 import { costLabel } from '../lib/format.js'
 import RouteView from './RouteView.jsx'
+import DayRoute from './DayRoute.jsx'
 
 // Marker colours per interest (Leaflet needs real colours, not CSS variables).
 export const interestColors = {
@@ -72,7 +73,9 @@ function FlyToFocused({ place, markerRefs }) {
   return null
 }
 
-export default function MapView({ places, cities, fitCities, savedIds, routeCities, legs, focusedId, fitTripRequest, onFocus, onToggleSave, onSelectCity }) {
+export default function MapView({ places, cities, fitCities, savedIds, routeCities, legs, focusedId, fitTripRequest, dayView, onFocus, onToggleSave, onSelectCity }) {
+  // While a day is shown, other places fade back so the day's numbered route stands out.
+  const dimmed = Boolean(dayView)
   const markerRefs = useRef({})
   const focused = focusedId ? placeById[focusedId] : null
 
@@ -91,6 +94,7 @@ export default function MapView({ places, cities, fitCities, savedIds, routeCiti
       <FlyToFocused place={focused} markerRefs={markerRefs} />
 
       <RouteView routeCities={routeCities} legs={legs} />
+      <DayRoute day={dayView?.day} places={dayView?.places || []} />
 
       {places.map((p) => {
         const saved = savedIds.has(p.id)
@@ -108,7 +112,8 @@ export default function MapView({ places, cities, fitCities, savedIds, routeCiti
               color: saved ? '#f4a261' : '#fff',
               weight: saved ? 3 : 2,
               fillColor: interestColors[p.category],
-              fillOpacity: 0.9,
+              fillOpacity: dimmed ? 0.3 : 0.9,
+              opacity: dimmed ? 0.4 : 1,
             }}
             eventHandlers={{ click: () => onFocus(p.id) }}
           >
