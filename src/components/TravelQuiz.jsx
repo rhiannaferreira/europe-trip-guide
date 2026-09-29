@@ -29,7 +29,7 @@ export default function TravelQuiz({ tripCityIds, onViewCity, onAddCity }) {
             const inTrip = tripCityIds.includes(r.city.id)
             return (
               <li key={r.city.id} className="quiz-result">
-                <Thumb id={r.city.id} image={r.city.image} emoji={r.city.emoji} alt={r.city.name} className="city-thumb" />
+                <Thumb id={r.city.id} image={r.city.image} emoji={r.city.emoji} alt={r.city.name} className="city-thumb" kind="city" item={r.city} width={120} />
                 <div>
                   <h3>
                     {r.city.name} {country.flag}

@@ -11,7 +11,7 @@ function CityCard({ city, inTrip, onSelect, onAddCity }) {
   return (
     <article className="city-card">
       <button type="button" className="city-card-main" onClick={() => onSelect(city.id)}>
-        <Thumb id={city.id} image={city.image} emoji={city.emoji} alt={city.name} className="city-thumb" />
+        <Thumb id={city.id} image={city.image} emoji={city.emoji} alt={city.name} className="city-thumb" kind="city" item={city} width={120} credit="title" />
         <span className="city-card-text">
           <strong>{city.name}</strong>
           <small>
@@ -101,7 +101,7 @@ function CityDetail({ city, inTrip, onAddCity, onCompare }) {
   const country = countryByCode[city.country]
   return (
     <article className="city-detail">
-      <Thumb id={city.id} image={city.image} emoji={city.emoji} alt={city.name} className="city-hero" />
+      <Thumb id={city.id} image={city.image} emoji={city.emoji} alt={`${city.name}, ${country.name}`} className="city-hero" kind="city" item={city} width={960} sizes="(max-width: 760px) 100vw, 420px" credit="caption" eager />
       <div className="city-detail-body">
         <div className="city-detail-title">
           <h2>

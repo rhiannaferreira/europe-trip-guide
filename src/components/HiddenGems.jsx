@@ -29,7 +29,7 @@ export default function HiddenGems({ city, tripCityIds, onSelectCity, onAddCity 
           const inTrip = tripCityIds.includes(gem.id)
           return (
             <li key={gem.id} className="gem">
-              <Thumb id={gem.id} image={gem.image} emoji={gem.emoji} alt={gem.name} className="city-thumb" />
+              <Thumb id={gem.id} image={gem.image} emoji={gem.emoji} alt={gem.name} className="city-thumb" kind="city" item={gem} width={120} />
               <div className="gem-body">
                 <strong>
                   {gem.name} {countryByCode[gem.country].flag}

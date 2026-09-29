@@ -9,7 +9,7 @@ export default function PlaceCard({ place, city, saved, status, focused, onToggl
   const interest = interestById[place.category]
   return (
     <article className={`place-card${focused ? ' focused' : ''}${saved ? ' saved' : ''}`}>
-      <Thumb id={place.id} image={place.image} emoji={interest.icon} alt={place.name} color={`var(--${place.category})`} className="place-thumb" />
+      <Thumb id={place.id} image={place.image} emoji={interest.icon} alt={place.name} color={`var(--${place.category})`} className="place-thumb" kind="place" item={place} width={250} />
       <div className="place-card-body">
         <div className="place-card-top">
           <span className={`tag tag-${place.category}`}>

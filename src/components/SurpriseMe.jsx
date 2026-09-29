@@ -60,7 +60,7 @@ export default function SurpriseMe({ tripCityIds, onViewCity, onAddCity }) {
 
       {pick && (
         <div className="surprise-result" aria-live="polite">
-          <Thumb id={pick.city.id} image={pick.city.image} emoji={pick.city.emoji} alt={pick.city.name} className="city-hero" />
+          <Thumb id={pick.city.id} image={pick.city.image} emoji={pick.city.emoji} alt={pick.city.name} className="city-hero" kind="city" item={pick.city} width={960} sizes="(max-width: 760px) 100vw, 560px" credit="caption" />
           <div className="surprise-body">
             <h3>
               Surprise destination: {pick.city.name} {countryByCode[pick.city.country].flag}
