@@ -818,3 +818,25 @@ a:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent); ou
 .map-notice { position: absolute; top: 10px; left: 56px; right: 10px; z-index: 1000; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; font-size: 0.8rem; box-shadow: var(--shadow); pointer-events: none; }
 .skip-links { position: absolute; }
 .leaflet-container:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; }
+
+/* ---------- Account (sign-in and saved trips; only when accounts are on) ---------- */
+.account { display: grid; gap: 10px; }
+.account-label { font-weight: 600; font-size: 0.9rem; }
+.account-input { width: 100%; padding: 9px 12px; border: 1px solid var(--border-strong); border-radius: 10px; background: var(--surface); color: var(--text); font-size: 1rem; }
+.account-sent { font-size: 0.95rem; }
+.account-status { font-size: 0.85rem; color: var(--good); }
+.account-status.pending, .account-status.saving { color: var(--muted); }
+.account-status.error { color: var(--warn); }
+.account-heading { font-family: var(--display); font-size: 1rem; margin-top: 6px; }
+.account-trips { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.account-trip { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+.account-trip > div { display: grid; gap: 2px; min-width: 0; }
+.account-trip .rule { margin: 0; }
+.account-trip.current { border-color: var(--accent); background: var(--accent-soft); }
+.account-trip-actions { display: flex; gap: 6px; flex: none; }
+.account-open-now { font-size: 0.75rem; font-weight: 700; color: var(--accent); flex: none; }
+.account-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: space-between; }
+.account-notice { order: 10; flex-basis: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 12px; background: var(--good-soft); color: var(--text); border-radius: 10px; font-size: 0.9rem; }
+.account-notice.error { background: var(--warn-soft); }
+.account-notice-actions { display: flex; align-items: center; gap: 6px; flex: none; }
+.account-notice .modal-close { width: 34px; height: 34px; }

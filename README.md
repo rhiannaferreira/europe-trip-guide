@@ -89,6 +89,7 @@ src/
   useTrip.js              trip state + localStorage (stops, dates, place statuses, itinerary, notes) and migrations
   useBudget.js            budget state + localStorage
   useTheme.js             light/dark preference
+  useCloudSync.js         saves the trip and budget to the signed-in account (accounts only)
   utils/
     distance.js           straight-line distance and "~450 m" formatting
     routeOptimizer.js     nearest-neighbour "Optimize route"
@@ -113,6 +114,10 @@ src/
     extraPlaces.js        registry for places added while the app runs
     weather.js            Open-Meteo forecasts and last year's weather
     pwa.js, motion.js     install prompt, online state, reduced motion
+    supabase.js           sign-in by email link and the session (plain fetch, no SDK)
+    account.jsx           who's signed in, for the whole app
+    cloudTrips.js         the account's saved trips (Supabase table `trips`)
+    cloudSync.js          keeps this browser's trip and the account's copy in step
   components/
     SearchBar, CityExplorer, Filters, PlaceCard, Thumb,
     MapView, RouteView, TripBoard, TripSummary, TripSeasons,
@@ -120,7 +125,8 @@ src/
     TripPanel (tabs), TripDates, DailyItinerary, ItineraryDay, DayPicker, DayRoute,
     NearbyPlaces, TripTimeline, BudgetPlanner, CityComparison, TravelQuiz, SurpriseMe,
     StatusPicker, TripProgress, TripNotes, PrintTrip, Modal, ThemeToggle,
-    ShareTrip, Weather, OsmStatus, InstallButton, OfflineNotice, PageStates, ErrorBoundary
+    ShareTrip, Weather, OsmStatus, InstallButton, OfflineNotice, PageStates, ErrorBoundary,
+    Account (sign-in, saved trips, header button and notice)
   pages/Landing.jsx       the home page
   Root.jsx                routes: landing, planner (loaded on demand), not found
   data/
@@ -145,11 +151,34 @@ Components only read data through the exports of `src/data/` (for example `getCi
 | `travel-app-trip-previous` | The trip as it was before a shared trip replaced it |
 | `travel-app-extra-places` | OpenStreetMap places the trip uses |
 | `travel-app-recent-searches` | The last few search suggestions picked |
+| `travel-app-session` | The signed-in session (accounts only; removed on sign-out) |
+| `travel-app-cloud` | Which of the account's saved trips this browser's trip is (accounts only) |
 | `eurowander-cache-*` | Cached photos, OpenStreetMap places and weather (safe to clear) |
 
 Older trips (the first `{ placeIds, cityOrder }` shape and v2 `{ stops, startDate, endDate }`) are migrated on load: saved places keep their stop and become ❤️ Saved. Nothing is ever deleted from storage. The itinerary is keyed by day number, so changing the start date keeps the plan; if the trip gets shorter, plans past the new end appear under "Outside your dates" instead of disappearing.
 
-The trip is one plain object, so cloud saving can serialise it as is (share links already do).
+The trip is one plain object, so cloud saving serialises it as is (share links do too).
+
+## Accounts (optional)
+
+People can sign in with an emailed link to keep their trips in an account and open them on any device. Signing in is optional: without it everything stays in the browser, as before. Accounts use a free Supabase project, called straight from the browser with the public anon key; row-level security (in `supabase/schema.sql`) lets each person read and write only their own trips.
+
+- **First sign-in:** the trip in the browser (with its itinerary, budget, notes and statuses) is uploaded as a saved trip. If the browser's trip is empty, the most recent saved trip opens instead.
+- **While signed in:** every change is saved to the account a moment after it's made, and a tab that comes back into focus picks up changes made on another device. The browser copy stays, so the app still works offline.
+- **Your trips:** the header's account button lists saved trips, opens another one, starts a new one or deletes one. Opening a shared trip link while signed in saves it as a new trip rather than writing over the open one.
+- **Sign out:** a copy of the open trip stays in the browser.
+
+Accounts switch on only when the build has both `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` (see `.env.example`). Without them there's no sign-in button and nothing about accounts runs.
+
+### Setting up Supabase
+
+1. Create a free project at supabase.com.
+2. In **SQL Editor**, paste `supabase/schema.sql` and run it.
+3. In **Authentication > URL Configuration**, set **Site URL** to `https://eurowander.vercel.app` and add `https://eurowander.vercel.app/**` (and `http://localhost:5173/**` for local work) to **Redirect URLs**.
+4. Copy the **Project URL** and the **publishable** key (`sb_publishable_…`, or the older **anon public** key). Both are under the project's **Connect** button and **Project Settings > API Keys**. Never use the secret or `service_role` key in the app.
+5. In Vercel, **Settings > Environment Variables**, add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` with those values, then redeploy. For local work, put them in `.env.local`.
+
+Supabase's built-in email sender is limited to a few emails an hour; for more, add your own SMTP provider under **Authentication > Emails**.
 
 ## Deploying
 

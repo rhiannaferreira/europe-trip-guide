@@ -13,11 +13,11 @@ import { KEYS, readJSON, writeJSON } from './lib/storage.js'
 //     expenses: [{ id, category, label, amount, kind }], kind: 'estimate' (expected) or 'paid'
 //   }
 const categoryIds = BUDGET_CATEGORIES.map((c) => c.id)
-const empty = () => ({ version: 1, total: '', currency: 'EUR', travellers: 1, cityLevels: {}, estimates: {}, expenses: [] })
+export const emptyBudget = () => ({ version: 1, total: '', currency: 'EUR', travellers: 1, cityLevels: {}, estimates: {}, expenses: [] })
 
-function load() {
-  const saved = readJSON(KEYS.budget)
-  if (!saved || typeof saved !== 'object') return empty()
+// A saved budget (from localStorage or the account), checked and filled in.
+export function normalizeBudget(saved) {
+  if (!saved || typeof saved !== 'object') return emptyBudget()
   return {
     version: 1,
     total: typeof saved.total === 'string' || typeof saved.total === 'number' ? String(saved.total) : '',
@@ -31,6 +31,11 @@ function load() {
   }
 }
 
+const load = () => normalizeBudget(readJSON(KEYS.budget))
+
+// Whether a budget holds nothing worth keeping (settings like the currency don't count).
+export const isEmptyBudget = (b) => !String(b.total).trim() && b.expenses.length === 0
+
 let nextId = Date.now()
 
 export function useBudget() {
@@ -40,6 +45,9 @@ export function useBudget() {
   const set = (patch) => setBudget((b) => ({ ...b, ...patch }))
   return {
     ...budget,
+    // The budget exactly as saved, and a way to swap in one from the account (see useCloudSync.js).
+    raw: budget,
+    load: (data) => setBudget(normalizeBudget(data)),
     setTotal: (total) => set({ total }),
     setCurrency: (currency) => CURRENCIES[currency] && set({ currency }),
     setTravellers: (n) => set({ travellers: Math.min(20, Math.max(1, Math.round(n) || 1)) }),

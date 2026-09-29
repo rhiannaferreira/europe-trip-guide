@@ -43,6 +43,8 @@ import { usePlacesVersion } from './lib/extraPlaces.js'
 import { useOsmPlaces } from './lib/osmPlaces.js'
 import OsmStatus from './components/OsmStatus.jsx'
 import { CityWeather, TripWeather } from './components/Weather.jsx'
+import AccountPanel, { AccountButton, AccountNotice } from './components/Account.jsx'
+import { useCloudSync } from './useCloudSync.js'
 
 const PAGE = 24
 
@@ -71,6 +73,8 @@ export default function App({ route }) {
   const [selectedDay, setSelectedDay] = useState(null)
   const trip = useTrip()
   const budget = useBudget()
+  // Signed in: the trip and budget are also saved to the account (does nothing when accounts are off).
+  const cloud = useCloudSync(trip, budget)
   const { theme, toggle: toggleTheme } = useTheme()
   // Which discovery tool is open in a dialog ('compare', or null), and the two compared cities.
   const [tool, setTool] = useState(null)
@@ -258,10 +262,12 @@ export default function App({ route }) {
           </button>
           <ThemeToggle theme={theme} onToggle={toggleTheme} />
           <InstallButton />
+          <AccountButton cloud={cloud} onOpen={() => setTool('account')} />
         </nav>
         <button type="button" className="btn trip-jump" onClick={scrollToTrip}>
           🧳 My Trip{trip.cityIds.length ? ` (${trip.cityIds.length})` : ''}
         </button>
+        <AccountNotice cloud={cloud} onOpen={() => setTool('account')} />
       </header>
 
       <aside className="sidebar">
@@ -399,7 +405,28 @@ export default function App({ route }) {
         </Modal>
       )}
 
-      {route.name === 'trip' && route.share && <SharedTripDialog code={route.share} trip={trip} />}
+      {tool === 'account' && (
+        <Modal title="Your account" onClose={() => setTool(null)}>
+          <AccountPanel cloud={cloud} currentName={trip.displayName} />
+        </Modal>
+      )}
+
+      {route.name === 'trip' && route.share && (
+        <SharedTripDialog
+          code={route.share}
+          trip={
+            // Signed in, an opened shared trip becomes a new saved trip instead of writing over the open one.
+            cloud.phase === 'on'
+              ? {
+                  ...trip,
+                  replace: (data) => {
+                    cloud.detach().then(() => trip.replace(data))
+                  },
+                }
+              : trip
+          }
+        />
+      )}
 
       <section className="trip-panel" id="my-trip-panel" aria-label="My trip" tabIndex={-1}>
         <TripPanel tab={tripTab} onTabChange={setTripTab}>

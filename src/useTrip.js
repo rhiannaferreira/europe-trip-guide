@@ -8,7 +8,7 @@ const VERSION = 3
 export const DEFAULT_TRIP_NAME = 'My Europe trip'
 export const STATUSES = ['saved', 'want', 'visited']
 
-const empty = () => ({
+export const emptyTrip = () => ({
   version: VERSION,
   name: '',
   stops: [],
@@ -37,8 +37,8 @@ const empty = () => ({
 // Older shapes are migrated when loaded, never thrown away:
 //   v1 { placeIds, cityOrder }                   first version
 //   v2 { stops: [{ cityId, auto, placeIds }], startDate, endDate }
-function migrate(saved) {
-  if (!saved || typeof saved !== 'object') return empty()
+export function migrate(saved) {
+  if (!saved || typeof saved !== 'object') return emptyTrip()
 
   let stops = []
   if (Array.isArray(saved.stops)) stops = saved.stops
@@ -251,13 +251,17 @@ export function useTrip() {
   const setTripNote = (text) => setTrip((t) => ({ ...t, notes: { ...t.notes, trip: text } }))
   const setCityNote = (cityId, text) => setTrip((t) => ({ ...t, notes: { ...t.notes, cities: { ...t.notes.cities, [cityId]: text } } }))
 
-  const clear = () => setTrip(empty())
+  const clear = () => setTrip(emptyTrip())
 
   // Swap in a whole trip (from a shared link). The current one is kept under travel-app-trip-previous first.
   const replace = (data) => {
     writeJSON(KEYS.tripPrevious, trip)
     setTrip(migrate(data))
   }
+
+  // Swap in a whole trip from the account (see useCloudSync.js). Unlike replace, no backup is kept:
+  // the trip being swapped out is already saved in the account.
+  const load = (data) => setTrip(migrate(data))
 
   return {
     name: trip.name,
@@ -290,7 +294,20 @@ export function useTrip() {
     setCityNote,
     clear,
     replace,
+    load,
     // The trip exactly as saved, for sharing.
     raw: trip,
   }
+}
+
+// Whether a trip holds nothing worth keeping (no stops, name, dates or notes).
+export function isEmptyTrip(t) {
+  return (
+    !t.stops.length &&
+    !t.name.trim() &&
+    !t.startDate &&
+    !t.endDate &&
+    !t.notes.trip.trim() &&
+    !Object.values(t.notes.cities).some((text) => text.trim())
+  )
 }
