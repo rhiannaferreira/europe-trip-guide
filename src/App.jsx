@@ -1,6 +1,9 @@
 import { useMemo, useState } from 'react'
-import { cities, cityById, countryByCode } from './data/cities.js'
-import { interests, places } from './data/places.js'
+import { cities, cityById } from './data/cities.js'
+import { countryByCode } from './data/countries.js'
+import { countryTips } from './data/countryTips.js'
+import { interests } from './data/interests.js'
+import { places } from './data/places.js'
 import { useTrip } from './useTrip.js'
 import Filters from './components/Filters.jsx'
 import PlaceCard from './components/PlaceCard.jsx'
@@ -17,11 +20,11 @@ export default function App() {
   const visiblePlaces = useMemo(
     () =>
       places.filter((p) => {
-        const c = cityById[p.city]
+        const c = cityById[p.cityId]
         return (
           (!country || c.country === country) &&
-          (!city || p.city === city) &&
-          activeInterests.has(p.interest)
+          (!city || p.cityId === city) &&
+          activeInterests.has(p.category)
         )
       }),
     [country, city, activeInterests],
@@ -64,14 +67,14 @@ export default function App() {
           onToggleInterest={toggleInterest}
         />
 
-        {selectedCity && <p className="city-blurb">{selectedCity.blurb}</p>}
+        {selectedCity && <p className="city-blurb">{selectedCity.description}</p>}
 
         {tipsCountry && (
           <details className="tips">
             <summary>Local tips for {countryByCode[tipsCountry].name}</summary>
             <ul>
-              {countryByCode[tipsCountry].tips.map((tip) => (
-                <li key={tip}>{tip}</li>
+              {Object.entries(countryTips[tipsCountry]).filter(([, v]) => typeof v === 'string').map(([k, v]) => (
+                <li key={k}>{v}</li>
               ))}
             </ul>
           </details>
@@ -85,7 +88,7 @@ export default function App() {
             <PlaceCard
               key={p.id}
               place={p}
-              city={cityById[p.city]}
+              city={cityById[p.cityId]}
               saved={trip.savedIds.has(p.id)}
               focused={focusedId === p.id}
               onToggleSave={() => trip.toggle(p.id)}

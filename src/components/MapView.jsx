@@ -73,7 +73,7 @@ export default function MapView({ places, cities, savedIds, routeCities, focused
           pathOptions={{
             color: savedIds.has(p.id) ? '#f4a261' : '#fff',
             weight: savedIds.has(p.id) ? 3 : 2,
-            fillColor: interestColors[p.interest],
+            fillColor: interestColors[p.category],
             fillOpacity: 0.9,
           }}
           eventHandlers={{ click: () => onFocus(p.id) }}

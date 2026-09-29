@@ -9,7 +9,7 @@ function load() {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY))
     if (saved && Array.isArray(saved.placeIds) && Array.isArray(saved.cityOrder)) {
       const placeIds = saved.placeIds.filter((id) => placeById[id])
-      const cityOrder = saved.cityOrder.filter((c) => placeIds.some((id) => placeById[id].city === c))
+      const cityOrder = saved.cityOrder.filter((c) => placeIds.some((id) => placeById[id].cityId === c))
       return { placeIds, cityOrder }
     }
   } catch {
@@ -32,10 +32,10 @@ export function useTrip() {
 
   const toggle = (placeId) =>
     setTrip(({ placeIds, cityOrder }) => {
-      const city = placeById[placeId].city
+      const city = placeById[placeId].cityId
       if (placeIds.includes(placeId)) {
         const next = placeIds.filter((id) => id !== placeId)
-        const cityStillUsed = next.some((id) => placeById[id].city === city)
+        const cityStillUsed = next.some((id) => placeById[id].cityId === city)
         return { placeIds: next, cityOrder: cityStillUsed ? cityOrder : cityOrder.filter((c) => c !== city) }
       }
       return {

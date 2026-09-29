@@ -53,7 +53,7 @@ export default function TripBoard({ savedPlaces, cityOrder, onRemove, onMoveCity
               </div>
               <ul>
                 {savedPlaces
-                  .filter((p) => p.city === cityId)
+                  .filter((p) => p.cityId === cityId)
                   .map((p) => (
                     <li key={p.id}>
                       <button type="button" className="link-btn" onClick={() => onFocus(p.id)}>

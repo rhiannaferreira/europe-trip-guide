@@ -1,5 +1,6 @@
-import { cities, countries } from '../data/cities.js'
-import { interests } from '../data/places.js'
+import { cities } from '../data/cities.js'
+import { countries } from '../data/countries.js'
+import { interests } from '../data/interests.js'
 
 export default function Filters({ country, city, activeInterests, onCountryChange, onCityChange, onToggleInterest }) {
   const cityOptions = country ? cities.filter((c) => c.country === country) : cities
