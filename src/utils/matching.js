@@ -157,10 +157,11 @@ export function pickRandom(list, previousId, random = Math.random) {
 
 export function explainSurprise(city, { interests = [], budget = '', season = '' }) {
   const parts = []
-  const known = interests.filter((id) => interestMatch(city, id) === 'strong')
+  const known = interests.filter((id) => id !== 'beaches' && interestMatch(city, id) === 'strong')
   if (known.length) parts.push(`it's known for ${list(known.map(lower))}`)
+  if (interests.includes('beaches') && city.beach) parts.push('there are beaches close by')
   const level = COST_LEVELS[city.costLevel]
-  if (budget && level) parts.push(`it's ${level.label.toLowerCase()} for day-to-day costs`)
+  if (budget && level) parts.push(`day-to-day costs are in the ${level.label} band`)
   if (season) {
     const months = seasonMonths(season).filter((m) => city.bestMonths.includes(m))
     const special = (city.seasons.special || []).filter((s) => s.months.some((m) => seasonMonths(season).includes(m)))
