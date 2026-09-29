@@ -24,6 +24,7 @@ import BudgetPlanner from './components/BudgetPlanner.jsx'
 import { useBudget } from './useBudget.js'
 import Modal from './components/Modal.jsx'
 import CityComparison from './components/CityComparison.jsx'
+import TravelQuiz from './components/TravelQuiz.jsx'
 import { buildDays } from './utils/tripCalculations.js'
 
 const PAGE = 24
@@ -174,6 +175,9 @@ export default function App() {
           <button type="button" className="btn nav-btn" onClick={() => openCompare()}>
             ⚖️ <span>Compare</span>
           </button>
+          <button type="button" className="btn nav-btn" onClick={() => setTool('quiz')}>
+            🧭 <span>Quiz</span>
+          </button>
         </nav>
         <a className="btn trip-jump" href="#my-trip">
           🧳 My Trip{trip.cityIds.length ? ` (${trip.cityIds.length})` : ''}
@@ -275,6 +279,12 @@ export default function App() {
             onViewCity={viewCity}
             onAddCity={trip.addCity}
           />
+        </Modal>
+      )}
+
+      {tool === 'quiz' && (
+        <Modal title="Find your destination" onClose={() => setTool(null)}>
+          <TravelQuiz tripCityIds={trip.cityIds} onViewCity={viewCity} onAddCity={trip.addCity} />
         </Modal>
       )}
 

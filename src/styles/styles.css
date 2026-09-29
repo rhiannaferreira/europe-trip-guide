@@ -489,6 +489,21 @@ button:focus-visible, select:focus-visible, input:focus-visible, summary:focus-v
 .compare-actions .btn { margin: 0 6px 6px 0; min-height: 38px; }
 .compare .rule { margin-top: 10px; }
 
+/* ---------- Quiz and Surprise Me ---------- */
+.quiz { display: flex; flex-direction: column; gap: 10px; }
+.quiz-progress { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; }
+.quiz-question { font-family: var(--display); font-size: 1.3rem; }
+.quiz-options { display: flex; flex-wrap: wrap; gap: 8px; }
+.quiz-option { border: 1px solid var(--border); background: var(--surface); border-radius: 999px; padding: 9px 16px; min-height: 44px; font-size: 0.92rem; font-weight: 600; }
+.quiz-option.selected { background: var(--accent); border-color: var(--accent); color: #fff; }
+.quiz-nav { display: flex; justify-content: space-between; margin-top: 6px; }
+.quiz-nav .btn { min-height: 42px; }
+.quiz-results { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+.quiz-result { display: flex; gap: 12px; border: 1px solid var(--border); border-radius: 12px; padding: 10px; background: var(--surface); }
+.quiz-result h3 { font-family: var(--display); font-size: 1.05rem; }
+.quiz-result p { font-size: 0.87rem; margin-top: 2px; }
+.quiz-result .gem-actions .btn { min-height: 38px; padding: 6px 12px; }
+
 /* ---------- Responsive ---------- */
 @media (max-width: 1200px) {
   .app {
