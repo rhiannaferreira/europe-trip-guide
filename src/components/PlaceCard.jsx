@@ -3,7 +3,7 @@ import { interestById } from '../data/interests.js'
 import { costLabel } from '../lib/format.js'
 import Thumb from './Thumb.jsx'
 
-export default function PlaceCard({ place, city, saved, focused, onToggleSave, onFocus }) {
+export default function PlaceCard({ place, city, saved, focused, onToggleSave, onFocus, children }) {
   const interest = interestById[place.category]
   return (
     <article className={`place-card${focused ? ' focused' : ''}${saved ? ' saved' : ''}`}>
@@ -36,6 +36,7 @@ export default function PlaceCard({ place, city, saved, focused, onToggleSave, o
             📍 Show on map
           </button>
         </div>
+        {focused && children}
       </div>
     </article>
   )

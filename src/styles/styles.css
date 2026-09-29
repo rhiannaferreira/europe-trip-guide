@@ -380,6 +380,21 @@ button:focus-visible, select:focus-visible, input:focus-visible, summary:focus-v
 .optimize small { flex: 1; min-width: 160px; font-size: 0.75rem; color: var(--muted); }
 .optimize-btn { padding: 5px 10px; font-size: 0.8rem; min-height: 34px; }
 
+/* ---------- Nearby places ---------- */
+.nearby { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border); }
+.nearby .subhead { margin-top: 0; }
+.nearby ul { list-style: none; padding: 0; margin: 6px 0; display: flex; flex-direction: column; gap: 6px; }
+.nearby li { display: flex; align-items: center; gap: 6px; font-size: 0.85rem; }
+.nearby-icon { width: 20px; text-align: center; flex: none; }
+.nearby-name { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.nearby-name small { color: var(--muted); font-size: 0.74rem; }
+.nearby .rule { margin-bottom: 0; }
+.heart-btn.small { font-size: 1.15rem; width: 32px; height: 32px; flex: none; }
+.popup-nearby { display: flex; flex-direction: column; gap: 2px; margin-top: 6px; padding-top: 6px; border-top: 1px solid #ddd; }
+.popup-nearby small { color: #666; font-weight: 600; }
+.popup-nearby .link-btn { color: #1f6f8b; font-size: 0.8rem; }
+.popup-nearby em { color: #666; font-style: normal; }
+
 /* ---------- Responsive ---------- */
 @media (max-width: 1200px) {
   .app {

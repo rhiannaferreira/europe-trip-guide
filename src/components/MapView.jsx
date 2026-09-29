@@ -6,6 +6,8 @@ import { cityById } from '../data/cities.js'
 import { interestById } from '../data/interests.js'
 import { costLabel } from '../lib/format.js'
 import RouteView from './RouteView.jsx'
+import { nearbyPlaces } from '../utils/nearby.js'
+import { formatDistance } from '../utils/distance.js'
 import DayRoute from './DayRoute.jsx'
 
 // Marker colours per interest (Leaflet needs real colours, not CSS variables).
@@ -73,7 +75,23 @@ function FlyToFocused({ place, markerRefs }) {
   return null
 }
 
-export default function MapView({ places, cities, fitCities, savedIds, routeCities, legs, focusedId, fitTripRequest, dayView, onFocus, onToggleSave, onSelectCity }) {
+// The three closest sample places, shown in the open popup. Clicking one moves to it.
+function PopupNearby({ place, onFocusPlace }) {
+  const nearby = nearbyPlaces(place, { limit: 3 })
+  if (nearby.length === 0) return null
+  return (
+    <div className="popup-nearby">
+      <small>Nearby places</small>
+      {nearby.map(({ place: n, km }) => (
+        <button key={n.id} type="button" className="link-btn" onClick={() => onFocusPlace(n.id)}>
+          {n.name} <em>{formatDistance(km)}</em>
+        </button>
+      ))}
+    </div>
+  )
+}
+
+export default function MapView({ places, cities, fitCities, savedIds, routeCities, legs, focusedId, fitTripRequest, dayView, onFocus, onFocusPlace, onToggleSave, onSelectCity }) {
   // While a day is shown, other places fade back so the day's numbered route stands out.
   const dimmed = Boolean(dayView)
   const markerRefs = useRef({})
@@ -130,6 +148,7 @@ export default function MapView({ places, cities, fitCities, savedIds, routeCiti
                 <button type="button" className={`popup-btn${saved ? ' saved' : ''}`} onClick={() => onToggleSave(p.id)}>
                   {saved ? '♥ Saved to trip' : '♡ Save to trip'}
                 </button>
+                {focusedId === p.id && <PopupNearby place={p} onFocusPlace={onFocusPlace} />}
               </div>
             </Popup>
           </CircleMarker>

@@ -18,6 +18,7 @@ import BestTime from './components/BestTime.jsx'
 import TripSeasons from './components/TripSeasons.jsx'
 import TripPanel from './components/TripPanel.jsx'
 import DailyItinerary from './components/DailyItinerary.jsx'
+import NearbyPlaces from './components/NearbyPlaces.jsx'
 import { buildDays } from './utils/tripCalculations.js'
 
 const PAGE = 24
@@ -100,8 +101,13 @@ export default function App() {
       if (activeInterests.size > 0 && !activeInterests.has(place.category)) setActiveInterests(new Set())
     }
     setFocusedId(id)
+    // Make sure the card is on the current page of results, so its details and nearby places can open.
+    const index = visiblePlaces.findIndex((p) => p.id === id)
+    if (index >= shown) setShown(index + 1)
     // On stacked layouts the map is above the lists, so bring it into view.
     if (window.innerWidth <= 1200) document.querySelector('.map-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    // Side by side, bring the place's card (with its nearby places) into view in the list.
+    else setTimeout(() => document.querySelector('.place-card.focused')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50)
   }
 
   const pickFromSearch = {
@@ -182,7 +188,16 @@ export default function App() {
                 focused={focusedId === p.id}
                 onToggleSave={() => trip.togglePlace(p.id)}
                 onFocus={() => focusPlace(p.id)}
-              />
+              >
+                <NearbyPlaces
+                  place={p}
+                  savedIds={trip.savedIds}
+                  days={itineraryDays}
+                  onToggleSave={trip.togglePlace}
+                  onAddToDay={trip.assignToDay}
+                  onFocusPlace={focusPlace}
+                />
+              </PlaceCard>
             ))}
           </div>
           {visiblePlaces.length > shown && (
@@ -206,6 +221,7 @@ export default function App() {
           fitTripRequest={fitTripRequest}
           dayView={dayView}
           onFocus={setFocusedId}
+          onFocusPlace={focusPlace}
           onToggleSave={trip.togglePlace}
           onSelectCity={selectCity}
         />
