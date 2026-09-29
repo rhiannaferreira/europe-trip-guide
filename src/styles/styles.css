@@ -11,6 +11,7 @@
   --accent-soft: #fdecec;
   --gem: #0f8b8d;
   --gem-soft: #e2f4f3;
+  --on-gem: #fff;
   --gold: #f4a261;
   --on-gold: #3b2200;
   --heart: #e0245e;
@@ -39,27 +40,28 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #14181c; --panel: #1b2026; --surface: #222830; --surface-2: #1f252c; --text: #e6e8ea; --muted: #9aa5b0;
-    --border: #2f3740; --border-strong: #46515d; --accent: #ef5350; --accent-soft: #3a2224; --gem: #3cc0bf; --gem-soft: #173334;
+    --border: #2f3740; --border-strong: #46515d; --accent: #ef5350; --accent-soft: #3a2224; --gem: #3cc0bf; --gem-soft: #173334; --on-gem: #0d2626;
     --gold: #f4a261; --on-gold: #2a1700; --heart: #ff5c8a; --good: #6fcf97; --good-soft: #1b3025; --warn: #f0b35a; --warn-soft: #33281a;
     --tip-bg: #2a2418; --tip-border: #4a3d24; --sea: #1c2a33; --land: #2a2f35; --land-edge: #4d5661;
-    --food: #e8775a; --outdoors: #3aa89a; --museums: #9277bd; --nightlife: #5a8aa0; --history: #c08a4a; --shopping: #d9699a;
+    --food: #c75f43; --outdoors: #238a7e; --museums: #9277bd; --nightlife: #5a8aa0; --history: #c08a4a; --shopping: #d9699a;
     --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 14px rgb(0 0 0 / 0.25);
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #14181c; --panel: #1b2026; --surface: #222830; --surface-2: #1f252c; --text: #e6e8ea; --muted: #9aa5b0;
-  --border: #2f3740; --border-strong: #46515d; --accent: #ef5350; --accent-soft: #3a2224; --gem: #3cc0bf; --gem-soft: #173334;
+  --border: #2f3740; --border-strong: #46515d; --accent: #ef5350; --accent-soft: #3a2224; --gem: #3cc0bf; --gem-soft: #173334; --on-gem: #0d2626;
   --gold: #f4a261; --on-gold: #2a1700; --heart: #ff5c8a; --good: #6fcf97; --good-soft: #1b3025; --warn: #f0b35a; --warn-soft: #33281a;
   --tip-bg: #2a2418; --tip-border: #4a3d24; --sea: #1c2a33; --land: #2a2f35; --land-edge: #4d5661;
-  --food: #e8775a; --outdoors: #3aa89a; --museums: #9277bd; --nightlife: #5a8aa0; --history: #c08a4a; --shopping: #d9699a;
+  --food: #c75f43; --outdoors: #238a7e; --museums: #9277bd; --nightlife: #5a8aa0; --history: #c08a4a; --shopping: #d9699a;
   --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 14px rgb(0 0 0 / 0.25);
   color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; }
-body { margin: 0; background: var(--bg); }
+/* Colour and font are set on body as well as :root, so a host page's own body styles can't override them. */
+body { margin: 0; background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
 h1, h2, h3, p { margin: 0; }
 button, input, select { font: inherit; color: inherit; }
 button { cursor: pointer; }
@@ -115,7 +117,7 @@ button:focus-visible, select:focus-visible, input:focus-visible, summary:focus-v
 .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
 .btn-primary:hover:not(:disabled) { filter: brightness(1.07); border-color: var(--accent); }
 .btn-done { background: var(--good-soft); border-color: transparent; color: var(--good); }
-.btn-gem { background: var(--gem); border-color: var(--gem); color: #fff; }
+.btn-gem { background: var(--gem); border-color: var(--gem); color: var(--on-gem); }
 .link-btn { border: none; background: none; padding: 2px 0; color: var(--text); text-align: left; }
 .link-btn:hover { text-decoration: underline; }
 .more-btn { width: 100%; margin-top: 10px; }
@@ -141,7 +143,7 @@ button:focus-visible, select:focus-visible, input:focus-visible, summary:focus-v
 .explorer-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
 .explorer-header .section-title { margin: 0; }
 .gem-toggle { border: 1px solid var(--border); background: var(--surface); border-radius: 999px; padding: 5px 12px; font-size: 0.82rem; font-weight: 600; color: var(--gem); }
-.gem-toggle.active { background: var(--gem); border-color: var(--gem); color: #fff; }
+.gem-toggle.active { background: var(--gem); border-color: var(--gem); color: var(--on-gem); }
 .country-chips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; scrollbar-width: thin; }
 .country-chip { flex: none; border: 1px solid var(--border); background: var(--surface); border-radius: 999px; padding: 5px 11px; font-size: 0.84rem; white-space: nowrap; transition: border-color 0.15s, background 0.15s; }
 .country-chip:hover { border-color: var(--border-strong); }
