@@ -29,6 +29,8 @@ import SurpriseMe from './components/SurpriseMe.jsx'
 import TripProgress from './components/TripProgress.jsx'
 import TripNotes from './components/TripNotes.jsx'
 import PrintTrip from './components/PrintTrip.jsx'
+import ThemeToggle from './components/ThemeToggle.jsx'
+import { useTheme } from './useTheme.js'
 import { autoEstimates, formatMoney, summarizeBudget } from './utils/budgetCalculations.js'
 import { buildDays, tripProgress } from './utils/tripCalculations.js'
 
@@ -47,6 +49,7 @@ export default function App() {
   const [selectedDay, setSelectedDay] = useState(null)
   const trip = useTrip()
   const budget = useBudget()
+  const { theme, toggle: toggleTheme } = useTheme()
   // Which discovery tool is open in a dialog ('compare', or null), and the two compared cities.
   const [tool, setTool] = useState(null)
   const [comparePair, setComparePair] = useState(['barcelona', 'lisbon'])
@@ -194,16 +197,17 @@ export default function App() {
         />
         <nav className="header-nav" aria-label="Discover">
           <button type="button" className="btn nav-btn" onClick={() => openCompare()}>
-            ⚖️ <span>Compare</span>
+            <span aria-hidden="true">⚖️</span> <span className="nav-label">Compare</span>
           </button>
           <button type="button" className="btn nav-btn" onClick={() => setTool('quiz')}>
-            🧭 <span>Quiz</span>
+            <span aria-hidden="true">🧭</span> <span className="nav-label">Quiz</span>
           </button>
           <button type="button" className="btn nav-btn" onClick={() => setTool('surprise')}>
-            🎲 <span>Surprise me</span>
+            <span aria-hidden="true">🎲</span> <span className="nav-label">Surprise me</span>
           </button>
+          <ThemeToggle theme={theme} onToggle={toggleTheme} />
         </nav>
-        <a className="btn trip-jump" href="#my-trip">
+        <a className="btn trip-jump" href="#my-trip-panel">
           🧳 My Trip{trip.cityIds.length ? ` (${trip.cityIds.length})` : ''}
         </a>
       </header>

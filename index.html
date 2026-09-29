@@ -6,6 +6,13 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&display=swap" />
     <title>Europe Trip Guide</title>
+    <script>
+      // Apply a saved light/dark choice before the page draws, so it doesn't flash the other theme.
+      try {
+        var t = localStorage.getItem('travel-app-theme')
+        if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

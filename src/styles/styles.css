@@ -31,6 +31,7 @@
   --history: #9a6a2f;
   --shopping: #c2417a;
   --shadow: 0 1px 2px rgb(0 0 0 / 0.05), 0 4px 14px rgb(0 0 0 / 0.06);
+  --tile-filter: none;
   --radius: 14px;
   --display: 'Bricolage Grotesque', system-ui, sans-serif;
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
@@ -45,6 +46,7 @@
     --tip-bg: #2a2418; --tip-border: #4a3d24; --sea: #1c2a33; --land: #2a2f35; --land-edge: #4d5661;
     --food: #c75f43; --outdoors: #238a7e; --museums: #9277bd; --nightlife: #5a8aa0; --history: #c08a4a; --shopping: #d9699a;
     --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 14px rgb(0 0 0 / 0.25);
+    --tile-filter: brightness(0.78) contrast(1.08) saturate(0.85);
     color-scheme: dark;
   }
 }
@@ -55,6 +57,7 @@
   --tip-bg: #2a2418; --tip-border: #4a3d24; --sea: #1c2a33; --land: #2a2f35; --land-edge: #4d5661;
   --food: #c75f43; --outdoors: #238a7e; --museums: #9277bd; --nightlife: #5a8aa0; --history: #c08a4a; --shopping: #d9699a;
   --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 14px rgb(0 0 0 / 0.25);
+  --tile-filter: brightness(0.78) contrast(1.08) saturate(0.85);
   color-scheme: dark;
 }
 
@@ -218,7 +221,10 @@ button:focus-visible, select:focus-visible, input:focus-visible, summary:focus-v
 .popup { display: flex; flex-direction: column; gap: 4px; min-width: 190px; }
 .popup strong { font-size: 0.98rem; }
 .popup > span:not(.popup-tag) { font-size: 0.84rem; line-height: 1.35; }
-.popup small { color: #5e6b77; }
+.popup small { color: var(--muted); }
+.leaflet-popup-content-wrapper, .leaflet-popup-tip { background: var(--surface); color: var(--text); }
+.leaflet-container a.leaflet-popup-close-button { color: var(--muted); }
+.leaflet-tile-pane { filter: var(--tile-filter); }
 .popup-tag { align-self: flex-start; font-size: 0.7rem; color: #fff; padding: 1px 7px; border-radius: 999px; }
 .popup-btn { margin-top: 6px; border: none; background: var(--accent); color: #fff; border-radius: 8px; padding: 6px 10px; font-weight: 600; }
 .popup-btn.saved { background: var(--heart); }
@@ -391,10 +397,10 @@ button:focus-visible, select:focus-visible, input:focus-visible, summary:focus-v
 .nearby-name small { color: var(--muted); font-size: 0.74rem; }
 .nearby .rule { margin-bottom: 0; }
 .heart-btn.small { font-size: 1.15rem; width: 32px; height: 32px; flex: none; }
-.popup-nearby { display: flex; flex-direction: column; gap: 2px; margin-top: 6px; padding-top: 6px; border-top: 1px solid #ddd; }
-.popup-nearby small { color: #666; font-weight: 600; }
-.popup-nearby .link-btn { color: #1f6f8b; font-size: 0.8rem; }
-.popup-nearby em { color: #666; font-style: normal; }
+.popup-nearby { display: flex; flex-direction: column; gap: 2px; margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--border); }
+.popup-nearby small { color: var(--muted); font-weight: 600; }
+.popup-nearby .link-btn { color: var(--gem); font-size: 0.8rem; }
+.popup-nearby em { color: var(--muted); font-style: normal; }
 
 /* ---------- Timeline ---------- */
 .travel-advice { font-size: 0.8rem; padding: 6px 9px; }
@@ -426,6 +432,7 @@ button:focus-visible, select:focus-visible, input:focus-visible, summary:focus-v
 .budget-settings { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: end; }
 .budget-settings label { display: flex; flex-direction: column; gap: 3px; font-size: 0.75rem; color: var(--muted); }
 .budget-settings .field-error { grid-column: 1 / -1; }
+.budget-settings .stepper { align-self: flex-start; }
 .money-input { display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--surface-2); }
 .money-input select { border: none; border-right: 1px solid var(--border); background: var(--surface); padding: 0 6px; font-size: 0.85rem; }
 .money-input input { border: none; background: none; padding: 8px; min-width: 0; width: 100%; font-size: 0.95rem; }
@@ -582,17 +589,20 @@ button:focus-visible, select:focus-visible, input:focus-visible, summary:focus-v
 @media (max-width: 1200px) {
   .app {
     height: auto;
-    grid-template-columns: minmax(340px, 1fr) minmax(320px, 1fr);
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 1fr);
     grid-template-rows: auto;
     grid-template-areas: 'header header' 'map map' 'sidebar trip';
   }
   .map-panel { height: 60vh; }
   .sidebar, .trip-panel { overflow: visible; }
   .trip-panel { border-left: 1px solid var(--border); position: sticky; top: 0; align-self: start; }
+  /* The trip panel sticks beside the explorer, so let it scroll on its own when it's taller than the screen. */
+  .trip-panel { max-height: 100vh; overflow-y: auto; }
 }
 @media (max-width: 760px) {
-  .app { grid-template-columns: 1fr; grid-template-areas: 'header' 'map' 'sidebar' 'trip'; }
-  .app-header { padding: 10px 16px; }
+  .app { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'header' 'map' 'sidebar' 'trip'; }
+  .app-header { padding: 10px 16px; column-gap: 10px; }
+  .theme-toggle .nav-label { display: none; }
   .brand p { display: none; }
   .search { max-width: none; flex-basis: 100%; }
   .brand h1 { font-size: 1.15rem; }
@@ -603,6 +613,46 @@ button:focus-visible, select:focus-visible, input:focus-visible, summary:focus-v
   .sidebar, .trip-panel { padding: 16px; border: none; border-top: 1px solid var(--border); }
   .city-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
   .place-thumb { width: 52px; height: 52px; }
+
+  /* Header: title and My Trip on one row, then the tools (scrolling sideways if needed), then search. */
+  .header-nav { order: 4; flex-basis: 100%; min-width: 0; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+  .header-nav::-webkit-scrollbar { display: none; }
+  .nav-btn { flex: none; min-height: 40px; }
+  .trip-jump { min-height: 38px; }
+
+  /* Trip panel: tabs stay reachable while scrolling a long itinerary. The panel itself flows with the page. */
+  .trip-panel { max-height: none; overflow: visible; }
+  .trip-tabs { position: sticky; top: 0; z-index: 20; background: var(--surface-2); box-shadow: 0 6px 10px -8px rgb(0 0 0 / 0.3); }
+  .map-panel { height: 45vh; min-height: 280px; }
+  .day-banner { top: 8px; font-size: 0.78rem; max-width: calc(100% - 70px); }
+
+  /* Comfortable touch targets. */
+  .stop-tools button, .day-place-tools > button:not(.remove-btn), .day-place-tools .remove-btn, .trip-city ul .remove-btn { width: 36px; height: 36px; }
+  .status-select, .day-picker { min-height: 36px; font-size: 0.85rem; }
+  .heart-btn { min-width: 40px; min-height: 40px; }
+  .link-btn.small { min-height: 32px; }
+  .status-btn { min-height: 36px; }
+  .trip-city ul li { min-height: 40px; flex-wrap: wrap; }
+  .day-place-main .link-btn, .nearby-name, .unscheduled li .link-btn { min-height: 34px; }
+
+  /* Dialogs use the whole screen. */
+  .modal-backdrop { padding: 0; place-items: stretch; }
+  .modal, .modal.wide { width: 100%; max-height: 100dvh; height: 100dvh; border-radius: 0; }
+  .modal-body { padding: 14px 16px 24px; }
+  .compare-table { font-size: 0.82rem; }
+  .compare-table th, .compare-table td { padding: 7px 6px; }
+  .compare-table tbody th { white-space: normal; width: 22%; }
+  .compare-actions .btn { width: 100%; margin: 0 0 6px; }
+
+  .budget-tiles { gap: 6px; }
+  .budget-tile { padding: 7px 8px; }
+  .budget-tile .stat-value { font-size: 0.95rem; }
+  .budget-settings { grid-template-columns: 1fr; }
+  .expense-list li { flex-wrap: wrap; }
+  .expense-label { flex-basis: 50%; }
+}
+@media (max-width: 1500px) {
+  .brand p { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; }
