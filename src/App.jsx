@@ -20,6 +20,8 @@ import TripPanel from './components/TripPanel.jsx'
 import DailyItinerary from './components/DailyItinerary.jsx'
 import NearbyPlaces from './components/NearbyPlaces.jsx'
 import TripTimeline from './components/TripTimeline.jsx'
+import BudgetPlanner from './components/BudgetPlanner.jsx'
+import { useBudget } from './useBudget.js'
 import { buildDays } from './utils/tripCalculations.js'
 
 const PAGE = 24
@@ -36,6 +38,7 @@ export default function App() {
   const [tripTab, setTripTab] = useState('trip')
   const [selectedDay, setSelectedDay] = useState(null)
   const trip = useTrip()
+  const budget = useBudget()
 
   const legs = useMemo(() => tripLegs(trip.cityIds), [trip.cityIds.join(',')]) // eslint-disable-line react-hooks/exhaustive-deps
   const days = tripDays(trip.startDate, trip.endDate)
@@ -274,6 +277,7 @@ export default function App() {
               }}
             />
           )}
+          {tripTab === 'budget' && <BudgetPlanner trip={trip} legs={legs} totalDays={days} budget={budget} />}
           {tripTab === 'days' && <DailyItinerary trip={trip} days={itineraryDays} tripLength={days} selectedDay={selectedDay} onSelectDay={selectDay} onFocusPlace={focusPlace} />}
         </TripPanel>
       </section>

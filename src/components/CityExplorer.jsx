@@ -2,6 +2,7 @@ import { countries, countryByCode } from '../data/countries.js'
 import { cities, citiesInCountry } from '../data/cities.js'
 import { interestById } from '../data/interests.js'
 import { costLabel } from '../lib/format.js'
+import { COST_LEVELS, perPersonDay } from '../data/costs.js'
 import Thumb from './Thumb.jsx'
 
 function CityCard({ city, inTrip, onSelect, onAddCity }) {
@@ -111,6 +112,7 @@ function CityDetail({ city, inTrip, onAddCity }) {
         </div>
         <p className="city-meta">
           {country.name} · {city.lat.toFixed(4)}, {city.lng.toFixed(4)} · Cost {costLabel(city.costLevel)}
+          {COST_LEVELS[city.costLevel] && ` (${COST_LEVELS[city.costLevel].label}, roughly €${perPersonDay(COST_LEVELS[city.costLevel])} a day per person, estimate)`}
           {city.hiddenGem && <span className="badge badge-gem">💎 Hidden gem</span>}
         </p>
         <p>{city.description}</p>

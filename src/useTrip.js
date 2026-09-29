@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { cityById } from './data/cities.js'
 import { placeById } from './data/places.js'
-import { KEYS, backupOnce, readJSON, writeJSON } from './lib/storage.js'
+import { KEYS, backupOnce, readJSON, readText, writeJSON } from './lib/storage.js'
 
 const VERSION = 3
 export const DEFAULT_TRIP_NAME = 'My Europe trip'
@@ -91,7 +91,8 @@ function migrate(saved) {
 
 function load() {
   const saved = readJSON(KEYS.trip)
-  if (saved && saved.version !== VERSION) backupOnce(KEYS.trip, KEYS.tripBackup)
+  // Before migrating an older (or unreadable) saved trip, keep a copy of it exactly as it was.
+  if (readText(KEYS.trip) !== null && saved?.version !== VERSION) backupOnce(KEYS.trip, KEYS.tripBackup)
   return migrate(saved)
 }
 

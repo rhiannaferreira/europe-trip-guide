@@ -311,7 +311,8 @@ button:focus-visible, select:focus-visible, input:focus-visible, summary:focus-v
 
 /* ---------- Trip panel tabs ---------- */
 .trip-tabs { display: flex; gap: 4px; padding: 4px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--border); }
-.trip-tab { flex: 1; min-height: 38px; border: none; border-radius: 9px; background: none; font-size: 0.85rem; font-weight: 600; color: var(--muted); white-space: nowrap; padding: 6px 4px; }
+.trip-tab { flex: 1; min-width: 0; min-height: 44px; border: none; border-radius: 9px; background: none; font-size: 0.78rem; font-weight: 600; color: var(--muted); white-space: nowrap; padding: 4px 2px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; line-height: 1.1; }
+.trip-tab span { font-size: 1rem; }
 .trip-tab.active { background: var(--surface); color: var(--text); box-shadow: var(--shadow); }
 .trip-tab-panel { display: flex; flex-direction: column; gap: 14px; }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
@@ -413,6 +414,51 @@ button:focus-visible, select:focus-visible, input:focus-visible, summary:focus-v
 .tl-free { font-size: 0.8rem; color: var(--muted); margin-top: 2px; font-style: italic; }
 .tl-note { font-size: 0.78rem; color: var(--muted); margin-top: 4px; }
 .tl-travel-row { font-size: 0.8rem; color: var(--gem); margin-bottom: 2px; }
+
+/* ---------- Budget ---------- */
+.budget { display: flex; flex-direction: column; gap: 12px; }
+.budget section { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); padding: 12px 14px; }
+.budget section .subhead:first-child, .expense-form .subhead { margin-top: 0; }
+.budget-tiles { grid-template-columns: repeat(3, 1fr); margin: 0; }
+.budget-tile .stat-value { font-size: 1.05rem; overflow-wrap: anywhere; }
+.budget-tile.under .stat-value { color: var(--good); }
+.budget-tile.over .stat-value { color: var(--accent); }
+.budget-settings { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: end; }
+.budget-settings label { display: flex; flex-direction: column; gap: 3px; font-size: 0.75rem; color: var(--muted); }
+.budget-settings .field-error { grid-column: 1 / -1; }
+.money-input { display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--surface-2); }
+.money-input select { border: none; border-right: 1px solid var(--border); background: var(--surface); padding: 0 6px; font-size: 0.85rem; }
+.money-input input { border: none; background: none; padding: 8px; min-width: 0; width: 100%; font-size: 0.95rem; }
+.budget input[aria-invalid], .expense-form input[aria-invalid] { outline: 2px solid var(--accent); }
+.field-error { color: var(--accent); font-size: 0.78rem; }
+.budget-cats { list-style: none; padding: 0; margin: 8px 0 0; display: flex; flex-direction: column; gap: 4px; }
+.budget-cat summary { cursor: pointer; display: grid; grid-template-columns: 1fr auto; gap: 3px 8px; align-items: center; padding: 6px 0; list-style: none; min-height: 40px; }
+.budget-cat summary::-webkit-details-marker { display: none; }
+.budget-cat-name { font-size: 0.88rem; font-weight: 600; }
+.budget-cat-name::after { content: ' ▾'; color: var(--muted); font-weight: 400; font-size: 0.75rem; }
+.budget-cat details[open] .budget-cat-name::after { content: ' ▴'; }
+.budget-cat-amount { font-weight: 700; font-size: 0.9rem; font-variant-numeric: tabular-nums; }
+.budget-bar { grid-column: 1 / -1; height: 8px; border-radius: 4px; background: var(--surface-2); overflow: hidden; }
+.budget-bar span { display: block; height: 100%; border-radius: 0 4px 4px 0; background: var(--gem); min-width: 0; }
+.budget-cat-body { padding: 4px 0 10px; display: flex; flex-direction: column; gap: 6px; }
+.budget-cat-body .rule { margin: 0; }
+.inline-field { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--muted); }
+.inline-field input { flex: 1; min-width: 0; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-2); padding: 7px 8px; }
+.check-field { display: flex; gap: 8px; align-items: flex-start; font-size: 0.78rem; color: var(--muted); }
+.check-field input { width: 18px; height: 18px; flex: none; margin: 0; }
+.expense-form { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+.expense-form input, .expense-form select, .city-costs select { border: 1px solid var(--border); border-radius: 8px; background: var(--surface-2); padding: 8px; font-size: 0.88rem; min-width: 0; min-height: 38px; }
+.expense-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.expense-list, .city-costs { list-style: none; padding: 0; margin: 8px 0 0; display: flex; flex-direction: column; gap: 6px; }
+.expense-list li { display: flex; align-items: center; gap: 8px; font-size: 0.86rem; }
+.expense-label { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.expense-amount { font-weight: 700; font-variant-numeric: tabular-nums; }
+.kind-toggle { border: 1px solid var(--border); background: var(--surface-2); border-radius: 999px; padding: 3px 9px; font-size: 0.72rem; min-height: 28px; }
+.kind-toggle.paid { background: var(--good-soft); color: var(--good); border-color: transparent; }
+.city-costs li { display: flex; align-items: center; gap: 8px; font-size: 0.86rem; flex-wrap: wrap; }
+.city-costs li > span { flex: 1; min-width: 140px; display: flex; flex-direction: column; }
+.city-costs small { color: var(--muted); font-size: 0.74rem; }
+.override-tag { color: var(--gem) !important; }
 
 /* ---------- Responsive ---------- */
 @media (max-width: 1200px) {

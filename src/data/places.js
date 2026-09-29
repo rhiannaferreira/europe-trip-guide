@@ -1,3 +1,5 @@
+import { PLACE_COST_EUR } from './costs.js'
+
 // Sample places until a places API is wired in.
 //
 // Shape of a place:
@@ -9,6 +11,9 @@
 //   costLevel   0 free, 1–3 ($ to $$$)
 //   description one sentence
 //   image       photo URL, or null to show the illustrated tile
+//   estimatedCost  optional rough entry cost per person in euros; when missing it comes from costLevel (see costs.js)
+//
+// Every place also gets `latitude`/`longitude` (same values as lat/lng) for code that prefers the long names.
 const raw = [
   // Paris
   { id: 'paris-marche-enfants-rouges', cityId: 'paris', category: 'food', type: 'market', name: 'Marché des Enfants Rouges', lat: 48.8627, lng: 2.3620, rating: 4.5, costLevel: 2, description: 'The oldest covered market in Paris, packed with lunch stalls.' },
@@ -264,7 +269,13 @@ const raw = [
   { id: 'galway-market', cityId: 'galway', category: 'food', type: 'market', name: 'Galway Market', lat: 53.2730, lng: -9.0530, rating: 4.5, costLevel: 1, description: 'Weekend market by St Nicholas\' Church, great for oysters.' },
 ]
 
-export const places = raw.map((p) => ({ image: null, ...p }))
+export const places = raw.map((p) => ({
+  image: null,
+  ...p,
+  latitude: p.lat,
+  longitude: p.lng,
+  estimatedCost: p.estimatedCost ?? PLACE_COST_EUR[p.costLevel] ?? 0,
+}))
 
 export const placeById = Object.fromEntries(places.map((p) => [p.id, p]))
 export const getPlace = (id) => placeById[id]
