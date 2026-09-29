@@ -4,6 +4,7 @@
 //   travel-app-trip-backup   a copy of the trip exactly as it was before its first migration to a newer shape
 //   travel-app-trip-previous the trip as it was before a shared trip replaced it
 //   travel-app-extra-places  OpenStreetMap places the trip uses (see lib/extraPlaces.js)
+//   travel-app-recent-searches  the last few search suggestions picked, as [{ kind, id }]
 //   travel-app-budget        budget total, currency, travellers, expenses and estimate overrides (see useBudget.js)
 //   travel-app-theme         'light' or 'dark' (missing means "follow the system")
 //
@@ -14,6 +15,7 @@ export const KEYS = {
   tripBackup: 'travel-app-trip-backup',
   tripPrevious: 'travel-app-trip-previous',
   extraPlaces: 'travel-app-extra-places',
+  recentSearches: 'travel-app-recent-searches',
   budget: 'travel-app-budget',
   theme: 'travel-app-theme',
 }

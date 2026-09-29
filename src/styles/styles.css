@@ -133,9 +133,15 @@ button:focus-visible, select:focus-visible, input:focus-visible, summary:focus-v
 .search-icon { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); font-size: 0.9rem; opacity: 0.7; }
 .search-clear { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); border: none; background: none; font-size: 1.3rem; line-height: 1; color: var(--muted); padding: 2px 6px; }
 .search-results, .search-empty { position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); z-index: 10; }
-.search-results { list-style: none; margin: 0; padding: 6px; max-height: 60vh; overflow-y: auto; }
-.search-results button { width: 100%; display: flex; align-items: center; gap: 10px; border: none; background: none; padding: 7px 8px; border-radius: 8px; text-align: left; }
-.search-results button:hover, .search-results button.active { background: var(--surface-2); }
+.search-results { padding: 6px; max-height: 60vh; overflow-y: auto; }
+.search-results[hidden] { display: none; }
+.search-results ul { list-style: none; margin: 0; padding: 0; }
+.search-option { display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 8px; cursor: pointer; }
+.search-option.active { background: var(--surface-2); box-shadow: inset 3px 0 0 var(--accent); }
+.search-option mark { background: none; color: var(--accent); font-weight: 800; }
+.search-group-label { display: flex; justify-content: space-between; align-items: center; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); padding: 8px 8px 3px; }
+.search-hint { font-size: 0.8rem; color: var(--muted); padding: 6px 8px 0; }
+.search-kbd { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font: 600 0.72rem/1 ui-monospace, monospace; color: var(--muted); border: 1px solid var(--border); border-radius: 5px; padding: 3px 6px; background: var(--surface); }
 .search-results strong { display: block; font-size: 0.92rem; }
 .search-results small { color: var(--muted); font-size: 0.78rem; }
 .search-result-icon { width: 24px; text-align: center; font-size: 1.1rem; }
