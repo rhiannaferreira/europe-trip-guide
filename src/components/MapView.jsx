@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import L from 'leaflet'
 import { CircleMarker, GeoJSON, MapContainer, Pane, Popup, TileLayer, Tooltip, useMap } from 'react-leaflet'
-import europeOutline from '../data/europe-outline.json'
 import { placeById } from '../data/places.js'
 import { cityById } from '../data/cities.js'
 import { interestById } from '../data/interests.js'
@@ -113,11 +113,35 @@ export default function MapView({ places, cities, fitCities, savedIds, routeCiti
   const [tiles, setTiles] = useState({ ok: 0, failed: 0 })
   const tilesDown = tiles.failed >= 4 && tiles.ok === 0
 
+  // The country outlines (~160 KB compressed) are only a backdrop under the tiles, so they load once
+  // the page is idle, or straight away if the tiles fail.
+  const [outline, setOutline] = useState(null)
+  useEffect(() => {
+    let live = true
+    const load = () => import('../data/europe-outline.json').then((m) => live && setOutline(m.default)).catch(() => {})
+    if (tilesDown) load()
+    else {
+      const idle = window.requestIdleCallback || ((fn) => setTimeout(fn, 2000))
+      const cancel = window.cancelIdleCallback || clearTimeout
+      const id = idle(load, { timeout: 4000 })
+      return () => {
+        live = false
+        cancel(id)
+      }
+    }
+    return () => {
+      live = false
+    }
+  }, [tilesDown])
+  // Markers and lines draw on one canvas (much lighter than hundreds of SVG elements); the outlines
+  // stay SVG so the CSS colours for light and dark mode apply to them.
+  const outlineRenderer = useMemo(() => L.svg({ pane: 'outline' }), [])
+
   return (
-    <MapContainer center={[48.5, 8]} zoom={4} className="map" scrollWheelZoom>
+    <MapContainer center={[48.5, 8]} zoom={4} className="map" scrollWheelZoom preferCanvas>
       {/* Country outlines sit under the tiles and show through wherever tiles can't load. */}
       <Pane name="outline" style={{ zIndex: 150 }}>
-        <GeoJSON data={europeOutline} interactive={false} style={{ className: 'country-outline', weight: 1 }} />
+        {outline && <GeoJSON data={outline} interactive={false} renderer={outlineRenderer} style={{ className: 'country-outline', weight: 1 }} />}
       </Pane>
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
