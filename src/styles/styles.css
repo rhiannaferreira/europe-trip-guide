@@ -536,6 +536,48 @@ button:focus-visible, select:focus-visible, input:focus-visible, summary:focus-v
 .progress-meter span { display: block; height: 100%; background: var(--good); border-radius: 0 3px 3px 0; }
 .trip-progress .link-btn.small { grid-column: 3; grid-row: 1; }
 
+/* ---------- Notes and printable trip ---------- */
+.trip-notes { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+.trip-notes .section-title { margin: 0; }
+.notes-field { display: flex; flex-direction: column; gap: 3px; font-size: 0.75rem; color: var(--muted); }
+.notes-field input { border: 1px solid var(--border); border-radius: 8px; background: var(--surface-2); padding: 8px 9px; font-size: 0.9rem; color: var(--text); }
+.trip-notes .rule { margin: 0; }
+.print-open-btn { align-self: flex-start; min-height: 40px; }
+.city-note { padding: 4px 0 0 32px; font-size: 0.8rem; }
+.city-note summary { cursor: pointer; color: var(--muted); min-height: 28px; display: flex; align-items: center; }
+.city-note textarea { margin-top: 4px; }
+.print-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.print-actions .btn { min-height: 44px; }
+.print-actions .rule { margin: 0; }
+.print-trip { font-size: 0.92rem; line-height: 1.45; }
+.print-trip h1 { font-family: var(--display); font-size: 1.6rem; }
+.print-trip h2 { font-family: var(--display); font-size: 1.1rem; margin: 18px 0 6px; padding-bottom: 4px; border-bottom: 1px solid var(--border); }
+.print-trip h3 { font-size: 0.95rem; margin: 10px 0 2px; }
+.print-trip ol, .print-trip ul { margin: 4px 0; padding-left: 22px; }
+.print-dates { font-weight: 600; margin: 4px 0; }
+.print-muted { color: var(--muted); font-size: 0.82rem; }
+.print-day { break-inside: avoid; }
+.print-note { white-space: pre-wrap; margin: 4px 0; }
+.print-table { border-collapse: collapse; min-width: 280px; }
+.print-table th, .print-table td { text-align: left; padding: 3px 12px 3px 0; }
+.print-table td { text-align: right; font-variant-numeric: tabular-nums; }
+.print-table .print-sub th { font-weight: 400; padding-left: 14px; color: var(--muted); }
+
+@media print {
+  @page { margin: 16mm; }
+  :root, body { background: #fff !important; color: #000 !important; }
+  html, body, #root, .app { height: auto !important; display: block !important; overflow: visible !important; }
+  .app > *:not(.modal-backdrop) { display: none !important; }
+  .modal-backdrop { position: static !important; display: block !important; background: none !important; padding: 0 !important; }
+  .modal { box-shadow: none !important; width: 100% !important; max-height: none !important; overflow: visible !important; background: #fff !important; color: #000 !important; }
+  .modal-header, .no-print, button { display: none !important; }
+  .modal-body { padding: 0 !important; overflow: visible !important; }
+  .print-trip, .print-trip * { color: #000 !important; }
+  .print-muted, .print-table .print-sub th { color: #444 !important; }
+  .print-trip h2 { break-after: avoid; border-color: #999; }
+  .print-table, .print-trip li { break-inside: avoid; }
+}
+
 /* ---------- Responsive ---------- */
 @media (max-width: 1200px) {
   .app {

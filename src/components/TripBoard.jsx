@@ -98,6 +98,18 @@ export default function TripBoard({ trip, legs, days, onSelectCity, onFocusPlace
                   ) : (
                     <p className="no-places">No places saved here yet.</p>
                   )}
+                  <details className="city-note" open={Boolean(trip.notes.cities[city.id])}>
+                    <summary>📝 {trip.notes.cities[city.id] ? 'Note' : 'Add a note'}</summary>
+                    <label className="note-field">
+                      <span className="visually-hidden">Notes for {city.name}</span>
+                      <textarea
+                        rows={2}
+                        value={trip.notes.cities[city.id] || ''}
+                        placeholder={`e.g. Try the bakery near the hotel in ${city.name}`}
+                        onChange={(e) => trip.setCityNote(city.id, e.target.value)}
+                      />
+                    </label>
+                  </details>
                 </div>
                 {legs[i] && <Leg leg={legs[i]} />}
               </li>

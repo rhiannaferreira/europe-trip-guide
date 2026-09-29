@@ -27,6 +27,8 @@ import CityComparison from './components/CityComparison.jsx'
 import TravelQuiz from './components/TravelQuiz.jsx'
 import SurpriseMe from './components/SurpriseMe.jsx'
 import TripProgress from './components/TripProgress.jsx'
+import TripNotes from './components/TripNotes.jsx'
+import PrintTrip from './components/PrintTrip.jsx'
 import { autoEstimates, formatMoney, summarizeBudget } from './utils/budgetCalculations.js'
 import { buildDays, tripProgress } from './utils/tripCalculations.js'
 
@@ -318,6 +320,18 @@ export default function App() {
         </Modal>
       )}
 
+      {tool === 'print' && (
+        <Modal title="Printable trip summary" onClose={() => setTool(null)} wide>
+          <div className="print-actions no-print">
+            <button type="button" className="btn btn-primary" onClick={() => window.print()}>
+              🖨️ Print / Save as PDF
+            </button>
+            <span className="rule">Choose “Save as PDF” as the printer to get a file.</span>
+          </div>
+          <PrintTrip trip={trip} days={itineraryDays} legs={legs} budgetSummary={budgetSummary} currency={budget.currency} />
+        </Modal>
+      )}
+
       <section className="trip-panel" id="my-trip-panel">
         <TripPanel tab={tripTab} onTabChange={setTripTab}>
           {tripTab === 'trip' && (
@@ -336,6 +350,7 @@ export default function App() {
                   onGo={{ activities: () => setTripTab('days'), itinerary: () => setTripTab('days'), budget: () => setTripTab('budget') }}
                 />
               )}
+              <TripNotes trip={trip} onOpenPrint={() => setTool('print')} />
               <TripSummary cityIds={trip.cityIds} legs={legs} days={days} pace={pace} suggestions={suggestions}>
                 <TripSeasons
                   events={eventsDuringTrip(trip.startDate, trip.endDate, trip.cityIds)}
