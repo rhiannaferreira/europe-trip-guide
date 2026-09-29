@@ -2,7 +2,7 @@
 
 A travel guide for Europe. Pick a country or city, discover places by interest, save favourites, and build a multi-country trip that leans on trains, with a route map, travel-time estimates, pace, local tips, hidden-gem alternatives and seasonal events.
 
-Everything runs in the browser from hardcoded sample data. There's no backend, no login and no paid API.
+Everything runs in the browser. The guide itself is built-in sample data; photos, extra places and weather come from free, keyless public sources (Wikipedia/Wikimedia Commons, OpenStreetMap and Open-Meteo), and the app works without them. There's no backend, no login and no paid API.
 
 ## Run it
 
@@ -11,6 +11,27 @@ npm install
 npm run dev      # http://localhost:5173
 npm run build    # production build in dist/
 ```
+
+## Pages
+
+| Address | What |
+| --- | --- |
+| `/` | Landing page: what makes Eurowander different, a sample train route, hidden-gem swaps |
+| `/explore` | The planner |
+| `/country/it` | The planner showing one country |
+| `/city/rome` | The planner showing one city |
+| `/trip` | The planner, opened on My Trip |
+| `/trip#share=…` | A shared trip link. The trip is packed into the part after `#`, so it never reaches a server |
+
+The build (`npm run build`) also writes a static HTML page for every city and country (`dist/city/rome.html`...) with its own title, description, preview image, structured data and a readable summary, plus `sitemap.xml` and `robots.txt` (`scripts/prerender.mjs`). `vercel.json` serves those at clean addresses and sends every other path to the app.
+
+## Live data (free, no keys, with fallbacks)
+
+- **Photos**: the lead image of each city's or place's English Wikipedia article, from Wikimedia Commons, with the photographer and licence credited on the photo. A photo is only used when the article's coordinates are near the city or place; titles that differ from the name are in `src/data/wikiTitles.js`. Looked up in batches of 50, cached for 30 days. No photo means the illustrated tile.
+- **More places**: opening a city adds up to 24 notable places from OpenStreetMap (Overpass API): named museums, landmarks, parks, markets, bars and so on that also have a Wikidata entry, skipping ones already in the built-in data. They're marked "From OpenStreetMap", work like any other place (save, days, share), and are cached per city for 14 days. Places a trip uses are kept in localStorage.
+- **Weather**: Open-Meteo. City pages show the next 7 days. With trip dates, the Trip tab shows the forecast for each day up to 16 days ahead, and last year's weather on the same dates (labelled as such) for days further out. Forecasts are cached for 3 hours.
+
+When a source can't be reached, the app says so in a line with a Try again button and carries on with the built-in data.
 
 ## Features
 
@@ -40,6 +61,11 @@ npm run build    # production build in dist/
 - **Notes** for the whole trip, each city and each day, and a trip name.
 - **Printable summary** with a Print / Save as PDF button (the browser's own print). Print CSS hides navigation, the map and buttons.
 - **Light/dark toggle** in the header, remembered in the browser; follows the system setting until you choose.
+- **Search autocomplete**: best matches first, matching letters highlighted, "did you mean" for typos, recent picks, arrow keys and Enter, and `/` to jump to the search box.
+- **Share a trip** as a link (stops, dates, places, days and notes). Opening one shows what's in it and asks before replacing your trip; the replaced trip is kept in `travel-app-trip-previous`.
+- **Install and offline**: a web app manifest and service worker (`public/sw.js`) let the app be installed and reopen offline; an Install app button appears when the browser offers it.
+- **Loading, empty and error states**: page loading and download errors, a crash screen that keeps the trip safe, not-found pages, an offline notice, a notice when map tiles fail, skeletons while weather loads.
+- **Accessibility**: skip links, arrow-key tabs, focus kept inside dialogs, a labelled map, reduced-motion support and colours that pass contrast checks in both themes (checked with axe-core).
 - Responsive (desktop three columns, tablet two, phone stacked), with sticky trip tabs, full-screen dialogs and larger touch targets on phones.
 
 ### Rules the numbers follow
@@ -78,13 +104,25 @@ src/
     search.js             search index and matching
     format.js             months, durations, cost labels
     geo.js                straight-line distance
+    router.jsx            tiny router (real paths on the site, #/paths in the preview build)
+    share.js              packing a trip into a link and back
+    meta.js, pageMeta.js  page titles, descriptions and canonical links
+    net.js                fetch with timeout, localStorage cache with expiry
+    photos.js             Wikipedia / Wikimedia Commons photos and credits
+    osmPlaces.js          places from OpenStreetMap
+    extraPlaces.js        registry for places added while the app runs
+    weather.js            Open-Meteo forecasts and last year's weather
+    pwa.js, motion.js     install prompt, online state, reduced motion
   components/
     SearchBar, CityExplorer, Filters, PlaceCard, Thumb,
     MapView, RouteView, TripBoard, TripSummary, TripSeasons,
     CountryTips, HiddenGems, BestTime,
     TripPanel (tabs), TripDates, DailyItinerary, ItineraryDay, DayPicker, DayRoute,
     NearbyPlaces, TripTimeline, BudgetPlanner, CityComparison, TravelQuiz, SurpriseMe,
-    StatusPicker, TripProgress, TripNotes, PrintTrip, Modal, ThemeToggle
+    StatusPicker, TripProgress, TripNotes, PrintTrip, Modal, ThemeToggle,
+    ShareTrip, Weather, OsmStatus, InstallButton, OfflineNotice, PageStates, ErrorBoundary
+  pages/Landing.jsx       the home page
+  Root.jsx                routes: landing, planner (loaded on demand), not found
   data/
     countries.js  cities.js  places.js  interests.js
     countryTips.js  trainTimes.js  events.js  costs.js
@@ -94,7 +132,7 @@ src/
 
 ## Swapping sample data for APIs later
 
-Components only read data through the exports of `src/data/` (for example `getCity`, `placesInCity`, `getTrainTime`, `eventsInCity`, `getCountryTips`), and every record has a stable `id`. To switch to a real source, keep those function names and shapes and change what's behind them. Records already carry an `image` field (null for now); `Thumb` shows a photo as soon as one is set and falls back to the illustrated tile otherwise.
+Components only read data through the exports of `src/data/` (for example `getCity`, `placesInCity`, `getTrainTime`, `eventsInCity`, `getCountryTips`), and every record has a stable `id`. To switch to a real source, keep those function names and shapes and change what's behind them. Records carry an `image` field (null for now); when set, `Thumb` uses it instead of looking up a Wikipedia photo. Places added at runtime go through `registerPlaces` in `src/lib/extraPlaces.js`.
 
 ## Saved data (localStorage)
 
@@ -104,11 +142,15 @@ Components only read data through the exports of `src/data/` (for example `getCi
 | `travel-app-trip-backup` | The trip exactly as it was before its first migration (written once, never overwritten) |
 | `travel-app-budget` | Budget total, currency, travellers, city cost overrides, category estimates, expenses |
 | `travel-app-theme` | `light` or `dark` (missing = follow the system) |
+| `travel-app-trip-previous` | The trip as it was before a shared trip replaced it |
+| `travel-app-extra-places` | OpenStreetMap places the trip uses |
+| `travel-app-recent-searches` | The last few search suggestions picked |
+| `eurowander-cache-*` | Cached photos, OpenStreetMap places and weather (safe to clear) |
 
 Older trips (the first `{ placeIds, cityOrder }` shape and v2 `{ stops, startDate, endDate }`) are migrated on load: saved places keep their stop and become ❤️ Saved. Nothing is ever deleted from storage. The itinerary is keyed by day number, so changing the start date keeps the plan; if the trip gets shorter, plans past the new end appear under "Outside your dates" instead of disappearing.
 
-The trip is one plain object, so cloud saving or share links can serialise it as is.
+The trip is one plain object, so cloud saving can serialise it as is (share links already do).
 
 ## Deploying
 
-The app is a static site, so any static host works. On Vercel: import this repo at vercel.com/new, keep the detected Vite preset (build `npm run build`, output `dist`), and deploy. Every push to `main` redeploys.
+The app is a static site, so any static host works. On Vercel: import this repo at vercel.com/new, keep the detected Vite preset (build `npm run build`, output `dist`), and deploy. Every push to `main` redeploys. `vercel.json` handles the clean city/country addresses and sends other paths to the app.

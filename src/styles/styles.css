@@ -692,7 +692,8 @@ a:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent); ou
 .notice .btn { padding: 3px 10px; font-size: 0.8rem; }
 
 /* ---------- Sharing ---------- */
-.share-trip { display: grid; gap: 8px; padding-top: 14px; margin-top: 14px; border-top: 1px solid var(--border); }
+.share-trip { display: grid; gap: 8px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); padding: 12px 14px; }
+.share-trip .section-title, .share-trip .rule, .trip-weather .section-title { margin: 0; }
 .share-row { display: flex; gap: 8px; flex-wrap: wrap; }
 .share-status { font-size: 0.85rem; color: var(--good); }
 .share-url { width: 100%; padding: 7px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-2); font-size: 0.8rem; }
@@ -719,7 +720,7 @@ a:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent); ou
 .weather-rain { color: var(--muted); font-size: 0.68rem; }
 .source-note { font-size: 0.7rem; color: var(--muted); }
 .source-note a { color: inherit; }
-.trip-weather { display: grid; gap: 8px; padding-top: 14px; margin-top: 14px; border-top: 1px solid var(--border); }
+.trip-weather { display: grid; gap: 8px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); padding: 12px 14px; }
 .trip-weather-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
 .trip-weather-list li { display: grid; grid-template-columns: 1fr auto auto; grid-template-areas: "date icon temp" "city rain rain"; column-gap: 8px; align-items: center; padding: 6px 10px; border-radius: 10px; background: var(--surface-2); font-size: 0.8rem; }
 .trip-weather-list li.last-year { opacity: 0.85; }

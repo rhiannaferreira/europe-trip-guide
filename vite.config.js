@@ -6,4 +6,6 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   base: process.env.VITE_PREVIEW ? './' : '/',
   plugins: [react()],
+  // The preview is a single HTML file, so everything goes into one script there.
+  build: process.env.VITE_PREVIEW ? { rollupOptions: { output: { inlineDynamicImports: true } } } : {},
 })
