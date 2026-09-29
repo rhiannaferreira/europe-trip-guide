@@ -16,6 +16,9 @@ import CountryTips from './components/CountryTips.jsx'
 import HiddenGems, { GemPairs } from './components/HiddenGems.jsx'
 import BestTime from './components/BestTime.jsx'
 import TripSeasons from './components/TripSeasons.jsx'
+import TripPanel from './components/TripPanel.jsx'
+import DailyItinerary from './components/DailyItinerary.jsx'
+import { buildDays } from './utils/tripCalculations.js'
 
 const PAGE = 24
 
@@ -28,12 +31,15 @@ export default function App() {
   const [focusedId, setFocusedId] = useState(null)
   const [shown, setShown] = useState(PAGE)
   const [fitTripRequest, setFitTripRequest] = useState(0)
+  const [tripTab, setTripTab] = useState('trip')
   const trip = useTrip()
 
   const legs = useMemo(() => tripLegs(trip.cityIds), [trip.cityIds.join(',')]) // eslint-disable-line react-hooks/exhaustive-deps
   const days = tripDays(trip.startDate, trip.endDate)
   const pace = tripPace(days, trip.cityIds.length)
   const suggestions = tripSuggestions({ days, cityIds: trip.cityIds, legs })
+  // One entry per trip day (empty without dates): date, city, and the travel leg on travel days.
+  const itineraryDays = buildDays({ startDate: trip.startDate, endDate: trip.endDate, stops: trip.stops, legs })
 
   const visiblePlaces = useMemo(
     () =>
@@ -196,21 +202,28 @@ export default function App() {
       </main>
 
       <section className="trip-panel">
-        <TripBoard
-          trip={trip}
-          legs={legs}
-          days={days}
-          onSelectCity={selectCity}
-          onFocusPlace={focusPlace}
-          onViewTrip={() => setFitTripRequest((n) => n + 1)}
-        />
-        <TripSummary cityIds={trip.cityIds} legs={legs} days={days} pace={pace} suggestions={suggestions}>
-          <TripSeasons
-            events={eventsDuringTrip(trip.startDate, trip.endDate, trip.cityIds)}
-            notes={seasonNotes(trip.startDate, trip.endDate, trip.cityIds)}
-            hasDates={Boolean(days)}
-          />
-        </TripSummary>
+        <TripPanel tab={tripTab} onTabChange={setTripTab}>
+          {tripTab === 'trip' && (
+            <>
+              <TripBoard
+                trip={trip}
+                legs={legs}
+                days={days}
+                onSelectCity={selectCity}
+                onFocusPlace={focusPlace}
+                onViewTrip={() => setFitTripRequest((n) => n + 1)}
+              />
+              <TripSummary cityIds={trip.cityIds} legs={legs} days={days} pace={pace} suggestions={suggestions}>
+                <TripSeasons
+                  events={eventsDuringTrip(trip.startDate, trip.endDate, trip.cityIds)}
+                  notes={seasonNotes(trip.startDate, trip.endDate, trip.cityIds)}
+                  hasDates={Boolean(days)}
+                />
+              </TripSummary>
+            </>
+          )}
+          {tripTab === 'days' && <DailyItinerary trip={trip} days={itineraryDays} tripLength={days} onFocusPlace={focusPlace} />}
+        </TripPanel>
       </section>
     </div>
   )

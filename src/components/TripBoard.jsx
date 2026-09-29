@@ -2,6 +2,7 @@ import { cityById } from '../data/cities.js'
 import { countryByCode } from '../data/countries.js'
 import { placeById } from '../data/places.js'
 import { formatDuration } from '../lib/format.js'
+import TripDates from './TripDates.jsx'
 
 const modeIcon = { train: '🚆', bus: '🚌', 'rail + ferry': '⛴️' }
 
@@ -23,7 +24,6 @@ function Leg({ leg }) {
 // "My Trip": dates, the ordered list of stops with their saved places, and the travel legs between them.
 export default function TripBoard({ trip, legs, days, onSelectCity, onFocusPlace, onViewTrip }) {
   const { stops, startDate, endDate } = trip
-  const dateError = startDate && endDate && endDate < startDate
 
   const clear = () => {
     if (window.confirm('Clear your whole trip? This removes every stop and saved place.')) trip.clear()
@@ -47,25 +47,7 @@ export default function TripBoard({ trip, legs, days, onSelectCity, onFocusPlace
         )}
       </div>
 
-      <div className="trip-dates">
-        <label>
-          Start date
-          <input type="date" value={startDate} max={endDate || undefined} onChange={(e) => trip.setDates(e.target.value, endDate)} />
-        </label>
-        <label>
-          End date
-          <input type="date" value={endDate} min={startDate || undefined} onChange={(e) => trip.setDates(startDate, e.target.value)} />
-        </label>
-        {dateError ? (
-          <p className="date-note error">The end date is before the start date.</p>
-        ) : days ? (
-          <p className="date-note">
-            {days} day{days === 1 ? '' : 's'}, counting both the first and last day.
-          </p>
-        ) : (
-          <p className="date-note">Optional: add dates to see trip length, pace and events.</p>
-        )}
-      </div>
+      <TripDates startDate={startDate} endDate={endDate} days={days} onChange={trip.setDates} />
 
       {stops.length === 0 ? (
         <p className="empty">

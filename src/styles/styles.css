@@ -309,6 +309,64 @@ button:focus-visible, select:focus-visible, input:focus-visible, summary:focus-v
 .event-list li { display: flex; gap: 8px; }
 .event-list small { display: block; color: var(--muted); }
 
+/* ---------- Trip panel tabs ---------- */
+.trip-tabs { display: flex; gap: 4px; padding: 4px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--border); }
+.trip-tab { flex: 1; min-height: 38px; border: none; border-radius: 9px; background: none; font-size: 0.85rem; font-weight: 600; color: var(--muted); white-space: nowrap; padding: 6px 4px; }
+.trip-tab.active { background: var(--surface); color: var(--text); box-shadow: var(--shadow); }
+.trip-tab-panel { display: flex; flex-direction: column; gap: 14px; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.link-btn.small { font-size: 0.78rem; color: var(--muted); text-decoration: underline; }
+.subhead-row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.subhead-row .subhead { margin-top: 0; }
+.count { display: inline-block; min-width: 20px; padding: 0 6px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-size: 0.75rem; text-align: center; }
+.warn-text { color: var(--warn); font-size: 0.74rem; }
+
+/* ---------- Daily itinerary ---------- */
+.itinerary { display: flex; flex-direction: column; gap: 12px; }
+.day-split, .unscheduled, .outside-days { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); padding: 12px 14px; }
+.day-split ul { list-style: none; padding: 0; margin: 8px 0 0; display: flex; flex-direction: column; gap: 6px; }
+.day-split li { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 0.9rem; }
+.day-split li.no-days .day-split-city { color: var(--warn); }
+.day-split-city { display: flex; flex-direction: column; min-width: 0; }
+.day-split-city small { color: var(--muted); font-size: 0.75rem; }
+.day-split .note { margin-top: 8px; }
+.stepper { display: inline-flex; align-items: center; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; flex: none; }
+.stepper button { width: 34px; height: 34px; border: none; background: var(--surface-2); font-size: 1.05rem; line-height: 1; }
+.stepper button:disabled { opacity: 0.35; }
+.stepper-value { min-width: 40px; text-align: center; font-weight: 700; display: flex; flex-direction: column; line-height: 1.1; }
+.stepper-value small { font-size: 0.6rem; font-weight: 400; color: var(--muted); }
+.unscheduled summary { cursor: pointer; font-weight: 700; font-size: 0.88rem; display: flex; gap: 6px; align-items: center; }
+.unscheduled ul { list-style: none; padding: 0; margin: 8px 0 0; display: flex; flex-direction: column; gap: 6px; }
+.unscheduled li { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 0.86rem; }
+.unscheduled li .link-btn small { color: var(--muted); margin-left: 4px; }
+.day-picker { border: 1px solid var(--border); border-radius: 8px; background: var(--surface-2); padding: 6px 8px; font-size: 0.82rem; max-width: 100%; min-height: 34px; }
+.day-picker.compact { width: 96px; flex: none; }
+.day-list { display: flex; flex-direction: column; gap: 10px; }
+.day-card { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+.day-card.selected { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+.day-card.travel-day { background: linear-gradient(90deg, var(--gem-soft), var(--surface) 70%); border-left: 4px solid var(--gem); }
+.day-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.day-header h3 { font-family: var(--display); font-size: 1rem; }
+.day-date { font-family: system-ui, sans-serif; font-weight: 400; font-size: 0.85rem; color: var(--muted); margin-left: 4px; }
+.day-city { font-size: 0.86rem; font-weight: 600; }
+.day-leg { font-size: 0.82rem; font-weight: 600; color: var(--gem); }
+.day-places { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
+.day-places li { display: flex; align-items: center; gap: 8px; font-size: 0.88rem; }
+.day-place-number { flex: none; width: 22px; height: 22px; border-radius: 50%; background: var(--text); color: var(--bg); display: grid; place-items: center; font-size: 0.72rem; font-weight: 700; }
+.day-place-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.day-place-tools { display: flex; gap: 3px; align-items: center; flex: none; }
+.day-place-tools > button:not(.remove-btn) { border: 1px solid var(--border); background: var(--surface); border-radius: 6px; width: 30px; height: 30px; padding: 0; line-height: 1; }
+.day-place-tools > button:disabled { opacity: 0.35; }
+.day-place-tools .remove-btn { width: 30px; height: 30px; }
+.day-card .no-places { font-size: 0.82rem; color: var(--muted); }
+.day-add { border: 1px dashed var(--border-strong); border-radius: 8px; background: none; padding: 7px 8px; font-size: 0.84rem; color: var(--muted); min-height: 36px; }
+.note-field textarea, .notes-field textarea { width: 100%; resize: vertical; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-2); padding: 7px 9px; font: inherit; font-size: 0.85rem; color: var(--text); }
+.outside-days { border-style: dashed; }
+.outside-day { margin-top: 8px; font-size: 0.86rem; }
+.outside-day ul { list-style: none; padding: 0; margin: 4px 0 0; display: flex; flex-direction: column; gap: 4px; }
+.outside-day li { display: flex; align-items: center; gap: 8px; justify-content: space-between; }
+.outside-note { font-size: 0.82rem; color: var(--muted); margin-top: 4px; }
+
 /* ---------- Responsive ---------- */
 @media (max-width: 1200px) {
   .app {
