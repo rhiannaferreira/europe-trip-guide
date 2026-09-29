@@ -1,4 +1,4 @@
-# Europe Trip Guide
+# Eurowander
 
 A travel guide for Europe. Pick a country or city, discover places by interest, save favourites, and build a multi-country trip that leans on trains, with a route map, travel-time estimates, pace, local tips, hidden-gem alternatives and seasonal events.
 

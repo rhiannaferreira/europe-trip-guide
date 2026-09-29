@@ -182,7 +182,7 @@ export default function App() {
     <div className="app">
       <header className="app-header">
         <div className="brand">
-          <h1>Europe Trip Guide</h1>
+          <h1>Eurowander</h1>
           <p>Places worth seeing across Europe, and the trip that connects them.</p>
         </div>
         <SearchBar
