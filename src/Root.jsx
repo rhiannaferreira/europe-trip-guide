@@ -5,6 +5,7 @@ import { useRoute } from './lib/router.jsx'
 import { setPageMeta } from './lib/meta.js'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
 import { NotFound, PageLoadError, PageLoading } from './components/PageStates.jsx'
+import Landing from './pages/Landing.jsx'
 
 // The planner (map, lists, trip) is its own download, so other pages open without Leaflet.
 const App = lazy(() => import('./App.jsx'))
@@ -34,7 +35,9 @@ export default function Root() {
 
   return (
     <ErrorBoundary>
-      {known ? (
+      {route.name === 'home' ? (
+        <Landing />
+      ) : known ? (
         <ChunkBoundary>
           <Suspense fallback={<PageLoading />}>
             <App route={route} />

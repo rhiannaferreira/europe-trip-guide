@@ -34,7 +34,7 @@ import ThemeToggle from './components/ThemeToggle.jsx'
 import { useTheme } from './useTheme.js'
 import { autoEstimates, formatMoney, summarizeBudget } from './utils/budgetCalculations.js'
 import { buildDays, tripProgress } from './utils/tripCalculations.js'
-import { cityPath, countryPath, navigate } from './lib/router.jsx'
+import { Link, cityPath, countryPath, navigate } from './lib/router.jsx'
 import { setPageMeta } from './lib/meta.js'
 import { stayText } from './utils/cityInfo.js'
 import { monthRange } from './lib/format.js'
@@ -225,7 +225,11 @@ export default function App({ route }) {
     <div className="app">
       <header className="app-header">
         <div className="brand">
-          <h1>Eurowander</h1>
+          <h1>
+            <Link to="/" className="brand-link">
+              Eurowander
+            </Link>
+          </h1>
           <p>Places worth seeing across Europe, and the trip that connects them.</p>
         </div>
         <SearchBar
