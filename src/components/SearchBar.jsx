@@ -64,11 +64,15 @@ export default function SearchBar({ query, onQueryChange, onPickCountry, onPickC
         aria-expanded={Boolean(showList)}
         aria-controls="search-results"
         onChange={(e) => {
+          clearTimeout(blurTimer.current)
           onQueryChange(e.target.value)
           setOpen(true)
           setActive(-1)
         }}
-        onFocus={() => setOpen(true)}
+        onFocus={() => {
+          clearTimeout(blurTimer.current)
+          setOpen(true)
+        }}
         onBlur={() => (blurTimer.current = setTimeout(() => setOpen(false), 150))}
         onKeyDown={onKeyDown}
       />

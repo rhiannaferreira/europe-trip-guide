@@ -154,7 +154,7 @@ button:focus-visible, select:focus-visible, input:focus-visible, summary:focus-v
 .city-card-main { display: flex; align-items: center; gap: 10px; width: 100%; border: none; background: none; padding: 8px; text-align: left; }
 .city-card-text { display: flex; flex-direction: column; min-width: 0; gap: 1px; padding-right: 22px; }
 .city-card-text strong { font-size: 0.95rem; }
-.city-card-text small { color: var(--muted); font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.city-card-text small { color: var(--muted); font-size: 0.75rem; }
 .city-card-text .badge { margin: 2px 0 0; align-self: flex-start; }
 .add-city-btn { position: absolute; top: 6px; right: 6px; width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface); font-weight: 700; line-height: 1; padding: 0; }
 .add-city-btn:hover:not(:disabled) { background: var(--accent); color: #fff; border-color: var(--accent); }

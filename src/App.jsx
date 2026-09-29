@@ -4,6 +4,7 @@ import { countryByCode } from './data/countries.js'
 import { countryTips } from './data/countryTips.js'
 import { placeById, places } from './data/places.js'
 import { placeMatches } from './lib/search.js'
+import { tripDays, tripLegs, tripPace, tripSuggestions } from './lib/trip.js'
 import { useTrip } from './useTrip.js'
 import SearchBar from './components/SearchBar.jsx'
 import CityExplorer from './components/CityExplorer.jsx'
@@ -11,6 +12,7 @@ import Filters from './components/Filters.jsx'
 import PlaceCard from './components/PlaceCard.jsx'
 import MapView from './components/MapView.jsx'
 import TripBoard from './components/TripBoard.jsx'
+import TripSummary from './components/TripSummary.jsx'
 
 const PAGE = 24
 
@@ -22,7 +24,13 @@ export default function App() {
   const [activeInterests, setActiveInterests] = useState(() => new Set())
   const [focusedId, setFocusedId] = useState(null)
   const [shown, setShown] = useState(PAGE)
+  const [fitTripRequest, setFitTripRequest] = useState(0)
   const trip = useTrip()
+
+  const legs = useMemo(() => tripLegs(trip.cityIds), [trip.cityIds.join(',')]) // eslint-disable-line react-hooks/exhaustive-deps
+  const days = tripDays(trip.startDate, trip.endDate)
+  const pace = tripPace(days, trip.cityIds.length)
+  const suggestions = tripSuggestions({ days, cityIds: trip.cityIds, legs })
 
   const visiblePlaces = useMemo(
     () =>
@@ -65,6 +73,14 @@ export default function App() {
     resetPaging()
   }
 
+  // Show a place on the map, switching to its city so its marker is visible.
+  const focusPlace = (id) => {
+    const place = placeById[id]
+    if (cityId !== place.cityId) selectCity(place.cityId)
+    if (activeInterests.size > 0 && !activeInterests.has(place.category)) setActiveInterests(new Set())
+    setFocusedId(id)
+  }
+
   const pickFromSearch = {
     country: (code) => {
       setQuery('')
@@ -77,8 +93,7 @@ export default function App() {
     },
     place: (id) => {
       setQuery('')
-      selectCity(placeById[id].cityId)
-      setFocusedId(id)
+      focusPlace(id)
     },
   }
 
@@ -105,6 +120,9 @@ export default function App() {
           onPickCity={pickFromSearch.city}
           onPickPlace={pickFromSearch.place}
         />
+        <a className="btn trip-jump" href="#my-trip">
+          🧳 My Trip{trip.cityIds.length ? ` (${trip.cityIds.length})` : ''}
+        </a>
       </header>
 
       <aside className="sidebar">
@@ -112,10 +130,10 @@ export default function App() {
           country={country}
           city={selectedCity}
           gemMode={gemMode}
-          tripCityIds={trip.cityOrder}
+          tripCityIds={trip.cityIds}
           onSelectCountry={selectCountry}
           onSelectCity={selectCity}
-          onAddCity={() => {}}
+          onAddCity={trip.addCity}
           onToggleGemMode={() => {
             setGemMode((g) => !g)
             resetPaging()
@@ -147,7 +165,7 @@ export default function App() {
                 city={cityById[p.cityId]}
                 saved={trip.savedIds.has(p.id)}
                 focused={focusedId === p.id}
-                onToggleSave={() => trip.toggle(p.id)}
+                onToggleSave={() => trip.togglePlace(p.id)}
                 onFocus={() => setFocusedId(p.id)}
               />
             ))}
@@ -167,23 +185,26 @@ export default function App() {
           cities={cities}
           fitCities={fitCities}
           savedIds={trip.savedIds}
-          routeCities={trip.cityOrder.map((id) => cityById[id])}
+          routeCities={trip.cityIds.map((id) => cityById[id])}
+          legs={legs}
           focusedId={focusedId}
+          fitTripRequest={fitTripRequest}
           onFocus={setFocusedId}
-          onToggleSave={trip.toggle}
+          onToggleSave={trip.togglePlace}
           onSelectCity={selectCity}
         />
       </main>
 
       <section className="trip-panel">
         <TripBoard
-          savedPlaces={trip.savedPlaces}
-          cityOrder={trip.cityOrder}
-          onRemove={trip.toggle}
-          onMoveCity={trip.moveCity}
-          onClear={trip.clear}
-          onFocus={(id) => setFocusedId(id)}
+          trip={trip}
+          legs={legs}
+          days={days}
+          onSelectCity={selectCity}
+          onFocusPlace={focusPlace}
+          onViewTrip={() => setFitTripRequest((n) => n + 1)}
         />
+        <TripSummary cityIds={trip.cityIds} legs={legs} days={days} pace={pace} suggestions={suggestions} />
       </section>
     </div>
   )

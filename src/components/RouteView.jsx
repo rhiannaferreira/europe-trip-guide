@@ -1,4 +1,5 @@
 import { Polyline, Tooltip } from 'react-leaflet'
+import { formatDuration } from '../lib/format.js'
 
 // Straight lines between trip stops, in trip order. Hover a line to see the leg.
 export default function RouteView({ routeCities, legs = [] }) {
@@ -17,7 +18,15 @@ export default function RouteView({ routeCities, legs = [] }) {
       >
         <Tooltip sticky>
           {from.name} → {to.name}
-          {leg?.label ? ` · ${leg.label}` : ''}
+          {leg && (
+            <>
+              <br />
+              <span className="leg-label">
+                {leg.mode === 'train' ? '🚆 Train' : leg.mode === 'bus' ? '🚌 Bus' : '⛴️ Rail + ferry'} ~{formatDuration(leg.minutes)}
+              </span>{' '}
+              <em>({leg.estimated ? 'rough estimate' : 'estimate'})</em>
+            </>
+          )}
         </Tooltip>
       </Polyline>
     )
