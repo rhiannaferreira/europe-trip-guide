@@ -22,6 +22,8 @@ import NearbyPlaces from './components/NearbyPlaces.jsx'
 import TripTimeline from './components/TripTimeline.jsx'
 import BudgetPlanner from './components/BudgetPlanner.jsx'
 import { useBudget } from './useBudget.js'
+import Modal from './components/Modal.jsx'
+import CityComparison from './components/CityComparison.jsx'
 import { buildDays } from './utils/tripCalculations.js'
 
 const PAGE = 24
@@ -39,6 +41,9 @@ export default function App() {
   const [selectedDay, setSelectedDay] = useState(null)
   const trip = useTrip()
   const budget = useBudget()
+  // Which discovery tool is open in a dialog ('compare', or null), and the two compared cities.
+  const [tool, setTool] = useState(null)
+  const [comparePair, setComparePair] = useState(['barcelona', 'lisbon'])
 
   const legs = useMemo(() => tripLegs(trip.cityIds), [trip.cityIds.join(',')]) // eslint-disable-line react-hooks/exhaustive-deps
   const days = tripDays(trip.startDate, trip.endDate)
@@ -114,6 +119,18 @@ export default function App() {
     else setTimeout(() => document.querySelector('.place-card.focused')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50)
   }
 
+  // From a dialog: close it and open the city in the explorer.
+  const viewCity = (id) => {
+    setTool(null)
+    selectCity(id)
+    setTimeout(() => document.querySelector('.explorer')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
+  }
+
+  const openCompare = (withCityId) => {
+    if (withCityId) setComparePair(([a, b]) => (a === withCityId || b === withCityId ? [a, b] : [withCityId, a === withCityId ? b : a]))
+    setTool('compare')
+  }
+
   const pickFromSearch = {
     country: (code) => {
       setQuery('')
@@ -153,6 +170,11 @@ export default function App() {
           onPickCity={pickFromSearch.city}
           onPickPlace={pickFromSearch.place}
         />
+        <nav className="header-nav" aria-label="Discover">
+          <button type="button" className="btn nav-btn" onClick={() => openCompare()}>
+            ⚖️ <span>Compare</span>
+          </button>
+        </nav>
         <a className="btn trip-jump" href="#my-trip">
           🧳 My Trip{trip.cityIds.length ? ` (${trip.cityIds.length})` : ''}
         </a>
@@ -167,6 +189,7 @@ export default function App() {
           onSelectCountry={selectCountry}
           onSelectCity={selectCity}
           onAddCity={trip.addCity}
+          onCompareCity={openCompare}
           onToggleGemMode={() => {
             setGemMode((g) => !g)
             resetPaging()
@@ -242,7 +265,20 @@ export default function App() {
         )}
       </main>
 
-      <section className="trip-panel">
+      {tool === 'compare' && (
+        <Modal title="Compare two cities" onClose={() => setTool(null)} wide>
+          <CityComparison
+            a={comparePair[0]}
+            b={comparePair[1]}
+            onChange={(a, b) => setComparePair([a, b])}
+            tripCityIds={trip.cityIds}
+            onViewCity={viewCity}
+            onAddCity={trip.addCity}
+          />
+        </Modal>
+      )}
+
+      <section className="trip-panel" id="my-trip-panel">
         <TripPanel tab={tripTab} onTabChange={setTripTab}>
           {tripTab === 'trip' && (
             <>

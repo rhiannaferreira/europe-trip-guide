@@ -1,7 +1,8 @@
 import { countries, countryByCode } from '../data/countries.js'
 import { cities, citiesInCountry } from '../data/cities.js'
 import { interestById } from '../data/interests.js'
-import { costLabel } from '../lib/format.js'
+import { costLabel, monthRange } from '../lib/format.js'
+import { stayText } from '../utils/cityInfo.js'
 import { COST_LEVELS, perPersonDay } from '../data/costs.js'
 import Thumb from './Thumb.jsx'
 
@@ -34,7 +35,7 @@ function CityCard({ city, inTrip, onSelect, onAddCity }) {
 }
 
 // Country picker, city grid, and the selected city's details (passed in as children).
-export default function CityExplorer({ country, city, gemMode, tripCityIds, onSelectCountry, onSelectCity, onAddCity, onToggleGemMode, children }) {
+export default function CityExplorer({ country, city, gemMode, tripCityIds, onSelectCountry, onSelectCity, onAddCity, onCompareCity, onToggleGemMode, children }) {
   const inTrip = (id) => tripCityIds.includes(id)
   let list = country ? citiesInCountry(country) : cities
   if (gemMode) list = list.filter((c) => c.hiddenGem)
@@ -71,7 +72,7 @@ export default function CityExplorer({ country, city, gemMode, tripCityIds, onSe
           <button type="button" className="link-btn back-btn" onClick={() => onSelectCity('')}>
             ← All cities{country ? ` in ${countryByCode[country].name}` : ''}
           </button>
-          <CityDetail city={city} inTrip={inTrip(city.id)} onAddCity={onAddCity} />
+          <CityDetail city={city} inTrip={inTrip(city.id)} onAddCity={onAddCity} onCompare={onCompareCity} />
           {children}
         </div>
       ) : (
@@ -96,7 +97,7 @@ export default function CityExplorer({ country, city, gemMode, tripCityIds, onSe
   )
 }
 
-function CityDetail({ city, inTrip, onAddCity }) {
+function CityDetail({ city, inTrip, onAddCity, onCompare }) {
   const country = countryByCode[city.country]
   return (
     <article className="city-detail">
@@ -116,6 +117,12 @@ function CityDetail({ city, inTrip, onAddCity }) {
           {city.hiddenGem && <span className="badge badge-gem">💎 Hidden gem</span>}
         </p>
         <p>{city.description}</p>
+        <p className="city-meta">
+          Typical stay {stayText(city)} · Best months {monthRange(city.bestMonths)}{' '}
+          <button type="button" className="link-btn small" onClick={() => onCompare(city.id)}>
+            ⚖️ Compare with another city
+          </button>
+        </p>
         <p className="city-interests">
           Popular for{' '}
           {city.interests.map((id) => (

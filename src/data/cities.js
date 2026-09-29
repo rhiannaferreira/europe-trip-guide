@@ -1,3 +1,5 @@
+import { trainTimes } from './trainTimes.js'
+
 // Sample cities until a places API is wired in.
 //
 // Shape of a city:
@@ -10,6 +12,13 @@
 //   seasons       month numbers (1–12): bestWeather, busy, lowerCost, plus special seasons
 //   hiddenGems    ids of less crowded alternatives (cities in this file)
 //   hiddenGem     true for the alternatives themselves
+//   recommendedDays  [min, max] typical stay in days (a rough guide)
+//   beach         true if there's a beach in or right by the city
+//   size          'major' for big-name cities, 'small' for smaller cities and towns
+//
+// Added automatically below:
+//   bestMonths         the same months as seasons.bestWeather
+//   trainConnectivity  how many direct sample connections the city has in trainTimes.js
 export const cities = [
   // France
   {
@@ -18,6 +27,7 @@ export const cities = [
     image: null, emoji: '🗼', interests: ['food', 'museums', 'history', 'nightlife'], costLevel: 3,
     seasons: { bestWeather: [4, 5, 6, 9, 10], busy: [6, 7, 8], lowerCost: [1, 2, 11], special: [{ label: 'Christmas lights', months: [12] }] },
     hiddenGems: ['rouen', 'reims', 'chartres'], hiddenGem: false,
+    recommendedDays: [3, 5], beach: false, size: 'major',
   },
   {
     id: 'rouen', name: 'Rouen', country: 'FR', lat: 49.4432, lng: 1.0999,
@@ -25,6 +35,7 @@ export const cities = [
     image: null, emoji: '⛪', interests: ['history', 'food'], costLevel: 2,
     seasons: { bestWeather: [5, 6, 7, 8, 9], busy: [7, 8], lowerCost: [1, 2, 3, 11] },
     hiddenGems: [], hiddenGem: true,
+    recommendedDays: [1, 1], beach: false, size: 'small',
   },
   {
     id: 'reims', name: 'Reims', country: 'FR', lat: 49.2583, lng: 4.0317,
@@ -32,6 +43,7 @@ export const cities = [
     image: null, emoji: '🥂', interests: ['food', 'history'], costLevel: 2,
     seasons: { bestWeather: [5, 6, 7, 8, 9], busy: [7, 8, 12], lowerCost: [1, 2, 3], special: [{ label: 'Grape harvest', months: [9] }] },
     hiddenGems: [], hiddenGem: true,
+    recommendedDays: [1, 1], beach: false, size: 'small',
   },
   {
     id: 'chartres', name: 'Chartres', country: 'FR', lat: 48.4439, lng: 1.4890,
@@ -39,6 +51,7 @@ export const cities = [
     image: null, emoji: '🪟', interests: ['history'], costLevel: 2,
     seasons: { bestWeather: [5, 6, 7, 8, 9], busy: [7, 8], lowerCost: [1, 2, 11], special: [{ label: 'Chartres en Lumières', months: [4, 5, 6, 7, 8, 9, 10, 11, 12] }] },
     hiddenGems: [], hiddenGem: true,
+    recommendedDays: [1, 1], beach: false, size: 'small',
   },
 
   // Italy
@@ -48,6 +61,7 @@ export const cities = [
     image: null, emoji: '🏛️', interests: ['history', 'food', 'museums'], costLevel: 2,
     seasons: { bestWeather: [4, 5, 6, 9, 10], busy: [4, 5, 6, 7, 8], lowerCost: [1, 2, 11] },
     hiddenGems: [], hiddenGem: false,
+    recommendedDays: [3, 4], beach: false, size: 'major',
   },
   {
     id: 'florence', name: 'Florence', country: 'IT', lat: 43.7696, lng: 11.2558,
@@ -55,6 +69,7 @@ export const cities = [
     image: null, emoji: '🎨', interests: ['museums', 'history', 'food', 'shopping'], costLevel: 2,
     seasons: { bestWeather: [4, 5, 6, 9, 10], busy: [5, 6, 7, 8, 9], lowerCost: [1, 2, 11] },
     hiddenGems: ['lucca'], hiddenGem: false,
+    recommendedDays: [2, 3], beach: false, size: 'major',
   },
   {
     id: 'lucca', name: 'Lucca', country: 'IT', lat: 43.8429, lng: 10.5027,
@@ -62,6 +77,7 @@ export const cities = [
     image: null, emoji: '🚲', interests: ['history', 'outdoors', 'food'], costLevel: 2,
     seasons: { bestWeather: [4, 5, 6, 9, 10], busy: [7, 8], lowerCost: [1, 2, 3, 11] },
     hiddenGems: [], hiddenGem: true,
+    recommendedDays: [1, 2], beach: false, size: 'small',
   },
   {
     id: 'venice', name: 'Venice', country: 'IT', lat: 45.4408, lng: 12.3155,
@@ -69,6 +85,7 @@ export const cities = [
     image: null, emoji: '🛶', interests: ['history', 'museums', 'food'], costLevel: 3,
     seasons: { bestWeather: [4, 5, 6, 9, 10], busy: [2, 5, 6, 7, 8, 9], lowerCost: [1, 11, 12], special: [{ label: 'Carnival', months: [2] }, { label: 'Biennale', months: [5, 6, 7, 8, 9, 10, 11] }] },
     hiddenGems: ['chioggia', 'treviso'], hiddenGem: false,
+    recommendedDays: [2, 3], beach: true, size: 'major',
   },
   {
     id: 'chioggia', name: 'Chioggia', country: 'IT', lat: 45.2186, lng: 12.2797,
@@ -76,6 +93,7 @@ export const cities = [
     image: null, emoji: '🐟', interests: ['food', 'outdoors'], costLevel: 1,
     seasons: { bestWeather: [5, 6, 7, 8, 9], busy: [7, 8], lowerCost: [1, 2, 3, 11], special: [{ label: 'Palio della Marciliana', months: [6] }] },
     hiddenGems: [], hiddenGem: true,
+    recommendedDays: [1, 1], beach: true, size: 'small',
   },
   {
     id: 'treviso', name: 'Treviso', country: 'IT', lat: 45.6669, lng: 12.2430,
@@ -83,6 +101,7 @@ export const cities = [
     image: null, emoji: '🍰', interests: ['food', 'history'], costLevel: 2,
     seasons: { bestWeather: [4, 5, 6, 9, 10], busy: [7, 8], lowerCost: [1, 2, 11] },
     hiddenGems: [], hiddenGem: true,
+    recommendedDays: [1, 2], beach: false, size: 'small',
   },
 
   // Spain
@@ -92,6 +111,7 @@ export const cities = [
     image: null, emoji: '🏖️', interests: ['food', 'nightlife', 'history', 'outdoors'], costLevel: 2,
     seasons: { bestWeather: [5, 6, 9, 10], busy: [6, 7, 8], lowerCost: [1, 2, 11] },
     hiddenGems: ['girona'], hiddenGem: false,
+    recommendedDays: [3, 4], beach: true, size: 'major',
   },
   {
     id: 'girona', name: 'Girona', country: 'ES', lat: 41.9794, lng: 2.8214,
@@ -99,6 +119,7 @@ export const cities = [
     image: null, emoji: '🏘️', interests: ['history', 'food'], costLevel: 2,
     seasons: { bestWeather: [5, 6, 9, 10], busy: [7, 8], lowerCost: [1, 2, 11], special: [{ label: 'Temps de Flors flower festival', months: [5] }] },
     hiddenGems: [], hiddenGem: true,
+    recommendedDays: [1, 2], beach: false, size: 'small',
   },
   {
     id: 'madrid', name: 'Madrid', country: 'ES', lat: 40.4168, lng: -3.7038,
@@ -106,6 +127,7 @@ export const cities = [
     image: null, emoji: '🖼️', interests: ['museums', 'food', 'nightlife'], costLevel: 2,
     seasons: { bestWeather: [4, 5, 6, 9, 10], busy: [5, 6, 9], lowerCost: [1, 2, 8] },
     hiddenGems: [], hiddenGem: false,
+    recommendedDays: [2, 3], beach: false, size: 'major',
   },
   {
     id: 'seville', name: 'Seville', country: 'ES', lat: 37.3891, lng: -5.9845,
@@ -113,6 +135,7 @@ export const cities = [
     image: null, emoji: '💃', interests: ['history', 'nightlife', 'food'], costLevel: 2,
     seasons: { bestWeather: [3, 4, 5, 10, 11], busy: [3, 4, 5], lowerCost: [1, 7, 8], special: [{ label: 'Semana Santa and Feria de Abril', months: [3, 4] }] },
     hiddenGems: [], hiddenGem: false,
+    recommendedDays: [2, 3], beach: false, size: 'major',
   },
 
   // Portugal
@@ -122,6 +145,7 @@ export const cities = [
     image: null, emoji: '🚋', interests: ['food', 'nightlife', 'history'], costLevel: 2,
     seasons: { bestWeather: [4, 5, 6, 9, 10], busy: [6, 7, 8], lowerCost: [1, 2, 11] },
     hiddenGems: ['coimbra'], hiddenGem: false,
+    recommendedDays: [3, 4], beach: true, size: 'major',
   },
   {
     id: 'porto', name: 'Porto', country: 'PT', lat: 41.1579, lng: -8.6291,
@@ -129,6 +153,7 @@ export const cities = [
     image: null, emoji: '🍷', interests: ['food', 'history', 'outdoors'], costLevel: 1,
     seasons: { bestWeather: [5, 6, 7, 8, 9], busy: [6, 7, 8], lowerCost: [1, 2, 11] },
     hiddenGems: ['coimbra'], hiddenGem: false,
+    recommendedDays: [2, 3], beach: true, size: 'major',
   },
   {
     id: 'coimbra', name: 'Coimbra', country: 'PT', lat: 40.2033, lng: -8.4103,
@@ -136,6 +161,7 @@ export const cities = [
     image: null, emoji: '📚', interests: ['history', 'nightlife'], costLevel: 1,
     seasons: { bestWeather: [5, 6, 7, 8, 9], busy: [5, 7, 8], lowerCost: [1, 2, 11] },
     hiddenGems: [], hiddenGem: true,
+    recommendedDays: [1, 2], beach: false, size: 'small',
   },
 
   // Germany
@@ -145,6 +171,7 @@ export const cities = [
     image: null, emoji: '🐻', interests: ['history', 'museums', 'nightlife'], costLevel: 2,
     seasons: { bestWeather: [5, 6, 7, 8, 9], busy: [7, 8], lowerCost: [1, 2, 3, 11] },
     hiddenGems: ['leipzig'], hiddenGem: false,
+    recommendedDays: [3, 4], beach: false, size: 'major',
   },
   {
     id: 'leipzig', name: 'Leipzig', country: 'DE', lat: 51.3397, lng: 12.3731,
@@ -152,6 +179,7 @@ export const cities = [
     image: null, emoji: '🎼', interests: ['museums', 'nightlife', 'history'], costLevel: 1,
     seasons: { bestWeather: [5, 6, 7, 8, 9], busy: [6, 12], lowerCost: [1, 2, 3, 11] },
     hiddenGems: [], hiddenGem: true,
+    recommendedDays: [1, 2], beach: false, size: 'small',
   },
   {
     id: 'munich', name: 'Munich', country: 'DE', lat: 48.1351, lng: 11.582,
@@ -159,6 +187,7 @@ export const cities = [
     image: null, emoji: '🍺', interests: ['food', 'nightlife', 'museums', 'outdoors'], costLevel: 3,
     seasons: { bestWeather: [5, 6, 7, 8, 9], busy: [7, 9, 10, 12], lowerCost: [1, 2, 3, 11] },
     hiddenGems: [], hiddenGem: false,
+    recommendedDays: [2, 3], beach: false, size: 'major',
   },
 
   // Netherlands
@@ -168,6 +197,7 @@ export const cities = [
     image: null, emoji: '🌷', interests: ['museums', 'nightlife', 'outdoors', 'shopping'], costLevel: 3,
     seasons: { bestWeather: [5, 6, 7, 8, 9], busy: [4, 7, 8], lowerCost: [1, 2], special: [{ label: 'Tulip season', months: [3, 4, 5] }] },
     hiddenGems: ['utrecht'], hiddenGem: false,
+    recommendedDays: [2, 4], beach: false, size: 'major',
   },
   {
     id: 'utrecht', name: 'Utrecht', country: 'NL', lat: 52.0907, lng: 5.1214,
@@ -175,6 +205,7 @@ export const cities = [
     image: null, emoji: '🚲', interests: ['food', 'history', 'nightlife'], costLevel: 2,
     seasons: { bestWeather: [5, 6, 7, 8, 9], busy: [7, 8], lowerCost: [1, 2, 11] },
     hiddenGems: [], hiddenGem: true,
+    recommendedDays: [1, 2], beach: false, size: 'small',
   },
 
   // Belgium
@@ -184,6 +215,7 @@ export const cities = [
     image: null, emoji: '🍫', interests: ['food', 'history', 'museums', 'shopping'], costLevel: 2,
     seasons: { bestWeather: [5, 6, 7, 8, 9], busy: [7, 8, 12], lowerCost: [1, 2, 3] },
     hiddenGems: [], hiddenGem: false,
+    recommendedDays: [1, 2], beach: false, size: 'major',
   },
   {
     id: 'bruges', name: 'Bruges', country: 'BE', lat: 51.2093, lng: 3.2247,
@@ -191,6 +223,7 @@ export const cities = [
     image: null, emoji: '🏰', interests: ['history', 'food'], costLevel: 3,
     seasons: { bestWeather: [5, 6, 7, 8, 9], busy: [5, 6, 7, 8, 12], lowerCost: [1, 2, 3] },
     hiddenGems: ['ghent'], hiddenGem: false,
+    recommendedDays: [1, 2], beach: false, size: 'small',
   },
   {
     id: 'ghent', name: 'Ghent', country: 'BE', lat: 51.0543, lng: 3.7174,
@@ -198,6 +231,7 @@ export const cities = [
     image: null, emoji: '🏯', interests: ['history', 'nightlife', 'food'], costLevel: 2,
     seasons: { bestWeather: [5, 6, 7, 8, 9], busy: [7], lowerCost: [1, 2, 3, 11], special: [{ label: 'Gentse Feesten', months: [7] }] },
     hiddenGems: [], hiddenGem: true,
+    recommendedDays: [1, 2], beach: false, size: 'small',
   },
 
   // Switzerland
@@ -207,6 +241,7 @@ export const cities = [
     image: null, emoji: '🏔️', interests: ['outdoors', 'shopping', 'museums'], costLevel: 3,
     seasons: { bestWeather: [6, 7, 8, 9], busy: [7, 8, 12], lowerCost: [3, 4, 11] },
     hiddenGems: [], hiddenGem: false,
+    recommendedDays: [1, 2], beach: false, size: 'major',
   },
   {
     id: 'lucerne', name: 'Lucerne', country: 'CH', lat: 47.0502, lng: 8.3093,
@@ -214,6 +249,7 @@ export const cities = [
     image: null, emoji: '⛰️', interests: ['outdoors', 'history'], costLevel: 3,
     seasons: { bestWeather: [6, 7, 8, 9], busy: [6, 7, 8], lowerCost: [3, 4, 11] },
     hiddenGems: [], hiddenGem: false,
+    recommendedDays: [1, 2], beach: false, size: 'small',
   },
 
   // Austria
@@ -223,6 +259,7 @@ export const cities = [
     image: null, emoji: '🎻', interests: ['museums', 'history', 'food'], costLevel: 2,
     seasons: { bestWeather: [5, 6, 9, 10], busy: [6, 7, 8, 12], lowerCost: [1, 2, 3], special: [{ label: 'Christmas markets', months: [11, 12] }, { label: 'Ball season', months: [1, 2] }] },
     hiddenGems: ['graz'], hiddenGem: false,
+    recommendedDays: [2, 3], beach: false, size: 'major',
   },
   {
     id: 'graz', name: 'Graz', country: 'AT', lat: 47.0707, lng: 15.4395,
@@ -230,6 +267,7 @@ export const cities = [
     image: null, emoji: '🕰️', interests: ['history', 'food', 'outdoors'], costLevel: 2,
     seasons: { bestWeather: [5, 6, 7, 8, 9], busy: [7, 8], lowerCost: [1, 2, 3, 11] },
     hiddenGems: [], hiddenGem: true,
+    recommendedDays: [1, 2], beach: false, size: 'small',
   },
   {
     id: 'salzburg', name: 'Salzburg', country: 'AT', lat: 47.8095, lng: 13.055,
@@ -237,6 +275,7 @@ export const cities = [
     image: null, emoji: '🎶', interests: ['history', 'outdoors', 'museums'], costLevel: 3,
     seasons: { bestWeather: [5, 6, 7, 8, 9], busy: [7, 8, 12], lowerCost: [1, 2, 3, 11], special: [{ label: 'Salzburg Festival', months: [7, 8] }] },
     hiddenGems: [], hiddenGem: false,
+    recommendedDays: [1, 2], beach: false, size: 'small',
   },
 
   // Czech Republic
@@ -246,6 +285,7 @@ export const cities = [
     image: null, emoji: '🍻', interests: ['history', 'nightlife', 'food'], costLevel: 2,
     seasons: { bestWeather: [5, 6, 9], busy: [5, 6, 7, 8, 12], lowerCost: [1, 2, 3, 11], special: [{ label: 'Christmas markets', months: [12] }] },
     hiddenGems: ['brno'], hiddenGem: false,
+    recommendedDays: [2, 4], beach: false, size: 'major',
   },
   {
     id: 'brno', name: 'Brno', country: 'CZ', lat: 49.1951, lng: 16.6068,
@@ -253,6 +293,7 @@ export const cities = [
     image: null, emoji: '🍸', interests: ['nightlife', 'history', 'food'], costLevel: 1,
     seasons: { bestWeather: [5, 6, 7, 8, 9], busy: [7, 8], lowerCost: [1, 2, 3, 11], special: [{ label: 'Wine harvest', months: [9, 10] }] },
     hiddenGems: [], hiddenGem: true,
+    recommendedDays: [1, 2], beach: false, size: 'small',
   },
 
   // Greece
@@ -262,6 +303,7 @@ export const cities = [
     image: null, emoji: '🏺', interests: ['history', 'museums', 'nightlife', 'food'], costLevel: 2,
     seasons: { bestWeather: [4, 5, 6, 9, 10], busy: [6, 7, 8], lowerCost: [1, 2, 11] },
     hiddenGems: ['thessaloniki'], hiddenGem: false,
+    recommendedDays: [2, 3], beach: true, size: 'major',
   },
   {
     id: 'thessaloniki', name: 'Thessaloniki', country: 'GR', lat: 40.6401, lng: 22.9444,
@@ -269,6 +311,7 @@ export const cities = [
     image: null, emoji: '🌊', interests: ['food', 'history', 'nightlife'], costLevel: 1,
     seasons: { bestWeather: [5, 6, 9, 10], busy: [7, 8], lowerCost: [1, 2, 3, 11] },
     hiddenGems: [], hiddenGem: true,
+    recommendedDays: [2, 3], beach: false, size: 'small',
   },
 
   // Croatia
@@ -278,6 +321,7 @@ export const cities = [
     image: null, emoji: '🏰', interests: ['history', 'outdoors'], costLevel: 3,
     seasons: { bestWeather: [5, 6, 9, 10], busy: [6, 7, 8, 9], lowerCost: [1, 2, 3, 11], special: [{ label: 'Summer Festival', months: [7, 8] }] },
     hiddenGems: ['sibenik'], hiddenGem: false,
+    recommendedDays: [2, 3], beach: true, size: 'small',
   },
   {
     id: 'sibenik', name: 'Šibenik', country: 'HR', lat: 43.7350, lng: 15.8952,
@@ -285,6 +329,7 @@ export const cities = [
     image: null, emoji: '💧', interests: ['history', 'outdoors'], costLevel: 1,
     seasons: { bestWeather: [5, 6, 9, 10], busy: [7, 8], lowerCost: [1, 2, 3, 11] },
     hiddenGems: [], hiddenGem: true,
+    recommendedDays: [1, 2], beach: true, size: 'small',
   },
   {
     id: 'split', name: 'Split', country: 'HR', lat: 43.5081, lng: 16.4402,
@@ -292,6 +337,7 @@ export const cities = [
     image: null, emoji: '⛵', interests: ['history', 'outdoors', 'nightlife'], costLevel: 2,
     seasons: { bestWeather: [5, 6, 9, 10], busy: [7, 8], lowerCost: [1, 2, 3, 11] },
     hiddenGems: ['sibenik'], hiddenGem: false,
+    recommendedDays: [2, 3], beach: true, size: 'small',
   },
 
   // United Kingdom
@@ -301,6 +347,7 @@ export const cities = [
     image: null, emoji: '🎡', interests: ['museums', 'shopping', 'nightlife', 'food', 'history'], costLevel: 3,
     seasons: { bestWeather: [5, 6, 7, 8, 9], busy: [6, 7, 8, 12], lowerCost: [1, 2, 11] },
     hiddenGems: ['york'], hiddenGem: false,
+    recommendedDays: [3, 5], beach: false, size: 'major',
   },
   {
     id: 'york', name: 'York', country: 'GB', lat: 53.9600, lng: -1.0873,
@@ -308,6 +355,7 @@ export const cities = [
     image: null, emoji: '🧱', interests: ['history', 'museums'], costLevel: 2,
     seasons: { bestWeather: [5, 6, 7, 8, 9], busy: [7, 8, 12], lowerCost: [1, 2, 3, 11] },
     hiddenGems: [], hiddenGem: true,
+    recommendedDays: [1, 2], beach: false, size: 'small',
   },
   {
     id: 'edinburgh', name: 'Edinburgh', country: 'GB', lat: 55.9533, lng: -3.1883,
@@ -315,6 +363,7 @@ export const cities = [
     image: null, emoji: '🏴', interests: ['history', 'outdoors', 'nightlife'], costLevel: 3,
     seasons: { bestWeather: [5, 6, 7, 8], busy: [8, 12], lowerCost: [1, 2, 3, 11], special: [{ label: 'Festival Fringe', months: [8] }, { label: 'Hogmanay', months: [12] }] },
     hiddenGems: [], hiddenGem: false,
+    recommendedDays: [2, 3], beach: false, size: 'major',
   },
 
   // Ireland
@@ -324,6 +373,7 @@ export const cities = [
     image: null, emoji: '☘️', interests: ['nightlife', 'history', 'museums'], costLevel: 3,
     seasons: { bestWeather: [5, 6, 7, 8, 9], busy: [3, 6, 7, 8], lowerCost: [1, 2, 11] },
     hiddenGems: ['galway'], hiddenGem: false,
+    recommendedDays: [2, 3], beach: false, size: 'major',
   },
   {
     id: 'galway', name: 'Galway', country: 'IE', lat: 53.2707, lng: -9.0568,
@@ -331,8 +381,14 @@ export const cities = [
     image: null, emoji: '🎻', interests: ['nightlife', 'outdoors', 'food'], costLevel: 2,
     seasons: { bestWeather: [5, 6, 7, 8, 9], busy: [7, 8], lowerCost: [1, 2, 3, 11], special: [{ label: 'Galway Arts Festival', months: [7] }] },
     hiddenGems: [], hiddenGem: true,
+    recommendedDays: [2, 3], beach: true, size: 'small',
   },
 ]
+
+for (const c of cities) {
+  c.bestMonths = c.seasons.bestWeather
+  c.trainConnectivity = trainTimes.filter((t) => t.from === c.id || t.to === c.id).length
+}
 
 export const cityById = Object.fromEntries(cities.map((c) => [c.id, c]))
 export const getCity = (id) => cityById[id]
