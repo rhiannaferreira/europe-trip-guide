@@ -2,6 +2,7 @@
 export const TRIP_TABS = [
   { id: 'trip', label: 'Trip', icon: '🧳' },
   { id: 'days', label: 'Days', icon: '📅' },
+  { id: 'timeline', label: 'Timeline', icon: '🕒' },
 ]
 
 export default function TripPanel({ tab, onTabChange, tabs = TRIP_TABS, children }) {

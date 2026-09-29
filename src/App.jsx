@@ -19,6 +19,7 @@ import TripSeasons from './components/TripSeasons.jsx'
 import TripPanel from './components/TripPanel.jsx'
 import DailyItinerary from './components/DailyItinerary.jsx'
 import NearbyPlaces from './components/NearbyPlaces.jsx'
+import TripTimeline from './components/TripTimeline.jsx'
 import { buildDays } from './utils/tripCalculations.js'
 
 const PAGE = 24
@@ -258,6 +259,20 @@ export default function App() {
                 />
               </TripSummary>
             </>
+          )}
+          {tripTab === 'timeline' && (
+            <TripTimeline
+              stops={trip.stops}
+              legs={legs}
+              days={itineraryDays}
+              itinerary={trip.itinerary}
+              statuses={trip.statuses}
+              onOpenDay={(n) => {
+                setTripTab('days')
+                setSelectedDay(n)
+                setTimeout(() => document.getElementById(`day-${n}-title`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
+              }}
+            />
           )}
           {tripTab === 'days' && <DailyItinerary trip={trip} days={itineraryDays} tripLength={days} selectedDay={selectedDay} onSelectDay={selectDay} onFocusPlace={focusPlace} />}
         </TripPanel>

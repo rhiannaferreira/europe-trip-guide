@@ -3,12 +3,14 @@ import { cityById } from '../data/cities.js'
 import { countryByCode } from '../data/countries.js'
 import { placeById } from '../data/places.js'
 import { formatDuration } from '../lib/format.js'
-import { formatDay } from '../utils/tripCalculations.js'
+import { formatDay, travelDayAdvice } from '../utils/tripCalculations.js'
 import { optimizeDay } from '../utils/routeOptimizer.js'
 import { formatDistance } from '../utils/distance.js'
 import DayPicker from './DayPicker.jsx'
 
 // One day of the itinerary: its date and city, the places on it (in visiting order), and a note.
+export const modeIcon = (mode) => ({ bus: '🚌', 'rail + ferry': '⛴️' })[mode] || '🚆'
+
 export default function ItineraryDay({ day, entry, days, unscheduled, trip, selected, onSelect, onFocusPlace }) {
   const [optimizeMsg, setOptimizeMsg] = useState('')
   const city = cityById[day.cityId]
@@ -16,6 +18,7 @@ export default function ItineraryDay({ day, entry, days, unscheduled, trip, sele
   const placeIds = entry?.placeIds || []
   const note = entry?.note || ''
   const fromCity = day.leg ? day.leg.from : null
+  const advice = travelDayAdvice(day, placeIds.length)
 
   const optimize = () => {
     const result = optimizeDay(placeIds.map((id) => placeById[id]))
@@ -51,9 +54,12 @@ export default function ItineraryDay({ day, entry, days, unscheduled, trip, sele
 
       {day.leg && (
         <p className="day-leg">
-          🚆 {fromCity.name} → {city.name}: ~{formatDuration(day.leg.minutes)} <span className="estimate">{day.leg.estimated ? 'rough estimate' : 'estimate'}</span>
+          {modeIcon(day.leg.mode)} {fromCity.name} → {city.name}: ~{formatDuration(day.leg.minutes)}{' '}
+          <span className="estimate">{day.leg.estimated ? 'rough estimate' : 'estimate'}</span>
+          {day.leg.estimated && day.leg.note && <span className="leg-note">{day.leg.note}</span>}
         </p>
       )}
+      {advice && <p className={`note ${advice.level === 'heavy' ? 'note-warn' : 'note-tip'} travel-advice`}>{advice.text}</p>}
 
       {placeIds.length > 0 ? (
         <ol className="day-places">

@@ -109,3 +109,19 @@ export function dayOfPlace(itinerary, placeId) {
   for (const [n, d] of Object.entries(itinerary)) if ((d.placeIds || []).includes(placeId)) return Number(n)
   return null
 }
+
+// Travel-time rules for a travel day. Returns null on days without travel.
+//   3 hours or more on the move: a travel day, suggest fewer activities.
+//   Under 3 hours: a note that part of the day goes to travel.
+// Activities are never removed; this is advice only.
+export const HEAVY_TRAVEL_MINUTES = 180
+export function travelDayAdvice(day, activityCount = 0) {
+  if (!day?.leg) return null
+  const { minutes } = day.leg
+  if (!Number.isFinite(minutes)) return { level: 'unknown', text: 'No travel time for this journey yet. Check timetables before planning the day.' }
+  if (minutes >= HEAVY_TRAVEL_MINUTES) {
+    const busy = activityCount >= 3 ? ` You have ${activityCount} activities planned; maybe move one to another day.` : ''
+    return { level: 'heavy', text: `Travel day — consider planning fewer activities.${busy}` }
+  }
+  return { level: 'light', text: 'Part of this day goes to travel, so leave some slack around the train.' }
+}

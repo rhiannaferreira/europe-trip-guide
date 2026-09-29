@@ -395,6 +395,25 @@ button:focus-visible, select:focus-visible, input:focus-visible, summary:focus-v
 .popup-nearby .link-btn { color: #1f6f8b; font-size: 0.8rem; }
 .popup-nearby em { color: #666; font-style: normal; }
 
+/* ---------- Timeline ---------- */
+.travel-advice { font-size: 0.8rem; padding: 6px 9px; }
+.timeline { list-style: none; margin: 0; padding: 0 0 0 4px; position: relative; }
+.timeline::before { content: ''; position: absolute; left: 15px; top: 8px; bottom: 8px; width: 2px; background: var(--border-strong); }
+.tl-day { position: relative; display: flex; gap: 12px; padding: 6px 0; }
+.tl-dot { position: relative; z-index: 1; flex: none; width: 24px; height: 24px; margin-top: 4px; border-radius: 50%; background: var(--surface); border: 3px solid var(--accent); display: grid; place-items: center; font-size: 0.72rem; }
+.tl-body { flex: 1; min-width: 0; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); padding: 8px 12px; }
+.tl-travel .tl-dot { width: 30px; height: 30px; margin-left: -3px; border-color: var(--gem); background: var(--gem-soft); font-size: 0.9rem; border-radius: 8px; }
+.tl-travel .tl-body { background: var(--gem-soft); border-color: color-mix(in srgb, var(--gem) 35%, transparent); border-style: dashed; }
+.tl-head { display: flex; justify-content: space-between; align-items: baseline; }
+.tl-date { font-size: 0.78rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.tl-city { font-family: var(--display); font-weight: 700; font-size: 1rem; display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: baseline; }
+.tl-leg { font-family: system-ui, sans-serif; font-weight: 600; font-size: 0.8rem; color: var(--gem); }
+.tl-advice { font-size: 0.78rem; color: var(--warn); margin-top: 2px; }
+.tl-activities { margin: 4px 0 0; padding-left: 18px; font-size: 0.84rem; }
+.tl-free { font-size: 0.8rem; color: var(--muted); margin-top: 2px; font-style: italic; }
+.tl-note { font-size: 0.78rem; color: var(--muted); margin-top: 4px; }
+.tl-travel-row { font-size: 0.8rem; color: var(--gem); margin-bottom: 2px; }
+
 /* ---------- Responsive ---------- */
 @media (max-width: 1200px) {
   .app {
