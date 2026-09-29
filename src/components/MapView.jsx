@@ -9,6 +9,7 @@ import RouteView from './RouteView.jsx'
 import { nearbyPlaces } from '../utils/nearby.js'
 import { formatDistance } from '../utils/distance.js'
 import DayRoute from './DayRoute.jsx'
+import { motion } from '../lib/motion.js'
 
 // Marker colours per interest (Leaflet needs real colours, not CSS variables).
 export const interestColors = {
@@ -35,6 +36,18 @@ function whenIdle(map, fn) {
   pendingView.set(map, fn)
 }
 
+// Leaflet's map box takes keyboard focus (arrow keys pan, + and - zoom); give it a name and a hint.
+// Every place on the map is also in the Places list, which is the keyboard-friendly way to pick one.
+function MapLabel() {
+  const map = useMap()
+  useEffect(() => {
+    const el = map.getContainer()
+    el.setAttribute('role', 'application')
+    el.setAttribute('aria-label', 'Map of Europe. Arrow keys move the map, plus and minus zoom. Pick places from the Places list to show them here.')
+  }, [map])
+  return null
+}
+
 // Fits the map to whatever places are visible, or to the chosen cities when there are no places.
 function FitToView({ places, cities }) {
   const map = useMap()
@@ -55,8 +68,8 @@ function FitToTrip({ routeCities, request }) {
   useEffect(() => {
     if (!request || routeCities.length === 0) return
     whenIdle(map, () => {
-      if (routeCities.length === 1) map.flyTo([routeCities[0].lat, routeCities[0].lng], 11, { duration: 0.6 })
-      else map.flyToBounds(routeCities.map((c) => [c.lat, c.lng]), { padding: [50, 50], duration: 0.6 })
+      if (routeCities.length === 1) map.flyTo([routeCities[0].lat, routeCities[0].lng], 11, motion({ duration: 0.6 }))
+      else map.flyToBounds(routeCities.map((c) => [c.lat, c.lng]), motion({ padding: [50, 50], duration: 0.6 }))
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [request])
@@ -67,7 +80,7 @@ function FlyToFocused({ place, markerRefs }) {
   const map = useMap()
   useEffect(() => {
     if (!place) return
-    whenIdle(map, () => map.flyTo([place.lat, place.lng], Math.max(map.getZoom(), 14), { duration: 0.6 }))
+    whenIdle(map, () => map.flyTo([place.lat, place.lng], Math.max(map.getZoom(), 14), motion({ duration: 0.6 })))
     // Wait for the marker to exist (it may have just been filtered in) before opening its popup.
     const t = setTimeout(() => markerRefs.current[place.id]?.openPopup(), 650)
     return () => clearTimeout(t)
@@ -119,6 +132,7 @@ export default function MapView({ places, cities, fitCities, savedIds, routeCiti
           The map background can't load right now, so only country outlines show. Markers and routes still work.
         </div>
       )}
+      <MapLabel />
       <FitToView places={places} cities={fitCities} />
       <FitToTrip routeCities={routeCities} request={fitTripRequest} />
       <FlyToFocused place={focused} markerRefs={markerRefs} />

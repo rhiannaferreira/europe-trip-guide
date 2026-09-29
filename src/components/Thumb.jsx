@@ -33,17 +33,21 @@ export default function Thumb({ id, image, emoji, alt, color, className = '', ki
     <div
       className={`thumb thumb-illustrated ${className}${status === 'loading' ? ' thumb-loading' : ''}${showPhoto && loaded ? ' thumb-has-photo' : ''}`}
       style={style}
-      role="img"
-      aria-label={alt}
       title={photo && credit === 'title' ? creditText(photo) : undefined}
     >
-      <span aria-hidden="true">{emoji}</span>
+      {showPhoto && loaded ? (
+        <span aria-hidden="true">{emoji}</span>
+      ) : (
+        <span role="img" aria-label={alt}>
+          {emoji}
+        </span>
+      )}
       {showPhoto && (
         <img
           src={src}
           srcSet={srcSet}
           sizes={srcSet ? sizes : undefined}
-          alt=""
+          alt={loaded ? alt : ''}
           loading={eager ? 'eager' : 'lazy'}
           decoding="async"
           width={photo?.width}

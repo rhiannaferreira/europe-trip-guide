@@ -16,7 +16,7 @@ export default class ErrorBoundary extends Component {
   render() {
     if (!this.state.error) return this.props.children
     return (
-      <div className="state-page" role="alert">
+      <main className="state-page" role="alert">
         <span className="state-icon" aria-hidden="true">🧭</span>
         <h1>Something went wrong</h1>
         <p>This page hit a problem it couldn't recover from. Your trip is saved in this browser and is safe.</p>
@@ -28,7 +28,7 @@ export default class ErrorBoundary extends Component {
             Go to the start
           </a>
         </div>
-      </div>
+      </main>
     )
   }
 }

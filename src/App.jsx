@@ -46,6 +46,14 @@ import { CityWeather, TripWeather } from './components/Weather.jsx'
 
 const PAGE = 24
 
+// Skip links move focus without changing the URL (the # would clash with routes in the preview build).
+const skipTo = (id) => (e) => {
+  e.preventDefault()
+  const el = document.getElementById(id)
+  el?.focus()
+  el?.scrollIntoView({ block: 'start' })
+}
+
 const scrollToTrip = () => document.getElementById('my-trip-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 
 // The planner. Which country or city is shown comes from the URL (/country/it, /city/rome), so the
@@ -211,6 +219,14 @@ export default function App({ route }) {
 
   return (
     <div className="app">
+      <nav className="skip-links" aria-label="Skip links">
+        <a className="skip-link" href="#places-title" onClick={skipTo('places-title')}>
+          Skip to places
+        </a>
+        <a className="skip-link" href="#my-trip-panel" onClick={skipTo('my-trip-panel')}>
+          Skip to my trip
+        </a>
+      </nav>
       <header className="app-header">
         <div className="brand">
           <h1>
@@ -271,7 +287,9 @@ export default function App({ route }) {
         </CityExplorer>
 
         <section className="places">
-          <h2 className="section-title">Places</h2>
+          <h2 className="section-title" id="places-title" tabIndex={-1}>
+            Places
+          </h2>
           <Filters activeInterests={activeInterests} onToggleInterest={toggleInterest} onClearInterests={() => setActiveInterests(new Set())} />
           <p className="list-count">{listTitle}</p>
           {selectedCity && <OsmStatus state={osm} city={selectedCity} />}
@@ -308,7 +326,7 @@ export default function App({ route }) {
         </section>
       </aside>
 
-      <main className="map-panel">
+      <main className="map-panel" aria-label="Map">
         <MapView
           places={visiblePlaces}
           cities={cities}
@@ -383,7 +401,7 @@ export default function App({ route }) {
 
       {route.name === 'trip' && route.share && <SharedTripDialog code={route.share} trip={trip} />}
 
-      <section className="trip-panel" id="my-trip-panel">
+      <section className="trip-panel" id="my-trip-panel" aria-label="My trip" tabIndex={-1}>
         <TripPanel tab={tripTab} onTabChange={setTripTab}>
           {tripTab === 'trip' && (
             <>

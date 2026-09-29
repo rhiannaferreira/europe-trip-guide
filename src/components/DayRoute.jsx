@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import L from 'leaflet'
 import { Marker, Polyline, Popup, useMap } from 'react-leaflet'
 import { cityById } from '../data/cities.js'
+import { motion } from '../lib/motion.js'
 
 // Numbered marker (1, 2, 3...) drawn with plain HTML, so no image files are needed.
 const numberIcon = (n) =>
@@ -17,11 +18,11 @@ export default function DayRoute({ day, places }) {
     if (!day) return
     if (places.length === 0) {
       const city = cityById[day.cityId]
-      map.flyTo([city.lat, city.lng], 12, { duration: 0.6 })
+      map.flyTo([city.lat, city.lng], 12, motion({ duration: 0.6 }))
     } else if (places.length === 1) {
-      map.flyTo([places[0].lat, places[0].lng], 15, { duration: 0.6 })
+      map.flyTo([places[0].lat, places[0].lng], 15, motion({ duration: 0.6 }))
     } else {
-      map.flyToBounds(places.map((p) => [p.lat, p.lng]), { padding: [60, 60], maxZoom: 15, duration: 0.6 })
+      map.flyToBounds(places.map((p) => [p.lat, p.lng]), motion({ padding: [60, 60], maxZoom: 15, duration: 0.6 }))
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fitKey])

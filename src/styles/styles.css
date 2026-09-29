@@ -9,7 +9,8 @@
   --border-strong: #c9bfae;
   --accent: #c8232c;
   --accent-soft: #fdecec;
-  --gem: #0f8b8d;
+  --accent-fill: #c8232c; /* backgrounds under white text */
+  --gem: #0c7677;
   --gem-soft: #e2f4f3;
   --on-gem: #fff;
   --gold: #f4a261;
@@ -24,8 +25,8 @@
   --sea: #cfe0e8;
   --land: #f2efe6;
   --land-edge: #b9b2a2;
-  --food: #d9623f;
-  --outdoors: #238a7e;
+  --food: #ba5436;
+  --outdoors: #208176;
   --museums: #6a4c93;
   --nightlife: #2f5566;
   --history: #9a6a2f;
@@ -44,7 +45,7 @@
     --border: #2f3740; --border-strong: #46515d; --accent: #ef5350; --accent-soft: #3a2224; --gem: #3cc0bf; --gem-soft: #173334; --on-gem: #0d2626;
     --gold: #f4a261; --on-gold: #2a1700; --heart: #ff5c8a; --good: #6fcf97; --good-soft: #1b3025; --warn: #f0b35a; --warn-soft: #33281a;
     --tip-bg: #2a2418; --tip-border: #4a3d24; --sea: #1c2a33; --land: #2a2f35; --land-edge: #4d5661;
-    --food: #c75f43; --outdoors: #238a7e; --museums: #9277bd; --nightlife: #5a8aa0; --history: #c08a4a; --shopping: #d9699a;
+    --food: #b7573d; --outdoors: #208176; --museums: #8068a6; --nightlife: #4f798c; --history: #956b39; --shopping: #af557c; --accent-fill: #c84543;
     --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 14px rgb(0 0 0 / 0.25);
     --tile-filter: brightness(0.78) contrast(1.08) saturate(0.85);
     color-scheme: dark;
@@ -55,7 +56,7 @@
   --border: #2f3740; --border-strong: #46515d; --accent: #ef5350; --accent-soft: #3a2224; --gem: #3cc0bf; --gem-soft: #173334; --on-gem: #0d2626;
   --gold: #f4a261; --on-gold: #2a1700; --heart: #ff5c8a; --good: #6fcf97; --good-soft: #1b3025; --warn: #f0b35a; --warn-soft: #33281a;
   --tip-bg: #2a2418; --tip-border: #4a3d24; --sea: #1c2a33; --land: #2a2f35; --land-edge: #4d5661;
-  --food: #c75f43; --outdoors: #238a7e; --museums: #9277bd; --nightlife: #5a8aa0; --history: #c08a4a; --shopping: #d9699a;
+  --food: #b7573d; --outdoors: #208176; --museums: #8068a6; --nightlife: #4f798c; --history: #956b39; --shopping: #af557c; --accent-fill: #c84543;
   --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 14px rgb(0 0 0 / 0.25);
   --tile-filter: brightness(0.78) contrast(1.08) saturate(0.85);
   color-scheme: dark;
@@ -117,8 +118,8 @@ button:focus-visible, select:focus-visible, input:focus-visible, summary:focus-v
 .btn { border: 1px solid var(--border); background: var(--surface); border-radius: 10px; padding: 7px 14px; font-size: 0.9rem; font-weight: 600; transition: background 0.15s, border-color 0.15s, transform 0.1s; }
 .btn:hover:not(:disabled) { border-color: var(--border-strong); }
 .btn:active:not(:disabled) { transform: translateY(1px); }
-.btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-.btn-primary:hover:not(:disabled) { filter: brightness(1.07); border-color: var(--accent); }
+.btn-primary { background: var(--accent-fill); border-color: var(--accent-fill); color: #fff; }
+.btn-primary:hover:not(:disabled) { filter: brightness(1.07); border-color: var(--accent-fill); }
 .btn-done { background: var(--good-soft); border-color: transparent; color: var(--good); }
 .btn-gem { background: var(--gem); border-color: var(--gem); color: var(--on-gem); }
 .link-btn { border: none; background: none; padding: 2px 0; color: var(--text); text-align: left; }
@@ -168,7 +169,7 @@ button:focus-visible, select:focus-visible, input:focus-visible, summary:focus-v
 .city-card-text small { color: var(--muted); font-size: 0.75rem; }
 .city-card-text .badge { margin: 2px 0 0; align-self: flex-start; }
 .add-city-btn { position: absolute; top: 6px; right: 6px; width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface); font-weight: 700; line-height: 1; padding: 0; }
-.add-city-btn:hover:not(:disabled) { background: var(--accent); color: #fff; border-color: var(--accent); }
+.add-city-btn:hover:not(:disabled) { background: var(--accent-fill); color: #fff; border-color: var(--accent); }
 .add-city-btn.added { background: var(--good-soft); color: var(--good); border-color: transparent; }
 
 .thumb { display: block; object-fit: cover; flex: none; }
@@ -239,7 +240,7 @@ button:focus-visible, select:focus-visible, input:focus-visible, summary:focus-v
 .leaflet-container a.leaflet-popup-close-button { color: var(--muted); }
 .leaflet-tile-pane { filter: var(--tile-filter); }
 .popup-tag { align-self: flex-start; font-size: 0.7rem; color: #fff; padding: 1px 7px; border-radius: 999px; }
-.popup-btn { margin-top: 6px; border: none; background: var(--accent); color: #fff; border-radius: 8px; padding: 6px 10px; font-weight: 600; }
+.popup-btn { margin-top: 6px; border: none; background: var(--accent-fill); color: #fff; border-radius: 8px; padding: 6px 10px; font-weight: 600; }
 .popup-btn.saved { background: var(--heart); }
 .leg-label { font-size: 0.75rem; font-weight: 600; }
 .map-trip-btn { position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 500; box-shadow: var(--shadow); }
@@ -260,7 +261,7 @@ button:focus-visible, select:focus-visible, input:focus-visible, summary:focus-v
 .trip-city-header { display: flex; align-items: center; gap: 8px; }
 .trip-city-header h3 { flex: 1; font-size: 1rem; min-width: 0; }
 .trip-city-header h3 .link-btn { font-weight: inherit; font-family: inherit; }
-.stop-number { flex: none; background: var(--accent); color: #fff; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 0.8rem; font-weight: 700; }
+.stop-number { flex: none; background: var(--accent-fill); color: #fff; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 0.8rem; font-weight: 700; }
 .stop-tools { display: flex; gap: 2px; }
 .stop-tools button { border: 1px solid var(--border); background: var(--surface); border-radius: 6px; width: 26px; height: 26px; padding: 0; line-height: 1; }
 .stop-tools button:hover:not(:disabled) { border-color: var(--border-strong); }
@@ -515,7 +516,7 @@ button:focus-visible, select:focus-visible, input:focus-visible, summary:focus-v
 .quiz-question { font-family: var(--display); font-size: 1.3rem; }
 .quiz-options { display: flex; flex-wrap: wrap; gap: 8px; }
 .quiz-option { border: 1px solid var(--border); background: var(--surface); border-radius: 999px; padding: 9px 16px; min-height: 44px; font-size: 0.92rem; font-weight: 600; }
-.quiz-option.selected { background: var(--accent); border-color: var(--accent); color: #fff; }
+.quiz-option.selected { background: var(--accent-fill); border-color: var(--accent-fill); color: #fff; }
 .quiz-nav { display: flex; justify-content: space-between; margin-top: 6px; }
 .quiz-nav .btn { min-height: 42px; }
 .quiz-results { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
@@ -777,7 +778,7 @@ a:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent); ou
 .swap-text span { color: var(--muted); font-size: 0.9rem; }
 .step-list { list-style: none; padding: 0; margin: 22px 0 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
 .step-list li { display: grid; gap: 6px; align-content: start; }
-.step-number { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: #fff; font-weight: 800; }
+.step-number { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--accent-fill); color: #fff; font-weight: 800; }
 .step-list h3 { font-family: var(--display); }
 .step-list p { color: var(--muted); font-size: 0.92rem; }
 .country-list ul { list-style: none; padding: 0; margin: 20px 0 24px; display: flex; flex-wrap: wrap; gap: 8px; }
@@ -814,3 +815,5 @@ a:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent); ou
 .prerender a { color: var(--accent); }
 .prerender-nav { font-weight: 600; }
 .map-notice { position: absolute; top: 10px; left: 56px; right: 10px; z-index: 1000; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; font-size: 0.8rem; box-shadow: var(--shadow); pointer-events: none; }
+.skip-links { position: absolute; }
+.leaflet-container:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; }
