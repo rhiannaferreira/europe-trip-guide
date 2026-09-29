@@ -1,10 +1,9 @@
 import { useMemo, useState } from 'react'
 import { cities, cityById, citiesInCountry } from './data/cities.js'
 import { countryByCode } from './data/countries.js'
-import { countryTips } from './data/countryTips.js'
 import { placeById, places } from './data/places.js'
 import { placeMatches } from './lib/search.js'
-import { tripDays, tripLegs, tripPace, tripSuggestions } from './lib/trip.js'
+import { eventsDuringTrip, seasonNotes, tripDays, tripLegs, tripPace, tripSuggestions } from './lib/trip.js'
 import { useTrip } from './useTrip.js'
 import SearchBar from './components/SearchBar.jsx'
 import CityExplorer from './components/CityExplorer.jsx'
@@ -13,6 +12,10 @@ import PlaceCard from './components/PlaceCard.jsx'
 import MapView from './components/MapView.jsx'
 import TripBoard from './components/TripBoard.jsx'
 import TripSummary from './components/TripSummary.jsx'
+import CountryTips from './components/CountryTips.jsx'
+import HiddenGems, { GemPairs } from './components/HiddenGems.jsx'
+import BestTime from './components/BestTime.jsx'
+import TripSeasons from './components/TripSeasons.jsx'
 
 const PAGE = 24
 
@@ -139,18 +142,10 @@ export default function App() {
             resetPaging()
           }}
         >
-          {tipsCountry && (
-            <details className="tips">
-              <summary>Local tips for {countryByCode[tipsCountry].name}</summary>
-              <ul>
-                {Object.entries(countryTips[tipsCountry])
-                  .filter(([, v]) => typeof v === 'string')
-                  .map(([k, v]) => (
-                    <li key={k}>{v}</li>
-                  ))}
-              </ul>
-            </details>
-          )}
+          {selectedCity && <HiddenGems city={selectedCity} tripCityIds={trip.cityIds} onSelectCity={selectCity} onAddCity={trip.addCity} />}
+          {!selectedCity && gemMode && <GemPairs country={country} onSelectCity={selectCity} />}
+          {selectedCity && <BestTime city={selectedCity} />}
+          {tipsCountry && <CountryTips code={tipsCountry} />}
         </CityExplorer>
 
         <section className="places">
@@ -204,7 +199,13 @@ export default function App() {
           onFocusPlace={focusPlace}
           onViewTrip={() => setFitTripRequest((n) => n + 1)}
         />
-        <TripSummary cityIds={trip.cityIds} legs={legs} days={days} pace={pace} suggestions={suggestions} />
+        <TripSummary cityIds={trip.cityIds} legs={legs} days={days} pace={pace} suggestions={suggestions}>
+          <TripSeasons
+            events={eventsDuringTrip(trip.startDate, trip.endDate, trip.cityIds)}
+            notes={seasonNotes(trip.startDate, trip.endDate, trip.cityIds)}
+            hasDates={Boolean(days)}
+          />
+        </TripSummary>
       </section>
     </div>
   )

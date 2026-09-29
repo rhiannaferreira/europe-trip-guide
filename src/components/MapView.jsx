@@ -17,6 +17,21 @@ export const interestColors = {
   shopping: '#c2417a',
 }
 
+// Leaflet drops a view change that arrives mid zoom animation, so hold it until the animation ends.
+// Only the latest request is kept, so quick successive clicks end on the last one.
+const pendingView = new WeakMap()
+function whenIdle(map, fn) {
+  if (!map._animatingZoom) return fn()
+  if (!pendingView.has(map)) {
+    map.once('zoomend', () => {
+      const next = pendingView.get(map)
+      pendingView.delete(map)
+      whenIdle(map, next)
+    })
+  }
+  pendingView.set(map, fn)
+}
+
 // Fits the map to whatever places are visible, or to the chosen cities when there are no places.
 function FitToView({ places, cities }) {
   const map = useMap()
@@ -25,7 +40,7 @@ function FitToView({ places, cities }) {
   useEffect(() => {
     if (points.length === 0) return
     const bounds = points.map((p) => [p.lat, p.lng])
-    map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 })
+    whenIdle(map, () => map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 }))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, map])
   return null
@@ -36,8 +51,10 @@ function FitToTrip({ routeCities, request }) {
   const map = useMap()
   useEffect(() => {
     if (!request || routeCities.length === 0) return
-    if (routeCities.length === 1) map.flyTo([routeCities[0].lat, routeCities[0].lng], 11, { duration: 0.6 })
-    else map.flyToBounds(routeCities.map((c) => [c.lat, c.lng]), { padding: [50, 50], duration: 0.6 })
+    whenIdle(map, () => {
+      if (routeCities.length === 1) map.flyTo([routeCities[0].lat, routeCities[0].lng], 11, { duration: 0.6 })
+      else map.flyToBounds(routeCities.map((c) => [c.lat, c.lng]), { padding: [50, 50], duration: 0.6 })
+    })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [request])
   return null
@@ -47,7 +64,7 @@ function FlyToFocused({ place, markerRefs }) {
   const map = useMap()
   useEffect(() => {
     if (!place) return
-    map.flyTo([place.lat, place.lng], Math.max(map.getZoom(), 14), { duration: 0.6 })
+    whenIdle(map, () => map.flyTo([place.lat, place.lng], Math.max(map.getZoom(), 14), { duration: 0.6 }))
     // Wait for the marker to exist (it may have just been filtered in) before opening its popup.
     const t = setTimeout(() => markerRefs.current[place.id]?.openPopup(), 650)
     return () => clearTimeout(t)
