@@ -327,10 +327,17 @@ export default function App() {
       {tool === 'print' && (
         <Modal title="Printable trip summary" onClose={() => setTool(null)} wide>
           <div className="print-actions no-print">
-            <button type="button" className="btn btn-primary" onClick={() => window.print()}>
-              🖨️ Print / Save as PDF
-            </button>
-            <span className="rule">Choose “Save as PDF” as the printer to get a file.</span>
+            {/* The hosted preview page can't open the print dialog, so it gets a note instead of the button. */}
+            {import.meta.env.VITE_PREVIEW ? (
+              <span className="rule">Printing isn't available in this preview. In the app, a Print / Save as PDF button appears here.</span>
+            ) : (
+              <>
+                <button type="button" className="btn btn-primary" onClick={() => window.print()}>
+                  🖨️ Print / Save as PDF
+                </button>
+                <span className="rule">Choose “Save as PDF” as the printer to get a file.</span>
+              </>
+            )}
           </div>
           <PrintTrip trip={trip} days={itineraryDays} legs={legs} budgetSummary={budgetSummary} currency={budget.currency} />
         </Modal>
