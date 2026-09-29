@@ -142,7 +142,7 @@ export default function MapView({ places, cities, fitCities, savedIds, routeCiti
                 </span>
                 <strong>{p.name}</strong>
                 <small>
-                  {cityById[p.cityId].name} · ★ {p.rating.toFixed(1)} · {costLabel(p.costLevel)}
+                  {[cityById[p.cityId].name, p.rating != null && `★ ${p.rating.toFixed(1)}`, costLabel(p.costLevel)].filter(Boolean).join(' · ')}
                 </small>
                 <span>{p.description}</span>
                 <button type="button" className={`popup-btn${saved ? ' saved' : ''}`} onClick={() => onToggleSave(p.id)}>

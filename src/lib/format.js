@@ -1,7 +1,8 @@
 export const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
 // 0 means free; 1–3 become $, $$, $$$.
-export const costLabel = (level) => (level === 0 ? 'Free' : '$'.repeat(level))
+// null (unknown, e.g. places from OpenStreetMap) gives ''.
+export const costLabel = (level) => (level == null ? '' : level === 0 ? 'Free' : '$'.repeat(level))
 
 // [4, 5, 6, 9] → "Apr–Jun, Sep". Months are 1–12 and may wrap past December ([11, 12, 1]).
 export function monthRange(months) {

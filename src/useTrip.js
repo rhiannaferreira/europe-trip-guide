@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { cityById } from './data/cities.js'
 import { placeById } from './data/places.js'
 import { KEYS, backupOnce, readJSON, readText, writeJSON } from './lib/storage.js'
+import { persistTripPlaces } from './lib/extraPlaces.js'
 
 const VERSION = 3
 export const DEFAULT_TRIP_NAME = 'My Europe trip'
@@ -116,7 +117,10 @@ function withoutStatuses(statuses, placeIds) {
 export function useTrip() {
   const [trip, setTrip] = useState(load)
 
-  useEffect(() => writeJSON(KEYS.trip, trip), [trip])
+  useEffect(() => {
+    writeJSON(KEYS.trip, trip)
+    persistTripPlaces(trip)
+  }, [trip])
 
   const addCity = (cityId) =>
     setTrip((t) => ({
@@ -249,6 +253,12 @@ export function useTrip() {
 
   const clear = () => setTrip(empty())
 
+  // Swap in a whole trip (from a shared link). The current one is kept under travel-app-trip-previous first.
+  const replace = (data) => {
+    writeJSON(KEYS.tripPrevious, trip)
+    setTrip(migrate(data))
+  }
+
   return {
     name: trip.name,
     displayName: trip.name.trim() || DEFAULT_TRIP_NAME,
@@ -279,5 +289,8 @@ export function useTrip() {
     setTripNote,
     setCityNote,
     clear,
+    replace,
+    // The trip exactly as saved, for sharing.
+    raw: trip,
   }
 }

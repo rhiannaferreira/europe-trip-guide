@@ -2,6 +2,8 @@
 //
 //   travel-app-trip          the trip: stops, dates, saved places and their status, itinerary, notes (see useTrip.js)
 //   travel-app-trip-backup   a copy of the trip exactly as it was before its first migration to a newer shape
+//   travel-app-trip-previous the trip as it was before a shared trip replaced it
+//   travel-app-extra-places  OpenStreetMap places the trip uses (see lib/extraPlaces.js)
 //   travel-app-budget        budget total, currency, travellers, expenses and estimate overrides (see useBudget.js)
 //   travel-app-theme         'light' or 'dark' (missing means "follow the system")
 //
@@ -10,6 +12,8 @@
 export const KEYS = {
   trip: 'travel-app-trip',
   tripBackup: 'travel-app-trip-backup',
+  tripPrevious: 'travel-app-trip-previous',
+  extraPlaces: 'travel-app-extra-places',
   budget: 'travel-app-budget',
   theme: 'travel-app-theme',
 }

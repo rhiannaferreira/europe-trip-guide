@@ -32,8 +32,8 @@ export default function PlaceCard({ place, city, saved, status, focused, onToggl
         </p>
         <p className="place-desc">{place.description}</p>
         <div className="place-meta">
-          <span title="Sample rating">★ {place.rating.toFixed(1)}</span>
-          <span title="Cost level">{costLabel(place.costLevel)}</span>
+          {place.rating != null && <span title="Sample rating">★ {place.rating.toFixed(1)}</span>}
+          {place.costLevel != null && <span title="Cost level">{costLabel(place.costLevel)}</span>}
           <button type="button" className="link-btn map-link" onClick={onFocus}>
             📍 Show on map
           </button>

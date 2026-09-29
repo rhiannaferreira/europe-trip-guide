@@ -31,6 +31,13 @@ const placeIndex = places.map((p) => [p, placeText(p)])
 const cityIndex = cities.map((c) => [c, cityText(c)])
 const placeTextById = Object.fromEntries(placeIndex.map(([p, text]) => [p.id, text]))
 
+// Add a place found while the app runs (see extraPlaces.js) to the search index.
+export function indexPlace(p) {
+  const text = placeText(p)
+  placeIndex.push([p, text])
+  placeTextById[p.id] = text
+}
+
 const matchesAll = (text, ts) => ts.every((t) => text.includes(t))
 
 // True when a place matches every word of the query (empty query matches everything).

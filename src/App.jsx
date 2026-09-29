@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import 'leaflet/dist/leaflet.css'
 import { cities, cityById, citiesInCountry } from './data/cities.js'
 import { countryByCode } from './data/countries.js'
 import { placeById, places } from './data/places.js'
@@ -33,12 +34,21 @@ import ThemeToggle from './components/ThemeToggle.jsx'
 import { useTheme } from './useTheme.js'
 import { autoEstimates, formatMoney, summarizeBudget } from './utils/budgetCalculations.js'
 import { buildDays, tripProgress } from './utils/tripCalculations.js'
+import { cityPath, countryPath, navigate } from './lib/router.jsx'
+import { setPageMeta } from './lib/meta.js'
+import { stayText } from './utils/cityInfo.js'
+import { monthRange } from './lib/format.js'
+import ShareTrip, { SharedTripDialog } from './components/ShareTrip.jsx'
 
 const PAGE = 24
 
-export default function App() {
-  const [country, setCountry] = useState('')
-  const [cityId, setCityId] = useState('')
+const scrollToTrip = () => document.getElementById('my-trip-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+
+// The planner. Which country or city is shown comes from the URL (/country/it, /city/rome), so the
+// back button, bookmarks and shared links all work.
+export default function App({ route }) {
+  const cityId = route.name === 'city' ? route.id : ''
+  const country = cityId ? cityById[cityId].country : route.name === 'country' ? route.code : ''
   const [query, setQuery] = useState('')
   const [gemMode, setGemMode] = useState(false)
   const [activeInterests, setActiveInterests] = useState(() => new Set())
@@ -106,16 +116,41 @@ export default function App() {
   const resetPaging = () => setShown(PAGE)
 
   const selectCountry = (code) => {
-    setCountry(code)
-    if (cityId && cityById[cityId].country !== code) setCityId('')
     resetPaging()
+    if (cityId && code && cityById[cityId].country === code) return
+    navigate(code ? countryPath(code) : '/explore')
   }
 
   const selectCity = (id) => {
-    setCityId(id)
-    if (id) setCountry(cityById[id].country)
     resetPaging()
+    if (id === cityId) return
+    navigate(id ? cityPath(id) : country ? countryPath(country) : '/explore')
   }
+
+  // Title, description and canonical link for the page being shown.
+  useEffect(() => {
+    if (cityId) {
+      const c = cityById[cityId]
+      setPageMeta({
+        title: `${c.name}, ${countryByCode[c.country].name}`,
+        description: `${c.description} Best months: ${monthRange(c.bestMonths)}. Typical stay: ${stayText(c)}. Places to see, hidden gems and train links.`,
+        path: cityPath(cityId),
+      })
+    } else if (country) {
+      const n = citiesInCountry(country).length
+      setPageMeta({
+        title: `${countryByCode[country].name} travel guide`,
+        description: `${n} cities and towns in ${countryByCode[country].name}: places to see, local tips, hidden gems and train links for a multi-country trip.`,
+        path: countryPath(country),
+      })
+    } else if (route.name === 'trip') setPageMeta({ title: 'My trip', path: '/trip' })
+    else setPageMeta({ title: 'Explore Europe', path: '/explore' })
+  }, [cityId, country, route.name])
+
+  // /trip opens on the trip panel.
+  useEffect(() => {
+    if (route.name === 'trip') setTimeout(scrollToTrip, 50)
+  }, [route.name])
 
   const toggleInterest = (id) => {
     setActiveInterests((prev) => {
@@ -159,8 +194,8 @@ export default function App() {
   const pickFromSearch = {
     country: (code) => {
       setQuery('')
-      setCityId('')
-      selectCountry(code)
+      resetPaging()
+      navigate(countryPath(code))
     },
     city: (id) => {
       setQuery('')
@@ -207,9 +242,9 @@ export default function App() {
           </button>
           <ThemeToggle theme={theme} onToggle={toggleTheme} />
         </nav>
-        <a className="btn trip-jump" href="#my-trip-panel">
+        <button type="button" className="btn trip-jump" onClick={scrollToTrip}>
           🧳 My Trip{trip.cityIds.length ? ` (${trip.cityIds.length})` : ''}
-        </a>
+        </button>
       </header>
 
       <aside className="sidebar">
@@ -343,6 +378,8 @@ export default function App() {
         </Modal>
       )}
 
+      {route.name === 'trip' && route.share && <SharedTripDialog code={route.share} trip={trip} />}
+
       <section className="trip-panel" id="my-trip-panel">
         <TripPanel tab={tripTab} onTabChange={setTripTab}>
           {tripTab === 'trip' && (
@@ -361,6 +398,7 @@ export default function App() {
                   onGo={{ activities: () => setTripTab('days'), itinerary: () => setTripTab('days'), budget: () => setTripTab('budget') }}
                 />
               )}
+              {trip.stops.length > 0 && <ShareTrip trip={trip} />}
               <TripNotes trip={trip} onOpenPrint={() => setTool('print')} />
               <TripSummary cityIds={trip.cityIds} legs={legs} days={days} pace={pace} suggestions={suggestions}>
                 <TripSeasons
