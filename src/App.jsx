@@ -76,12 +76,17 @@ export default function App() {
     resetPaging()
   }
 
-  // Show a place on the map, switching to its city so its marker is visible.
+  // Show a place on the map. If filters hide it, switch to its city so its marker appears.
   const focusPlace = (id) => {
     const place = placeById[id]
-    if (cityId !== place.cityId) selectCity(place.cityId)
-    if (activeInterests.size > 0 && !activeInterests.has(place.category)) setActiveInterests(new Set())
+    if (!visiblePlaces.some((p) => p.id === id)) {
+      selectCity(place.cityId)
+      setGemMode(false)
+      if (activeInterests.size > 0 && !activeInterests.has(place.category)) setActiveInterests(new Set())
+    }
     setFocusedId(id)
+    // On stacked layouts the map is above the lists, so bring it into view.
+    if (window.innerWidth <= 1200) document.querySelector('.map-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
   const pickFromSearch = {
@@ -161,7 +166,7 @@ export default function App() {
                 saved={trip.savedIds.has(p.id)}
                 focused={focusedId === p.id}
                 onToggleSave={() => trip.togglePlace(p.id)}
-                onFocus={() => setFocusedId(p.id)}
+                onFocus={() => focusPlace(p.id)}
               />
             ))}
           </div>

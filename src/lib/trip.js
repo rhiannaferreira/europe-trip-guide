@@ -106,21 +106,29 @@ export function tripMonths(startDate, endDate) {
   return [...months]
 }
 
-// Season notes for each stop, from the city's hardcoded seasons.
+// Season notes for the stops, from each city's hardcoded seasons. Cities sharing a note are grouped.
 export function seasonNotes(startDate, endDate, cityIds) {
   const months = tripMonths(startDate, endDate)
   if (months.length === 0) return []
   const monthText = months.map((m) => monthNames[m - 1]).join('/')
-  const notes = []
+  const hit = (list) => list && months.some((m) => list.includes(m))
+  const names = (list) => list.map((c) => c.name).join(', ').replace(/, ([^,]*)$/, ' and $1')
+  const special = []
+  const busy = []
+  const cheaper = []
+  const goodWeather = []
   for (const id of cityIds) {
     const c = cityById[id]
     const s = c.seasons
-    const hit = (list) => list && months.some((m) => list.includes(m))
-    const special = (s.special || []).filter((sp) => hit(sp.months))
-    if (special.length) notes.push({ city: c, tone: 'good', text: `${special.map((sp) => sp.label).join(', ')} in ${c.name} during your ${monthText} visit.` })
-    if (hit(s.busy)) notes.push({ city: c, tone: 'warn', text: `${c.name} is in its busy season. Book rooms and big sights ahead.` })
-    else if (hit(s.lowerCost)) notes.push({ city: c, tone: 'good', text: `${c.name} is usually cheaper in ${monthText}.` })
-    else if (hit(s.bestWeather)) notes.push({ city: c, tone: 'good', text: `${monthText} is a good weather window for ${c.name}.` })
+    for (const sp of s.special || []) if (hit(sp.months)) special.push(`${sp.label} in ${c.name}`)
+    if (hit(s.busy)) busy.push(c)
+    else if (hit(s.lowerCost)) cheaper.push(c)
+    else if (hit(s.bestWeather)) goodWeather.push(c)
   }
+  const notes = []
+  if (special.length) notes.push({ tone: 'good', text: `In season during your visit: ${special.join(', ')}.` })
+  if (busy.length) notes.push({ tone: 'warn', text: `Busy season in ${names(busy)}. Book rooms and big sights ahead.` })
+  if (cheaper.length) notes.push({ tone: 'good', text: `${names(cheaper)} ${cheaper.length === 1 ? 'is' : 'are'} usually cheaper in ${monthText}.` })
+  if (goodWeather.length) notes.push({ tone: 'good', text: `${monthText} is a good weather window for ${names(goodWeather)}.` })
   return notes
 }
