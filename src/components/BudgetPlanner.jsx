@@ -144,6 +144,9 @@ export default function BudgetPlanner({ trip, legs, totalDays, budget }) {
 
   return (
     <div className="budget">
+      {trip.stops.length === 0 && (
+        <p className="empty budget-empty">Add cities to your trip to get rough cost estimates. You can already set a total and log expenses here.</p>
+      )}
       <div className="stats budget-tiles">
         <Tile label="Budget" value={summary.total === null ? '—' : money(summary.total)} />
         <Tile label="Estimated" value={money(summary.estimated)} />

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { CircleMarker, GeoJSON, MapContainer, Pane, Popup, TileLayer, Tooltip, useMap } from 'react-leaflet'
 import europeOutline from '../data/europe-outline.json'
 import { placeById } from '../data/places.js'
@@ -96,6 +96,9 @@ export default function MapView({ places, cities, fitCities, savedIds, routeCiti
   const dimmed = Boolean(dayView)
   const markerRefs = useRef({})
   const focused = focusedId ? placeById[focusedId] : null
+  // Tiles that fail to load (offline, or the tile server is down) leave only the country outlines.
+  const [tiles, setTiles] = useState({ ok: 0, failed: 0 })
+  const tilesDown = tiles.failed >= 4 && tiles.ok === 0
 
   return (
     <MapContainer center={[48.5, 8]} zoom={4} className="map" scrollWheelZoom>
@@ -106,7 +109,16 @@ export default function MapView({ places, cities, fitCities, savedIds, routeCiti
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        eventHandlers={{
+          tileload: () => setTiles((t) => (t.ok ? t : { ...t, ok: 1 })),
+          tileerror: () => setTiles((t) => (t.failed >= 4 ? t : { ...t, failed: t.failed + 1 })),
+        }}
       />
+      {tilesDown && (
+        <div className="map-notice" role="status">
+          The map background can't load right now, so only country outlines show. Markers and routes still work.
+        </div>
+      )}
       <FitToView places={places} cities={fitCities} />
       <FitToTrip routeCities={routeCities} request={fitTripRequest} />
       <FlyToFocused place={focused} markerRefs={markerRefs} />

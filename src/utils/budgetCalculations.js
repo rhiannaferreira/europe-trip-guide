@@ -66,9 +66,9 @@ export function autoEstimates({ stops, totalDays, legs, levelOverrides, travelle
   return {
     accommodation: {
       amount: r(accommodation),
-      detail: noDates ? 'Add trip dates to estimate nights.' : `${nights} night${nights === 1 ? '' : 's'}, ${rooms} room${rooms === 1 ? '' : 's'} at each city's cost level`,
+      detail: noDates ? 'Add trip dates to estimate nights' : `${nights} night${nights === 1 ? '' : 's'}, ${rooms} room${rooms === 1 ? '' : 's'} at each city's cost level`,
     },
-    food: { amount: r(food), detail: noDates ? 'Add trip dates to estimate meals.' : `${totalDays} days of meals for ${who}` },
+    food: { amount: r(food), detail: noDates ? 'Add trip dates to estimate meals' : `${totalDays} days of meals for ${who}` },
     transportation: {
       amount: r(fares + local),
       detail: `${legs.length} train journey${legs.length === 1 ? '' : 's'} (rough fares from distance)${noDates ? '' : ' plus local transport'} for ${who}`,
