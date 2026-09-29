@@ -25,5 +25,5 @@ export function setPageMeta({ title, description = DEFAULT_DESCRIPTION, path = '
   setMeta('meta[property="og:description"]', 'content', description)
   setMeta('meta[property="og:url"]', 'content', SITE_URL + path)
   setMeta('link[rel="canonical"]', 'href', SITE_URL + path)
-  if (image) setMeta('meta[property="og:image"]', 'content', image)
+  setMeta('meta[property="og:image"]', 'content', image || `${SITE_URL}/og-image.png`)
 }

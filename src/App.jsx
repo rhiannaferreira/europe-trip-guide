@@ -37,8 +37,7 @@ import { autoEstimates, formatMoney, summarizeBudget } from './utils/budgetCalcu
 import { buildDays, tripProgress } from './utils/tripCalculations.js'
 import { Link, cityPath, countryPath, navigate } from './lib/router.jsx'
 import { setPageMeta } from './lib/meta.js'
-import { stayText } from './utils/cityInfo.js'
-import { monthRange } from './lib/format.js'
+import { cityMeta, countryMeta } from './lib/pageMeta.js'
 import ShareTrip, { SharedTripDialog } from './components/ShareTrip.jsx'
 import { usePlacesVersion } from './lib/extraPlaces.js'
 import { useOsmPlaces } from './lib/osmPlaces.js'
@@ -138,21 +137,9 @@ export default function App({ route }) {
 
   // Title, description and canonical link for the page being shown.
   useEffect(() => {
-    if (cityId) {
-      const c = cityById[cityId]
-      setPageMeta({
-        title: `${c.name}, ${countryByCode[c.country].name}`,
-        description: `${c.description} Best months: ${monthRange(c.bestMonths)}. Typical stay: ${stayText(c)}. Places to see, hidden gems and train links.`,
-        path: cityPath(cityId),
-      })
-    } else if (country) {
-      const n = citiesInCountry(country).length
-      setPageMeta({
-        title: `${countryByCode[country].name} travel guide`,
-        description: `${n} cities and towns in ${countryByCode[country].name}: places to see, local tips, hidden gems and train links for a multi-country trip.`,
-        path: countryPath(country),
-      })
-    } else if (route.name === 'trip') setPageMeta({ title: 'My trip', path: '/trip' })
+    if (cityId) setPageMeta(cityMeta(cityById[cityId]))
+    else if (country) setPageMeta(countryMeta(country))
+    else if (route.name === 'trip') setPageMeta({ title: 'My trip', path: '/trip' })
     else setPageMeta({ title: 'Explore Europe', path: '/explore' })
   }, [cityId, country, route.name])
 

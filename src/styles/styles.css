@@ -805,3 +805,11 @@ a:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent); ou
 /* ---------- Offline and install ---------- */
 .offline-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 2500; background: var(--text); color: var(--panel); font-size: 0.82rem; padding: 7px 16px; text-align: center; }
 .install-link { font-weight: 600; }
+
+/* ---------- Static page content (shown until the app starts) ---------- */
+.prerender { max-width: 760px; margin: 0 auto; padding: 24px 16px 48px; line-height: 1.55; }
+.prerender h1 { font-family: var(--display); font-size: 2rem; margin: 16px 0 8px; }
+.prerender h2 { font-family: var(--display); font-size: 1.2rem; margin: 22px 0 6px; }
+.prerender ul { padding-left: 20px; }
+.prerender a { color: var(--accent); }
+.prerender-nav { font-weight: 600; }
