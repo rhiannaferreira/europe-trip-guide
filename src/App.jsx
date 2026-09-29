@@ -39,6 +39,9 @@ import { setPageMeta } from './lib/meta.js'
 import { stayText } from './utils/cityInfo.js'
 import { monthRange } from './lib/format.js'
 import ShareTrip, { SharedTripDialog } from './components/ShareTrip.jsx'
+import { usePlacesVersion } from './lib/extraPlaces.js'
+import { useOsmPlaces } from './lib/osmPlaces.js'
+import OsmStatus from './components/OsmStatus.jsx'
 
 const PAGE = 24
 
@@ -63,6 +66,10 @@ export default function App({ route }) {
   // Which discovery tool is open in a dialog ('compare', or null), and the two compared cities.
   const [tool, setTool] = useState(null)
   const [comparePair, setComparePair] = useState(['barcelona', 'lisbon'])
+
+  // Places from OpenStreetMap join the list when a city is opened; the version changes when they arrive.
+  const placesVersion = usePlacesVersion()
+  const osm = useOsmPlaces(cityId ? cityById[cityId] : null)
 
   const legs = useMemo(() => tripLegs(trip.cityIds), [trip.cityIds.join(',')]) // eslint-disable-line react-hooks/exhaustive-deps
   const days = tripDays(trip.startDate, trip.endDate)
@@ -107,7 +114,7 @@ export default function App({ route }) {
           placeMatches(p, query)
         )
       }),
-    [country, cityId, gemMode, activeInterests, query],
+    [country, cityId, gemMode, activeInterests, query, placesVersion],
   )
 
   // Cities the map should frame when no places match (e.g. a country with every filter off).
@@ -272,6 +279,7 @@ export default function App({ route }) {
           <h2 className="section-title">Places</h2>
           <Filters activeInterests={activeInterests} onToggleInterest={toggleInterest} onClearInterests={() => setActiveInterests(new Set())} />
           <p className="list-count">{listTitle}</p>
+          {selectedCity && <OsmStatus state={osm} city={selectedCity} />}
           <div className="place-list">
             {visiblePlaces.slice(0, shown).map((p) => (
               <PlaceCard

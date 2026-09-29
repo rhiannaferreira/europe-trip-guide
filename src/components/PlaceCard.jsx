@@ -31,6 +31,21 @@ export default function PlaceCard({ place, city, saved, status, focused, onToggl
           {countryByCode[city.country].flag} {city.name}
         </p>
         <p className="place-desc">{place.description}</p>
+        {place.source === 'osm' && (
+          <p className="place-source">
+            <span className="source-tag">From OpenStreetMap</span>
+            {place.osmUrl && (
+              <a href={place.osmUrl} target="_blank" rel="noopener noreferrer">
+                Details<span className="visually-hidden"> for {place.name} on OpenStreetMap</span>
+              </a>
+            )}
+            {place.website && (
+              <a href={place.website} target="_blank" rel="noopener noreferrer">
+                Website<span className="visually-hidden"> of {place.name}</span>
+              </a>
+            )}
+          </p>
+        )}
         <div className="place-meta">
           {place.rating != null && <span title="Sample rating">★ {place.rating.toFixed(1)}</span>}
           {place.costLevel != null && <span title="Cost level">{costLabel(place.costLevel)}</span>}

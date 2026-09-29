@@ -698,3 +698,10 @@ a:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent); ou
 .shared-trip { display: grid; gap: 10px; }
 .shared-trip h3 { font-family: var(--display); font-size: 1.2rem; }
 .shared-route { font-weight: 600; }
+
+/* ---------- Places from OpenStreetMap ---------- */
+.osm-status { font-size: 0.78rem; color: var(--muted); margin: -4px 0 10px; display: flex; align-items: center; gap: 8px; }
+.osm-status.notice { color: var(--text); justify-content: space-between; margin-top: 0; }
+.place-source { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; font-size: 0.75rem; }
+.place-source a { color: var(--muted); }
+.source-tag { font-size: 0.68rem; font-weight: 700; padding: 1px 7px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); color: var(--muted); }
