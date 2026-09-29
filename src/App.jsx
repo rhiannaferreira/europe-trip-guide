@@ -26,7 +26,9 @@ import Modal from './components/Modal.jsx'
 import CityComparison from './components/CityComparison.jsx'
 import TravelQuiz from './components/TravelQuiz.jsx'
 import SurpriseMe from './components/SurpriseMe.jsx'
-import { buildDays } from './utils/tripCalculations.js'
+import TripProgress from './components/TripProgress.jsx'
+import { autoEstimates, formatMoney, summarizeBudget } from './utils/budgetCalculations.js'
+import { buildDays, tripProgress } from './utils/tripCalculations.js'
 
 const PAGE = 24
 
@@ -56,6 +58,22 @@ export default function App() {
   // The day drawn on the map: only while the Days tab is open, and only if that day still exists.
   const shownDay = tripTab === 'days' ? itineraryDays.find((d) => d.number === selectedDay) : null
   const dayView = shownDay ? { day: shownDay, places: (trip.itinerary[shownDay.number]?.placeIds || []).map((id) => placeById[id]) } : null
+
+  const budgetSummary = summarizeBudget(
+    budget,
+    autoEstimates({ stops: trip.stops, totalDays: days, legs, levelOverrides: budget.cityLevels, travellers: budget.travellers, currency: budget.currency }),
+  )
+  const progress = tripProgress({
+    stops: trip.stops,
+    startDate: trip.startDate,
+    endDate: trip.endDate,
+    tripLength: days,
+    days: itineraryDays,
+    legs,
+    itinerary: trip.itinerary,
+    budgetSummary,
+    formatMoney: (n) => formatMoney(n, budget.currency),
+  })
 
   const selectDay = (n) => {
     setSelectedDay(n)
@@ -220,6 +238,8 @@ export default function App() {
                 place={p}
                 city={cityById[p.cityId]}
                 saved={trip.savedIds.has(p.id)}
+                status={trip.statuses[p.id]}
+                onStatusChange={(s) => trip.setStatus(p.id, s)}
                 focused={focusedId === p.id}
                 onToggleSave={() => trip.togglePlace(p.id)}
                 onFocus={() => focusPlace(p.id)}
@@ -310,6 +330,12 @@ export default function App() {
                 onFocusPlace={focusPlace}
                 onViewTrip={() => setFitTripRequest((n) => n + 1)}
               />
+              {trip.stops.length > 0 && (
+                <TripProgress
+                  items={progress}
+                  onGo={{ activities: () => setTripTab('days'), itinerary: () => setTripTab('days'), budget: () => setTripTab('budget') }}
+                />
+              )}
               <TripSummary cityIds={trip.cityIds} legs={legs} days={days} pace={pace} suggestions={suggestions}>
                 <TripSeasons
                   events={eventsDuringTrip(trip.startDate, trip.endDate, trip.cityIds)}

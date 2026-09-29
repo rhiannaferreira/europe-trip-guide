@@ -125,3 +125,56 @@ export function travelDayAdvice(day, activityCount = 0) {
   }
   return { level: 'light', text: 'Part of this day goes to travel, so leave some slack around the train.' }
 }
+
+// Setup checklist for the trip. Each item reports real numbers, not a score:
+//   { id, label, done, detail }
+export function tripProgress({ stops, startDate, endDate, tripLength, days, legs, itinerary, budgetSummary, formatMoney }) {
+  const saved = stops.flatMap((s) => s.placeIds)
+  const scheduled = saved.filter((id) => Object.values(itinerary).some((d) => d.placeIds.includes(id)))
+  const plannedDays = days.filter((d) => (itinerary[d.number]?.placeIds.length || 0) > 0 || (itinerary[d.number]?.note || '').trim()).length
+  const rough = legs.filter((l) => l.estimated).length
+  const fmt = (iso) => formatLongDate(parseDate(iso))
+
+  return [
+    {
+      id: 'dates',
+      label: 'Trip dates',
+      done: Boolean(tripLength),
+      detail: tripLength ? `${fmt(startDate)} – ${fmt(endDate)}, ${tripLength} day${tripLength === 1 ? '' : 's'}` : 'Not set yet',
+    },
+    { id: 'cities', label: 'Cities', done: stops.length > 0, detail: stops.length ? `${stops.length} in the trip` : 'None yet' },
+    {
+      id: 'transport',
+      label: 'Transportation',
+      done: stops.length > 0 && rough === 0,
+      detail:
+        stops.length < 2
+          ? 'No journeys between cities yet'
+          : rough === 0
+            ? legs.length === 1
+              ? 'The journey has a sample train time'
+              : `All ${legs.length} journeys have sample train times`
+            : `${legs.length - rough} of ${legs.length} have sample times, ${rough} rough estimate${rough === 1 ? '' : 's'}`,
+    },
+    {
+      id: 'activities',
+      label: 'Activities',
+      done: saved.length > 0 && scheduled.length === saved.length,
+      detail: saved.length ? `${scheduled.length}/${saved.length} saved places on a day` : 'No saved places yet',
+      value: saved.length ? [scheduled.length, saved.length] : null,
+    },
+    {
+      id: 'budget',
+      label: 'Budget',
+      done: budgetSummary.total !== null,
+      detail: budgetSummary.total !== null ? `${formatMoney(budgetSummary.total)} set, ${formatMoney(budgetSummary.estimated)} estimated` : 'No total budget set',
+    },
+    {
+      id: 'itinerary',
+      label: 'Daily itinerary',
+      done: days.length > 0 && plannedDays === days.length,
+      detail: days.length ? `${plannedDays}/${days.length} days planned` : 'Add dates to plan days',
+      value: days.length ? [plannedDays, days.length] : null,
+    },
+  ]
+}

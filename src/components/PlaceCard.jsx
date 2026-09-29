@@ -2,8 +2,10 @@ import { countryByCode } from '../data/countries.js'
 import { interestById } from '../data/interests.js'
 import { costLabel } from '../lib/format.js'
 import Thumb from './Thumb.jsx'
+import StatusPicker from './StatusPicker.jsx'
+import { statusInfo } from '../lib/statuses.js'
 
-export default function PlaceCard({ place, city, saved, focused, onToggleSave, onFocus, children }) {
+export default function PlaceCard({ place, city, saved, status, focused, onToggleSave, onStatusChange, onFocus, children }) {
   const interest = interestById[place.category]
   return (
     <article className={`place-card${focused ? ' focused' : ''}${saved ? ' saved' : ''}`}>
@@ -18,7 +20,7 @@ export default function PlaceCard({ place, city, saved, focused, onToggleSave, o
             className={`heart-btn${saved ? ' saved' : ''}`}
             aria-pressed={saved}
             aria-label={saved ? `Remove ${place.name} from trip` : `Save ${place.name} to trip`}
-            title={saved ? 'Saved to your trip' : 'Save to trip'}
+            title={saved ? `In your trip (${statusInfo(status).label})` : 'Save to trip'}
             onClick={onToggleSave}
           >
             {saved ? '♥' : '♡'}
@@ -36,6 +38,7 @@ export default function PlaceCard({ place, city, saved, focused, onToggleSave, o
             📍 Show on map
           </button>
         </div>
+        {saved && <StatusPicker place={place} status={status} onChange={onStatusChange} />}
         {focused && children}
       </div>
     </article>

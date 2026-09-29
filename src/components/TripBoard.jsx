@@ -3,6 +3,7 @@ import { countryByCode } from '../data/countries.js'
 import { placeById } from '../data/places.js'
 import { formatDuration } from '../lib/format.js'
 import TripDates from './TripDates.jsx'
+import StatusPicker from './StatusPicker.jsx'
 
 const modeIcon = { train: '🚆', bus: '🚌', 'rail + ferry': '⛴️' }
 
@@ -83,10 +84,11 @@ export default function TripBoard({ trip, legs, days, onSelectCity, onFocusPlace
                   {stop.placeIds.length > 0 ? (
                     <ul>
                       {stop.placeIds.map((id) => (
-                        <li key={id}>
+                        <li key={id} className={trip.statuses[id] === 'visited' ? 'visited' : ''}>
                           <button type="button" className="link-btn" onClick={() => onFocusPlace(id)}>
-                            ♥ {placeById[id].name}
+                            {placeById[id].name}
                           </button>
+                          <StatusPicker place={placeById[id]} status={trip.statuses[id]} onChange={(s) => trip.setStatus(id, s)} compact />
                           <button type="button" className="remove-btn" onClick={() => trip.togglePlace(id)} aria-label={`Remove ${placeById[id].name}`}>
                             ×
                           </button>
