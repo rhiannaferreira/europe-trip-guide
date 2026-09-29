@@ -1,25 +1,45 @@
 import { useEffect, useRef } from 'react'
-import { places as allPlaces } from '../data/places.js'
-import { CircleMarker, GeoJSON, MapContainer, Pane, Polyline, Popup, TileLayer, Tooltip, useMap } from 'react-leaflet'
+import { CircleMarker, GeoJSON, MapContainer, Pane, Popup, TileLayer, Tooltip, useMap } from 'react-leaflet'
 import europeOutline from '../data/europe-outline.json'
+import { placeById } from '../data/places.js'
+import { cityById } from '../data/cities.js'
+import { interestById } from '../data/interests.js'
+import { costLabel } from '../lib/format.js'
+import RouteView from './RouteView.jsx'
 
+// Marker colours per interest (Leaflet needs real colours, not CSS variables).
 export const interestColors = {
-  food: '#e76f51',
-  outdoors: '#2a9d8f',
+  food: '#d9623f',
+  outdoors: '#238a7e',
   museums: '#6a4c93',
-  nightlife: '#264653',
+  nightlife: '#2f5566',
+  history: '#9a6a2f',
+  shopping: '#c2417a',
 }
 
-// Fits the map to whatever places are currently visible.
-function FitToPlaces({ places }) {
+// Fits the map to whatever places are visible, or to the chosen cities when there are no places.
+function FitToView({ places, cities }) {
   const map = useMap()
-  const key = places.map((p) => p.id).join(',')
+  const points = places.length > 0 ? places : cities
+  const key = points.map((p) => p.id).join(',')
   useEffect(() => {
-    if (places.length === 0) return
-    const bounds = places.map((p) => [p.lat, p.lng])
+    if (points.length === 0) return
+    const bounds = points.map((p) => [p.lat, p.lng])
     map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, map])
+  return null
+}
+
+// Fits to the whole trip whenever the "view trip" request counter changes.
+function FitToTrip({ routeCities, request }) {
+  const map = useMap()
+  useEffect(() => {
+    if (!request || routeCities.length === 0) return
+    if (routeCities.length === 1) map.flyTo([routeCities[0].lat, routeCities[0].lng], 11, { duration: 0.6 })
+    else map.flyToBounds(routeCities.map((c) => [c.lat, c.lng]), { padding: [50, 50], duration: 0.6 })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [request])
   return null
 }
 
@@ -28,81 +48,91 @@ function FlyToFocused({ place, markerRefs }) {
   useEffect(() => {
     if (!place) return
     map.flyTo([place.lat, place.lng], Math.max(map.getZoom(), 14), { duration: 0.6 })
-    markerRefs.current[place.id]?.openPopup()
+    // Wait for the marker to exist (it may have just been filtered in) before opening its popup.
+    const t = setTimeout(() => markerRefs.current[place.id]?.openPopup(), 650)
+    return () => clearTimeout(t)
   }, [place, map, markerRefs])
   return null
 }
 
-export default function MapView({ places, cities, savedIds, routeCities, focusedId, onFocus, onToggleSave, onSelectCity }) {
+export default function MapView({ places, cities, fitCities, savedIds, routeCities, legs, focusedId, fitTripRequest, onFocus, onToggleSave, onSelectCity }) {
   const markerRefs = useRef({})
-  const focused = allPlaces.find((p) => p.id === focusedId)
+  const focused = focusedId ? placeById[focusedId] : null
 
   return (
     <MapContainer center={[48.5, 8]} zoom={4} className="map" scrollWheelZoom>
       {/* Country outlines sit under the tiles and show through wherever tiles can't load. */}
       <Pane name="outline" style={{ zIndex: 150 }}>
-        <GeoJSON
-          data={europeOutline}
-          interactive={false}
-          style={{ className: 'country-outline', weight: 1 }}
-        />
+        <GeoJSON data={europeOutline} interactive={false} style={{ className: 'country-outline', weight: 1 }} />
       </Pane>
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      <FitToPlaces places={places} />
+      <FitToView places={places} cities={fitCities} />
+      <FitToTrip routeCities={routeCities} request={fitTripRequest} />
       <FlyToFocused place={focused} markerRefs={markerRefs} />
 
-      {routeCities.length > 1 && (
-        <Polyline
-          positions={routeCities.map((c) => [c.lat, c.lng])}
-          pathOptions={{ color: '#d62828', weight: 3, dashArray: '8 6' }}
-        />
-      )}
+      <RouteView routeCities={routeCities} legs={legs} />
 
-      {places.map((p) => (
-        <CircleMarker
-          key={p.id}
-          ref={(m) => {
-            if (m) markerRefs.current[p.id] = m
-            else delete markerRefs.current[p.id]
-          }}
-          center={[p.lat, p.lng]}
-          radius={savedIds.has(p.id) ? 9 : 7}
-          pathOptions={{
-            color: savedIds.has(p.id) ? '#f4a261' : '#fff',
-            weight: savedIds.has(p.id) ? 3 : 2,
-            fillColor: interestColors[p.category],
-            fillOpacity: 0.9,
-          }}
-          eventHandlers={{ click: () => onFocus(p.id) }}
-        >
-          <Popup>
-            <strong>{p.name}</strong>
-            <br />
-            {p.description}
-            <br />
-            <button type="button" className="popup-btn" onClick={() => onToggleSave(p.id)}>
-              {savedIds.has(p.id) ? 'Remove from trip' : 'Save to trip'}
-            </button>
-          </Popup>
-        </CircleMarker>
-      ))}
+      {places.map((p) => {
+        const saved = savedIds.has(p.id)
+        const interest = interestById[p.category]
+        return (
+          <CircleMarker
+            key={p.id}
+            ref={(m) => {
+              if (m) markerRefs.current[p.id] = m
+              else delete markerRefs.current[p.id]
+            }}
+            center={[p.lat, p.lng]}
+            radius={saved ? 9 : 7}
+            pathOptions={{
+              color: saved ? '#f4a261' : '#fff',
+              weight: saved ? 3 : 2,
+              fillColor: interestColors[p.category],
+              fillOpacity: 0.9,
+            }}
+            eventHandlers={{ click: () => onFocus(p.id) }}
+          >
+            <Popup>
+              <div className="popup">
+                <span className="popup-tag" style={{ background: interestColors[p.category] }}>
+                  {interest.icon} {interest.label}
+                </span>
+                <strong>{p.name}</strong>
+                <small>
+                  {cityById[p.cityId].name} · ★ {p.rating.toFixed(1)} · {costLabel(p.costLevel)}
+                </small>
+                <span>{p.description}</span>
+                <button type="button" className={`popup-btn${saved ? ' saved' : ''}`} onClick={() => onToggleSave(p.id)}>
+                  {saved ? '♥ Saved to trip' : '♡ Save to trip'}
+                </button>
+              </div>
+            </Popup>
+          </CircleMarker>
+        )
+      })}
 
       {/* Cities last so they sit above place dots when zoomed out. */}
       {cities.map((c) => {
         const stop = routeCities.findIndex((r) => r.id === c.id)
+        const inTrip = stop >= 0
         return (
           <CircleMarker
             key={c.id}
             center={[c.lat, c.lng]}
-            radius={stop >= 0 ? 11 : 6}
-            pathOptions={{ color: '#d62828', fillColor: stop >= 0 ? '#d62828' : '#fff', fillOpacity: 1, weight: 2 }}
+            radius={inTrip ? 11 : c.hiddenGem ? 5 : 6}
+            pathOptions={{
+              color: c.hiddenGem && !inTrip ? '#0f8b8d' : '#d62828',
+              fillColor: inTrip ? '#d62828' : '#fff',
+              fillOpacity: 1,
+              weight: 2,
+            }}
             eventHandlers={{ click: () => onSelectCity(c.id) }}
           >
-            <Tooltip key={stop >= 0 ? `stop-${stop}` : "city"} direction="top" offset={[0, -8]} permanent={stop >= 0}>
-              {stop >= 0 ? `${stop + 1}. ${c.name}` : c.name}
+            <Tooltip key={inTrip ? `stop-${stop}` : 'city'} direction="top" offset={[0, -8]} permanent={inTrip}>
+              {inTrip ? `${stop + 1}. ${c.name}` : `${c.hiddenGem ? '💎 ' : ''}${c.name}`}
             </Tooltip>
           </CircleMarker>
         )

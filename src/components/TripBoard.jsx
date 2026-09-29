@@ -1,5 +1,5 @@
 import { cityById } from '../data/cities.js'
-import { distanceKm } from '../geo.js'
+import { distanceKm } from '../lib/geo.js'
 
 export default function TripBoard({ savedPlaces, cityOrder, onRemove, onMoveCity, onClear, onFocus }) {
   if (cityOrder.length === 0) {
