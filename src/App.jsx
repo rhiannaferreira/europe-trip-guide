@@ -42,6 +42,7 @@ import ShareTrip, { SharedTripDialog } from './components/ShareTrip.jsx'
 import { usePlacesVersion } from './lib/extraPlaces.js'
 import { useOsmPlaces } from './lib/osmPlaces.js'
 import OsmStatus from './components/OsmStatus.jsx'
+import { CityWeather, TripWeather } from './components/Weather.jsx'
 
 const PAGE = 24
 
@@ -271,6 +272,7 @@ export default function App({ route }) {
         >
           {selectedCity && <HiddenGems city={selectedCity} tripCityIds={trip.cityIds} onSelectCity={selectCity} onAddCity={trip.addCity} />}
           {!selectedCity && gemMode && <GemPairs country={country} onSelectCity={selectCity} />}
+          {selectedCity && <CityWeather city={selectedCity} />}
           {selectedCity && <BestTime city={selectedCity} />}
           {tipsCountry && <CountryTips code={tipsCountry} />}
         </CityExplorer>
@@ -406,6 +408,7 @@ export default function App({ route }) {
                   onGo={{ activities: () => setTripTab('days'), itinerary: () => setTripTab('days'), budget: () => setTripTab('budget') }}
                 />
               )}
+              {itineraryDays.length > 0 && <TripWeather days={itineraryDays} />}
               {trip.stops.length > 0 && <ShareTrip trip={trip} />}
               <TripNotes trip={trip} onOpenPrint={() => setTool('print')} />
               <TripSummary cityIds={trip.cityIds} legs={legs} days={days} pace={pace} suggestions={suggestions}>
