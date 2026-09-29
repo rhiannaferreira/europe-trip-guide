@@ -31,6 +31,7 @@ import TripProgress from './components/TripProgress.jsx'
 import TripNotes from './components/TripNotes.jsx'
 import PrintTrip from './components/PrintTrip.jsx'
 import ThemeToggle from './components/ThemeToggle.jsx'
+import InstallButton from './components/InstallButton.jsx'
 import { useTheme } from './useTheme.js'
 import { autoEstimates, formatMoney, summarizeBudget } from './utils/budgetCalculations.js'
 import { buildDays, tripProgress } from './utils/tripCalculations.js'
@@ -253,6 +254,7 @@ export default function App({ route }) {
             <span aria-hidden="true">🎲</span> <span className="nav-label">Surprise me</span>
           </button>
           <ThemeToggle theme={theme} onToggle={toggleTheme} />
+          <InstallButton />
         </nav>
         <button type="button" className="btn trip-jump" onClick={scrollToTrip}>
           🧳 My Trip{trip.cityIds.length ? ` (${trip.cityIds.length})` : ''}

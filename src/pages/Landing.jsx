@@ -9,6 +9,7 @@ import { KEYS, readJSON } from '../lib/storage.js'
 import { Link, cityPath, countryPath } from '../lib/router.jsx'
 import { setPageMeta } from '../lib/meta.js'
 import Thumb from '../components/Thumb.jsx'
+import InstallButton from '../components/InstallButton.jsx'
 
 // Start downloading the planner while people read, so "Start exploring" opens instantly.
 const preloadPlanner = () => import('../App.jsx')
@@ -82,6 +83,7 @@ export default function Landing() {
         <nav aria-label="Main">
           <Link to="/explore">Explore</Link>
           <Link to="/trip">{saved ? `My trip (${saved.count})` : 'My trip'}</Link>
+          <InstallButton className="link-btn install-link" />
         </nav>
       </header>
 
