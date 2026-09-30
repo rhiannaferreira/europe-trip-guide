@@ -28,6 +28,10 @@ export default class ErrorBoundary extends Component {
             Go to the start
           </a>
         </div>
+        <details className="state-details">
+          <summary>Details</summary>
+          <code>{String(this.state.error?.message || this.state.error)}</code>
+        </details>
       </main>
     )
   }

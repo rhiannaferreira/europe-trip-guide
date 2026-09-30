@@ -1,11 +1,12 @@
 // Eurowander service worker: lets the app open offline and install to a home screen.
 //
 //   pages        network first, falling back to the last copy (any page works, since the app routes itself)
-//   /assets/*    cache first (file names change with every build, so a cached file never goes stale)
+//   /assets/*    cache first (file names change with every build, so a cached file never goes stale;
+//                a missing old file is a 404, never the app page, see vercel.json)
 //   icons etc.   served from cache, refreshed in the background
 //   fonts        same, so the headings keep their font offline
 // Map tiles, photos and API calls are left to the browser; the app caches its API results itself.
-const VERSION = 'v1'
+const VERSION = 'v2'
 const SHELL = `eurowander-shell-${VERSION}`
 const ASSETS = `eurowander-assets-${VERSION}`
 const MAX_ASSETS = 80
@@ -50,7 +51,8 @@ async function cacheFirst(request) {
   const hit = await cache.match(request)
   if (hit) return hit
   const res = await fetch(request)
-  if (res.ok) {
+  // Never keep a page in place of a script or stylesheet (what a missing file used to come back as).
+  if (res.ok && !(res.headers.get('content-type') || '').includes('text/html')) {
     cache.put(request, res.clone())
     trim(ASSETS, MAX_ASSETS)
   }

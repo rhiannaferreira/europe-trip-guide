@@ -12,14 +12,40 @@ import { AccountProvider } from './lib/account.jsx'
 // The planner (map, lists, trip) is its own download, so other pages open without Leaflet.
 const App = lazy(() => import('./App.jsx'))
 
-// A failed download of a lazy page shows a retry screen instead of the generic crash page.
+// What browsers (and Vite's preloader) say when a page's code or styles couldn't be downloaded.
+const isLoadError = (error) =>
+  /dynamically imported module|Importing a module script failed|Unable to preload CSS|Failed to fetch|Load failed|ChunkLoadError/i.test(
+    `${error?.name || ''} ${error?.message || error}`,
+  )
+
+const RELOADED_AT = 'eurowander-chunk-reload'
+
+// A failed download of a lazy page reloads once (after a deploy the old files are gone, and the reload
+// picks up the new ones), then shows a retry screen. Any other error is a real crash: it goes on to
+// the ErrorBoundary above, so it isn't mistaken for a connection problem.
 class ChunkBoundary extends Component {
-  state = { failed: false }
-  static getDerivedStateFromError() {
-    return { failed: true }
+  state = { error: null }
+  static getDerivedStateFromError(error) {
+    return { error }
+  }
+  componentDidCatch(error) {
+    if (!isLoadError(error)) return
+    console.error('Eurowander could not load the planner:', error)
+    if (navigator.onLine === false) return
+    try {
+      const last = Number(sessionStorage.getItem(RELOADED_AT)) || 0
+      if (Date.now() - last < 30000) return
+      sessionStorage.setItem(RELOADED_AT, String(Date.now()))
+    } catch {
+      return
+    }
+    window.location.reload()
   }
   render() {
-    return this.state.failed ? <PageLoadError /> : this.props.children
+    const { error } = this.state
+    if (!error) return this.props.children
+    if (!isLoadError(error)) throw error
+    return <PageLoadError error={error} />
   }
 }
 

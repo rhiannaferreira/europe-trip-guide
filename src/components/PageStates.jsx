@@ -11,7 +11,7 @@ export function PageLoading({ label = 'Loading the planner…' }) {
 }
 
 // Shown when the code for a page can't be downloaded (usually offline, or a new version was just deployed).
-export function PageLoadError() {
+export function PageLoadError({ error }) {
   return (
     <main className="state-page" role="alert">
       <span className="state-icon" aria-hidden="true">📡</span>
@@ -22,6 +22,12 @@ export function PageLoadError() {
           Try again
         </button>
       </div>
+      {error && (
+        <details className="state-details">
+          <summary>Details</summary>
+          <code>{String(error.message || error)}</code>
+        </details>
+      )}
     </main>
   )
 }
