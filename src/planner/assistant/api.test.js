@@ -61,7 +61,7 @@ test('scope app uses the site-wide actions and rejects unknown scopes', async ()
   assert.ok(sent.output_config.format.schema.properties.action.enum.includes('build_trip'))
   assert.match(sent.system, /Eurowander/)
   // A trip-builder action isn't allowed in the app scope, and vice versa.
-  globalThis.fetch = async () => ({ ok: true, json: async () => ({ content: [{ type: 'text', text: JSON.stringify(action) }] }) })
+  globalThis.fetch = async () => ({ ok: true, json: async () => ({ content: [{ type: 'text', text: JSON.stringify({ ...action, action: 'answer' }) }] }) })
   assert.equal((await call('POST', { message: 'x', context, scope: 'app' })).status, 502)
   assert.equal((await call('POST', { message: 'x', context, scope: '__proto__' })).status, 400)
   assert.equal((await call('POST', { message: 'x', context, scope: 'nope' })).status, 400)

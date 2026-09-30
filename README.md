@@ -110,15 +110,22 @@ Questions ("Which day is busiest?", "Where are we spending the most?") and chang
 - **Without a key** the built-in rules (`intents.js`) read the request.
 - **With a key** an AI model reads it through `api/assistant.js`, a Vercel function. Set `ANTHROPIC_API_KEY` in the Vercel project's environment variables (never a `VITE_` variable; it must stay on the server). `ASSISTANT_MODEL` optionally overrides the model. The function only returns the proposed action; the browser checks it and the planner does all the maths. It sends the cities, nights, days and main preferences, never trip names or notes; requests are limited to 500 characters and 20 a minute per visitor. If the AI is unreachable, the rules take over.
 
-### Ask Eurowander (every page)
+### EuroWander travel copilot (every page)
 
-The 💬 **Ask Eurowander** button sits in the corner of every page and opens a chat that knows the whole app. It can plan a new trip ("Plan 10 days in Italy and Greece for food", which builds it on the Build page), change the trip open on the Build page (everything the assistant above does), suggest places in a city ("Where to eat in Lisbon?") or cities for an interest ("Less touristy cities in Spain"), describe a city ("Tell me about Porto"), open any city, country or page (including Compare, Quiz and Surprise me), save a place or add a city to My trip, sum up My trip, and explain how features work ("How do I share my trip?").
+The ✨ **EuroWander** button sits in the corner of every page and opens the copilot: a side panel on wide screens, the whole screen on phones. It knows the whole app and whichever trip is open (the one on the Build page, or My trip), and shows that trip in its header ("Planning: Italy & Switzerland · Jun 10–21").
 
-It follows the same rule: the request becomes one action from a fixed list (`src/assistant/appActions.js`), is checked against Eurowander's data, and the answer comes from that data (`appRun.js`), never from the AI. Opening a page happens straight away; anything that changes a trip waits for Apply (or the Save / Add button next to a suggestion). Without a key, rules (`appIntents.js`) read the request. With a key, `api/assistant.js` reads it with `scope: 'app'`, sending only the page, the city names in your trips, and the list of cities and countries. The chat downloads the first time it's opened.
+- **Discovery**: plan a new trip ("Plan me 10 days in Europe"; it asks a short question or two first when details are missing), where to go after a city, somewhere less touristy, train routes, comparisons ("which is cheapest?" works on whatever it just showed), places in a city, Surprise me.
+- **Your trip**: add, remove or replace cities, change nights, make it cheaper, cut train time, slow it down, plan or lighten a day ("Plan Tuesday", "Make Tuesday less busy"), move outdoor plans off rainy days, find places near your saved ones, and questions like "Is my trip too rushed?", "What's my most expensive city?" or "What should I do next?".
+- **Answers as cards**: places (View on the map, Save, Add to a day), cities (why they fit, train time, Explore, Add to trip), routes, budgets, day plans, weather and comparisons, each labelled with where the numbers come from (guide data, estimate, seasonal, live).
+- **Changes are proposals**: each option shows the route before and after, with travel time and estimated cost. Nothing changes until Apply, a proposal made for an older version of the trip can't be applied, and Undo puts My trip back.
+- **Weather** is a live forecast only within 16 days; further ahead it gives seasonal information, never an invented forecast.
+- **Chats** are kept in this browser (New chat, recent chats, delete); they never go to an account or to analytics.
+
+How it works: the request becomes one action from a fixed list (`src/assistant/appActions.js`) and is checked against Eurowander's data and the open trip. Answers come from that data (`appRun.js`) and trip changes from the planner (`tripRun.js`), applied through one trip handle (`tripHandle.js`) so the real trip is the only copy. Without a key, rules (`appIntents.js`) read the request. With a key, `api/assistant.js` reads it with `scope: 'app'`, sending only the page, the open trip's structure (cities, nights, days and their places, budget total, saved place names; never notes, expenses or account details) and the last few exchanges. The AI never supplies facts or numbers and can't change a trip by itself. The copilot downloads the first time it's opened.
 
 ### Analytics
 
-The builder records `trip_builder_started`, `trip_generated`, `generated_trip_saved`, `city_replaced`, `route_optimized`, `trip_shared` and `assistant_used`, with small numbers and ids only, never typed text (`src/lib/analytics.js`). They go to Vercel Web Analytics when the build has `VITE_VERCEL_ANALYTICS=1` and Web Analytics is on for the project (custom events need a paid Vercel plan), and are always dispatched as a `eurowander:analytics` browser event.
+The builder records `trip_builder_started`, `trip_generated`, `generated_trip_saved`, `city_replaced`, `route_optimized`, `trip_shared` and `assistant_used`, and the copilot records `chat_opened`, `chat_message_sent`, `chat_quick_action_used`, `chat_place_saved`, `chat_city_added`, `chat_trip_change_proposed`, `chat_trip_change_applied` and `chat_error`, with small numbers and ids only, never typed text (`src/lib/analytics.js`). They go to Vercel Web Analytics when the build has `VITE_VERCEL_ANALYTICS=1` and Web Analytics is on for the project (custom events need a paid Vercel plan), and are always dispatched as a `eurowander:analytics` browser event.
 
 ## Layout
 
@@ -172,7 +179,7 @@ src/
   builder/                the /build page: BuilderPage, BuilderForm, RouteEditor, PlanSummary, PlanMap,
                           DayPlans, PlanBudget, PlanWeather, Assistant, SaveDialog, DataBadge,
                           usePlanner (state + undo), saveTrip
-  assistant/              Ask Eurowander, the site-wide assistant: actions, rules, answers, context,
+  assistant/              EuroWander, the site-wide travel copilot: actions, rules, answers, trip changes, cards, history,
                           help texts, the floating button and panel, and a bridge to open pages
   pages/Landing.jsx       the home page
   Root.jsx                routes: landing, planner and builder (loaded on demand), not found

@@ -4,10 +4,12 @@
 //   open      whether the assistant panel is open
 //   builder   { plan, days, weatherByDay, apply } while Build My Europe Trip shows a plan, else null
 //   build     preferences waiting for the trip builder to generate from, or null
-//   tool      a planner dialog waiting to be opened ('compare', 'quiz', 'surprise'), or null
+//   tool      a planner dialog waiting to be opened ('compare', 'quiz', 'surprise', or { name: 'compare', cities }), or null
+//   focus     a city or place waiting to be shown on the explorer map ({ cityId, placeId }), or null
+//   tab       a My trip tab waiting to be opened ('trip', 'days', 'budget'), or null
 import { useSyncExternalStore } from 'react'
 
-let state = { open: false, builder: null, build: null, tool: null }
+let state = { open: false, builder: null, build: null, tool: null, focus: null, tab: null }
 const listeners = new Set()
 
 function set(patch) {
@@ -29,6 +31,8 @@ export const setAssistantOpen = (open) => set({ open })
 export const setBuilder = (builder) => set({ builder })
 export const requestBuild = (input) => set({ build: input })
 export const requestTool = (tool) => set({ tool })
+export const requestFocus = (focus) => set({ focus })
+export const requestTab = (tab) => set({ tab })
 
 // Take (and clear) a waiting request.
 export function takeBuild() {
@@ -40,4 +44,14 @@ export function takeTool() {
   const tool = state.tool
   if (tool) set({ tool: null })
   return tool
+}
+export function takeFocus() {
+  const focus = state.focus
+  if (focus) set({ focus: null })
+  return focus
+}
+export function takeTab() {
+  const tab = state.tab
+  if (tab) set({ tab: null })
+  return tab
 }

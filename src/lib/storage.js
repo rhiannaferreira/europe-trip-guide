@@ -10,6 +10,8 @@
 //   travel-app-session       the signed-in account's session, when accounts are on (see lib/supabase.js)
 //   travel-app-cloud         which saved trip in the account this browser's trip belongs to (see lib/cloudSync.js)
 //   travel-app-builder       the trip builder's form, generated plan and undo history (see builder/usePlanner.js)
+//   travel-app-chats         the travel copilot's recent conversations in this browser (see assistant/history.js)
+//   travel-app-copilot       copilot flags: intro seen, last proactive hint (see assistant/AssistantPanel.jsx)
 //
 // Reads never throw: unreadable or missing values come back as `fallback`.
 // Nothing here ever removes a key (signing out removes travel-app-session, in lib/supabase.js).
@@ -24,6 +26,8 @@ export const KEYS = {
   session: 'travel-app-session',
   cloud: 'travel-app-cloud',
   builder: 'travel-app-builder',
+  chats: 'travel-app-chats',
+  copilot: 'travel-app-copilot',
 }
 
 export function readJSON(key, fallback = null) {

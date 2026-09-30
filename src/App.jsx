@@ -45,7 +45,7 @@ import OsmStatus from './components/OsmStatus.jsx'
 import { CityWeather, TripWeather } from './components/Weather.jsx'
 import AccountPanel, { AccountButton, AccountNotice } from './components/Account.jsx'
 import { useCloudSync } from './useCloudSync.js'
-import { takeTool, useAssistantBridge } from './assistant/bridge.js'
+import { takeFocus, takeTab, takeTool, useAssistantBridge } from './assistant/bridge.js'
 
 const PAGE = 24
 
@@ -204,9 +204,31 @@ export default function App({ route }) {
   const toolRequest = useAssistantBridge((s) => s.tool)
   useEffect(() => {
     const next = toolRequest && takeTool()
-    if (next === 'compare') openCompare()
-    else if (next) setTool(next)
+    if (next?.name === 'compare' && next.cities?.length === 2) {
+      setComparePair(next.cities)
+      setTool('compare')
+    } else if (next === 'compare' || next?.name === 'compare') openCompare()
+    else if (typeof next === 'string') setTool(next)
   }, [toolRequest]) // eslint-disable-line react-hooks/exhaustive-deps
+  // …or ask for a city or place on the map, or a My trip tab.
+  const focusRequest = useAssistantBridge((s) => s.focus)
+  useEffect(() => {
+    const next = focusRequest && takeFocus()
+    if (!next) return
+    if (next.placeId && placeById[next.placeId]) focusPlace(next.placeId)
+    else if (next.cityId) {
+      selectCity(next.cityId)
+      if (window.innerWidth <= 1200) setTimeout(() => document.querySelector('.map-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
+    }
+  }, [focusRequest]) // eslint-disable-line react-hooks/exhaustive-deps
+  const tabRequest = useAssistantBridge((s) => s.tab)
+  useEffect(() => {
+    const next = tabRequest && takeTab()
+    if (next) {
+      setTripTab(next)
+      setTimeout(scrollToTrip, 50)
+    }
+  }, [tabRequest]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const pickFromSearch = {
     country: (code) => {

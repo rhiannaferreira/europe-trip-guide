@@ -105,6 +105,41 @@ export function useForecast(city) {
   return { ...state, retry: () => setAttempt((n) => n + 1) }
 }
 
+// The weather behind useTripWeather, without React (the assistant uses it too). `days`: [{ number, cityId,
+// city, date (Date) }], already limited to days that haven't passed. Never throws.
+// Returns { byDay, failed, total, error }: `failed` of `total` cities couldn't be loaded.
+export async function loadTripWeather(days) {
+  const horizon = lastForecastDate()
+  // One request per city: its forecast, or its dates last year.
+  const byCity = {}
+  for (const d of days) (byCity[d.cityId] ||= []).push(d)
+  const jobs = Object.entries(byCity).map(async ([, list]) => {
+    const city = list[0].city
+    const near = list.filter((d) => d.date <= horizon)
+    const far = list.filter((d) => d.date > horizon)
+    const out = {}
+    if (near.length) {
+      const fc = Object.fromEntries((await getForecast(city)).map((r) => [r.date, r]))
+      near.forEach((d) => fc[ymd(d.date)] && (out[d.number] = { kind: 'forecast', ...fc[ymd(d.date)] }))
+    }
+    if (far.length) {
+      const ly = Object.fromEntries((await getLastYear(city, ymd(far[0].date), ymd(far[far.length - 1].date))).map((r) => [r.date, r]))
+      far.forEach((d) => ly[ymd(d.date)] && (out[d.number] = { kind: 'last-year', ...ly[ymd(d.date)] }))
+    }
+    return out
+  })
+  const results = await Promise.allSettled(jobs)
+  const failed = results.filter((r) => r.status === 'rejected')
+  return {
+    byDay: Object.assign({}, ...results.filter((r) => r.status === 'fulfilled').map((r) => r.value)),
+    failed: failed.length,
+    total: results.length,
+    error: failed[0]?.reason,
+  }
+}
+
+export const startOfToday = today
+
 // Weather for each trip day: a forecast when the day is within 16 days, otherwise last year's
 // weather on that date. Days already over get nothing.
 // Returns { status, byDay: { [dayNumber]: { kind: 'forecast' | 'last-year', ...day } }, counts, error, retry }
@@ -115,40 +150,14 @@ export function useTripWeather(days) {
 
   useEffect(() => {
     const start = today()
-    const horizon = lastForecastDate()
     const upcoming = days.filter((d) => d.date >= start)
     if (upcoming.length === 0) return setState({ status: 'idle', byDay: {} })
     let live = true
     setState((s) => ({ status: 'loading', byDay: s.byDay }))
 
-    // One request per city: its forecast, or its dates last year.
-    const byCity = {}
-    for (const d of upcoming) (byCity[d.cityId] ||= []).push(d)
-    const jobs = Object.entries(byCity).map(async ([cityId, list]) => {
-      const city = list[0].city
-      const near = list.filter((d) => d.date <= horizon)
-      const far = list.filter((d) => d.date > horizon)
-      const out = {}
-      if (near.length) {
-        const fc = Object.fromEntries((await getForecast(city)).map((r) => [r.date, r]))
-        near.forEach((d) => fc[ymd(d.date)] && (out[d.number] = { kind: 'forecast', ...fc[ymd(d.date)] }))
-      }
-      if (far.length) {
-        const ly = Object.fromEntries((await getLastYear(city, ymd(far[0].date), ymd(far[far.length - 1].date))).map((r) => [r.date, r]))
-        far.forEach((d) => ly[ymd(d.date)] && (out[d.number] = { kind: 'last-year', ...ly[ymd(d.date)] }))
-      }
-      return out
-    })
-    Promise.allSettled(jobs).then((results) => {
+    loadTripWeather(upcoming).then(({ byDay, failed, total, error }) => {
       if (!live) return
-      const byDay = Object.assign({}, ...results.filter((r) => r.status === 'fulfilled').map((r) => r.value))
-      const failed = results.filter((r) => r.status === 'rejected')
-      setState({
-        status: failed.length === results.length ? 'error' : 'ready',
-        partial: failed.length > 0 && failed.length < results.length,
-        byDay,
-        error: failed[0]?.reason,
-      })
+      setState({ status: failed === total ? 'error' : 'ready', partial: failed > 0 && failed < total, byDay, error })
     })
     return () => {
       live = false

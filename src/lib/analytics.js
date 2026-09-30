@@ -12,6 +12,15 @@ export const EVENTS = [
   'route_optimized',
   'trip_shared',
   'assistant_used',
+  // The EuroWander copilot. Only the action name and small counts go out, never what was typed.
+  'chat_opened',
+  'chat_message_sent',
+  'chat_quick_action_used',
+  'chat_place_saved',
+  'chat_city_added',
+  'chat_trip_change_proposed',
+  'chat_trip_change_applied',
+  'chat_error',
 ]
 const allowed = new Set(EVENTS)
 
