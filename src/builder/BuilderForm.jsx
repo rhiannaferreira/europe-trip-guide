@@ -61,15 +61,15 @@ export default function BuilderForm({ input, onChange, onGenerate, hasPlan, note
         <legend>When and how long</legend>
         <div className="field-grid">
           <label>
-            Start date <small>optional</small>
+            <span className="field-label">Start date <small>optional</small></span>
             <input type="date" value={input.startDate} onChange={(e) => set({ startDate: e.target.value })} />
           </label>
           <label>
-            End date <small>optional</small>
+            <span className="field-label">End date <small>optional</small></span>
             <input type="date" value={input.endDate} min={input.startDate || undefined} onChange={(e) => set({ endDate: e.target.value })} />
           </label>
           <label>
-            Days
+            <span className="field-label">Days</span>
             <input
               type="number"
               min={MIN_DAYS}
@@ -83,7 +83,7 @@ export default function BuilderForm({ input, onChange, onGenerate, hasPlan, note
           </label>
           {!input.startDate && (
             <label>
-              Month <small>for seasons</small>
+              <span className="field-label">Month <small>for seasons</small></span>
               <select value={input.month || ''} onChange={(e) => set({ month: e.target.value ? Number(e.target.value) : null })}>
                 <option value="">Not sure yet</option>
                 {monthNames.map((m, i) => (
@@ -126,7 +126,7 @@ export default function BuilderForm({ input, onChange, onGenerate, hasPlan, note
             </div>
           </div>
           <label>
-            Getting around
+            <span className="field-label">Getting around</span>
             <select value={input.transport} onChange={(e) => set({ transport: e.target.value })}>
               {TRANSPORT.map((t) => (
                 <option key={t.id} value={t.id}>
@@ -136,7 +136,7 @@ export default function BuilderForm({ input, onChange, onGenerate, hasPlan, note
             </select>
           </label>
           <label>
-            Longest journey you'd like
+            <span className="field-label">Longest journey you'd like</span>
             <select value={input.maxLegMinutes ?? 'none'} onChange={(e) => set({ maxLegMinutes: e.target.value === 'none' ? null : Number(e.target.value) })}>
               {MAX_LEG_OPTIONS.map((m) => (
                 <option key={m ?? 'none'} value={m ?? 'none'}>
@@ -146,7 +146,7 @@ export default function BuilderForm({ input, onChange, onGenerate, hasPlan, note
             </select>
           </label>
           <label>
-            Famous or hidden gems
+            <span className="field-label">Famous or hidden gems</span>
             <select value={input.mix} onChange={(e) => set({ mix: e.target.value })}>
               {DESTINATION_MIX.map((m) => (
                 <option key={m.id} value={m.id}>
@@ -162,11 +162,11 @@ export default function BuilderForm({ input, onChange, onGenerate, hasPlan, note
         <legend>Where</legend>
         <div className="field-grid">
           <label>
-            Start in
+            <span className="field-label">Start in</span>
             <CitySelect value={input.startCityId} onChange={(v) => set({ startCityId: v })} empty="Anywhere" />
           </label>
           <label>
-            End in
+            <span className="field-label">End in</span>
             <select value={input.endCityId} onChange={(e) => set({ endCityId: e.target.value })}>
               <option value="">Wherever the route ends</option>
               {input.startCityId && <option value={input.startCityId}>Back in {cityById[input.startCityId].name} (round trip)</option>}
@@ -233,11 +233,11 @@ export default function BuilderForm({ input, onChange, onGenerate, hasPlan, note
         <legend>Budget</legend>
         <div className="field-grid">
           <label>
-            Total budget <small>optional, for everyone</small>
+            <span className="field-label">Total budget <small>optional, for everyone</small></span>
             <input type="text" inputMode="decimal" value={input.budget} placeholder="e.g. 3000" onChange={(e) => set({ budget: e.target.value })} />
           </label>
           <label>
-            Currency
+            <span className="field-label">Currency</span>
             <select value={input.currency} onChange={(e) => set({ currency: e.target.value })}>
               {Object.keys(CURRENCIES).map((c) => (
                 <option key={c} value={c}>
@@ -247,7 +247,7 @@ export default function BuilderForm({ input, onChange, onGenerate, hasPlan, note
             </select>
           </label>
           <label>
-            Travellers
+            <span className="field-label">Travellers</span>
             <input type="number" min="1" max="20" inputMode="numeric" value={input.travellers} onChange={(e) => set({ travellers: e.target.value })} />
           </label>
         </div>

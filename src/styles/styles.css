@@ -865,6 +865,10 @@ a:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent); ou
 }
 .builder-form input:disabled { opacity: 0.6; }
 .field-label { font-size: 0.82rem; font-weight: 600; }
+.field-label small { margin-left: 4px; }
+/* Hints sit on the label's line, and inputs sit at the bottom of their row, so boxes in a row line up
+   even when a label wraps on a narrow screen. */
+.field-grid > label, .field-grid > .field { justify-content: flex-end; }
 .field-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px 12px; }
 .field-note { font-size: 0.8rem; color: var(--muted); }
 .field-note.error, .field-note.warn { color: var(--warn); }
