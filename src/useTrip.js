@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { placeById } from './data/places.js'
 import { KEYS, backupOnce, readJSON, readText, writeJSON } from './lib/storage.js'
 import { persistTripPlaces } from './lib/extraPlaces.js'
+import { TRIP_CHANGED, withCity, withPlace } from './lib/tripStore.js'
 import { DEFAULT_TRIP_NAME, STATUSES, VERSION, emptyTrip, migrate } from './lib/tripModel.js'
 
 // The trip's shape and migrations live in lib/tripModel.js; they're re-exported here for older imports.
@@ -39,13 +40,14 @@ export function useTrip() {
     persistTripPlaces(trip)
   }, [trip])
 
-  const addCity = (cityId) =>
-    setTrip((t) => ({
-      ...t,
-      stops: t.stops.some((s) => s.cityId === cityId)
-        ? t.stops.map((s) => (s.cityId === cityId ? { ...s, auto: false } : s))
-        : [...t.stops, { cityId, auto: false, placeIds: [], days: null }],
-    }))
+  // The site-wide assistant can change the saved trip while this page is open (see lib/tripStore.js).
+  useEffect(() => {
+    const reload = () => setTrip(loadSaved())
+    window.addEventListener(TRIP_CHANGED, reload)
+    return () => window.removeEventListener(TRIP_CHANGED, reload)
+  }, [])
+
+  const addCity = (cityId) => setTrip((t) => withCity(t, cityId))
 
   const removeCity = (cityId) =>
     setTrip((t) => {
@@ -60,16 +62,7 @@ export function useTrip() {
     })
 
   // Save a place (adding its city as a stop if needed). Does nothing if it's already saved.
-  const savePlace = (placeId, status = 'saved') =>
-    setTrip((t) => {
-      const place = placeById[placeId]
-      if (!place || t.statuses[placeId]) return t
-      const stop = t.stops.find((s) => s.cityId === place.cityId)
-      const stops = stop
-        ? t.stops.map((s) => (s === stop ? { ...s, placeIds: [...s.placeIds, placeId] } : s))
-        : [...t.stops, { cityId: place.cityId, auto: true, placeIds: [placeId], days: null }]
-      return { ...t, stops, statuses: { ...t.statuses, [placeId]: status } }
-    })
+  const savePlace = (placeId, status = 'saved') => setTrip((t) => withPlace(t, placeId, status))
 
   // Unsave a place: it leaves its stop, its day and its status.
   // Unsaving the last place drops the stop only if the stop came from saving places.

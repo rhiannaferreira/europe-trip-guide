@@ -12,14 +12,16 @@ import DataBadge from './DataBadge.jsx'
 
 const API = '/api/assistant'
 
-async function askAi(message, plan) {
+// Sends one request to the AI endpoint. `scope` is 'plan' (a built trip) or 'app' (the site-wide assistant).
+// Returns the raw action, or null when the AI couldn't answer.
+export async function askAi(message, context, scope = 'plan') {
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), 30000)
   try {
     const r = await fetch(API, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ message, context: assistantContext(plan) }),
+      body: JSON.stringify({ message, context, scope }),
       signal: controller.signal,
     })
     if (!r.ok) return null
@@ -32,51 +34,115 @@ async function askAi(message, plan) {
   }
 }
 
-// Ask about the trip or ask for a change. The request is read (by the AI when it's set up, otherwise by
-// built-in rules) into one checked action; the planner works out the answer or the change, and a change
-// only happens when the traveller presses Apply.
-export default function Assistant({ plan, days, weather, onApply }) {
-  const [aiReady, setAiReady] = useState(false)
-  const [text, setText] = useState('')
-  const [busy, setBusy] = useState(false)
-  const [log, setLog] = useState([])
-
+// Whether the AI is set up (asked once per page load).
+let aiCheck = null
+export function useAiReady() {
+  const [ready, setReady] = useState(false)
   useEffect(() => {
     if (HASH_MODE) return
     let live = true
-    fetch(API)
+    aiCheck ||= fetch(API)
       .then((r) => (r.ok ? r.json() : null))
-      .then((d) => live && setAiReady(Boolean(d?.enabled)))
-      .catch(() => {})
+      .then((d) => Boolean(d?.enabled))
+      .catch(() => false)
+    aiCheck.then((ok) => live && setReady(ok))
     return () => {
       live = false
     }
   }, [])
+  return ready
+}
+
+// Works out a request about a built trip. `raw` is the AI's action if it answered; otherwise the
+// built-in rules read the request. Returns an entry for the chat log.
+export function answerPlanRequest(q, { plan, days, weather, raw = null, aiReady = false }) {
+  const via = raw ? 'ai' : 'rules'
+  if (!raw) raw = parseIntent(q, { plan, timeline: planTimeline(plan) })
+  const checked = validateAction(raw, { plan, dayCount: days.length })
+  let result
+  if (!checked.ok) result = { kind: 'none', text: checked.error }
+  else {
+    try {
+      result = runAction(checked.action, { plan, days, weather: weather?.byDay || {} })
+    } catch {
+      result = { kind: 'none', text: 'Something went wrong working that out. Try asking another way.' }
+    }
+  }
+  track('assistant_used', { mode: via, action: checked.ok ? checked.action.action : 'invalid', result: result.kind })
+  return { id: Date.now(), q, via, planAt: plan, action: checked.ok ? checked.action.action : '', reply: via === 'ai' && checked.ok ? checked.action.reply : '', result, fallback: aiReady && via === 'rules' }
+}
+
+// The planner's answer to one request about a built trip, with Apply / Dismiss for a proposed change.
+export function PlanReply({ entry: e, plan, onApply, settle }) {
+  if (e.result.kind !== 'proposal') return <p>{e.result.text}</p>
+  return (
+    <div className="proposal">
+      <p>
+        <strong>Proposed:</strong> {e.result.summary}
+      </p>
+      {e.result.reasons?.length > 0 && <p className="plan-why">Why: {e.result.reasons.join('; ')}</p>}
+      {e.status ? (
+        <p className="rule">{e.status === 'applied' ? 'Applied.' : 'Dismissed.'}</p>
+      ) : e.planAt !== plan ? (
+        <p className="rule">The trip has changed since this was worked out. Ask again for an up-to-date suggestion.</p>
+      ) : (
+        <div className="proposal-actions">
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => {
+              settle(e.id, 'applied')
+              onApply(e.result.plan, { message: e.result.summary, days: e.result.plan === plan ? e.result.days : null, replaced: e.action === 'replace_city', optimized: e.action === 'optimize_route' })
+            }}
+          >
+            Apply
+          </button>
+          <button type="button" className="btn" onClick={() => settle(e.id, 'dismissed')}>
+            Dismiss
+          </button>
+        </div>
+      )}
+      {!e.status && e.planAt === plan && e.result.options?.length > 0 && (
+        <div className="proposal-options">
+          <span className="rule">Other options:</span>
+          {e.result.options.map((o) => (
+            <button
+              key={o.cityId}
+              type="button"
+              className="chip"
+              title={o.reasons.join('; ')}
+              onClick={() => {
+                const r = applyChange(plan, o.change)
+                if (!r.changed) return
+                settle(e.id, 'applied')
+                onApply(r.plan, { message: r.summary, replaced: o.change.type === 'replace' })
+              }}
+            >
+              {cityById[o.cityId].name}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Ask about the trip or ask for a change. The request is read (by the AI when it's set up, otherwise by
+// built-in rules) into one checked action; the planner works out the answer or the change, and a change
+// only happens when the traveller presses Apply.
+export default function Assistant({ plan, days, weather, onApply }) {
+  const aiReady = useAiReady()
+  const [text, setText] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [log, setLog] = useState([])
 
   const ask = async (message) => {
     const q = message.trim().slice(0, 500)
     if (!q || busy) return
     setBusy(true)
-    const timeline = planTimeline(plan)
-    let raw = null
-    let via = 'rules'
-    if (aiReady) {
-      raw = await askAi(q, plan)
-      if (raw) via = 'ai'
-    }
-    if (!raw) raw = parseIntent(q, { plan, timeline })
-    const checked = validateAction(raw, { plan, dayCount: days.length })
-    let result
-    if (!checked.ok) result = { kind: 'none', text: checked.error }
-    else {
-      try {
-        result = runAction(checked.action, { plan, days, weather: weather.byDay || {} })
-      } catch {
-        result = { kind: 'none', text: 'Something went wrong working that out. Try asking another way.' }
-      }
-    }
-    track('assistant_used', { mode: via, action: checked.ok ? checked.action.action : 'invalid', result: result.kind })
-    setLog((l) => [...l.slice(-5), { id: Date.now(), q, via, planAt: plan, action: checked.ok ? checked.action.action : '', reply: via === 'ai' && checked.ok ? checked.action.reply : '', result, fallback: aiReady && via === 'rules' }])
+    const raw = aiReady ? await askAi(q, assistantContext(plan)) : null
+    const entry = answerPlanRequest(q, { plan, days, weather, raw, aiReady })
+    setLog((l) => [...l.slice(-5), entry])
     setText('')
     setBusy(false)
   }
@@ -86,7 +152,7 @@ export default function Assistant({ plan, days, weather, onApply }) {
   return (
     <div className="assistant">
       <p className="rule">
-        Ask about this trip or ask for a change. {aiReady ? 'An AI reads your request; ' : ''}Eurowander’s planner works out every answer and number, and nothing changes until you press Apply.
+        Ask about this trip or ask for a change. {aiReady ? 'An AI reads your request; ' : ''}Eurowander’s planner works out every answer and number, and nothing changes until you press Apply. The 💬 button works on every page too.
       </p>
       <ul className="assistant-log" aria-live="polite">
         {log.map((e) => (
@@ -96,58 +162,7 @@ export default function Assistant({ plan, days, weather, onApply }) {
               {e.via === 'ai' && <DataBadge kind="ai" />}
               {e.fallback && <p className="rule">The AI couldn’t answer just now, so the built-in rules read this.</p>}
               {e.reply && <p className="assistant-understood">{e.reply}</p>}
-              {e.result.kind === 'proposal' ? (
-                <div className="proposal">
-                  <p>
-                    <strong>Proposed:</strong> {e.result.summary}
-                  </p>
-                  {e.result.reasons?.length > 0 && <p className="plan-why">Why: {e.result.reasons.join('; ')}</p>}
-                  {e.status ? (
-                    <p className="rule">{e.status === 'applied' ? 'Applied.' : 'Dismissed.'}</p>
-                  ) : e.planAt !== plan ? (
-                    <p className="rule">The trip has changed since this was worked out. Ask again for an up-to-date suggestion.</p>
-                  ) : (
-                    <div className="proposal-actions">
-                      <button
-                        type="button"
-                        className="btn btn-primary"
-                        onClick={() => {
-                          settle(e.id, 'applied')
-                          onApply(e.result.plan, { message: e.result.summary, days: e.result.plan === plan ? e.result.days : null, replaced: e.action === 'replace_city', optimized: e.action === 'optimize_route' })
-                        }}
-                      >
-                        Apply
-                      </button>
-                      <button type="button" className="btn" onClick={() => settle(e.id, 'dismissed')}>
-                        Dismiss
-                      </button>
-                    </div>
-                  )}
-                  {!e.status && e.planAt === plan && e.result.options?.length > 0 && (
-                    <div className="proposal-options">
-                      <span className="rule">Other options:</span>
-                      {e.result.options.map((o) => (
-                        <button
-                          key={o.cityId}
-                          type="button"
-                          className="chip"
-                          title={o.reasons.join('; ')}
-                          onClick={() => {
-                            const r = applyChange(plan, o.change)
-                            if (!r.changed) return
-                            settle(e.id, 'applied')
-                            onApply(r.plan, { message: r.summary, replaced: o.change.type === 'replace' })
-                          }}
-                        >
-                          {cityById[o.cityId].name}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <p>{e.result.text}</p>
-              )}
+              <PlanReply entry={e} plan={plan} onApply={onApply} settle={settle} />
             </div>
           </li>
         ))}

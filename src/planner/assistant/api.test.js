@@ -46,3 +46,23 @@ test('bad input and bad model output are rejected', async () => {
   globalThis.fetch = async () => ({ ok: false, status: 500 })
   assert.equal((await call('POST', { message: 'hi', context })).status, 502)
 })
+
+test('scope app uses the site-wide actions and rejects unknown scopes', async () => {
+  process.env.ANTHROPIC_API_KEY = 'test-key'
+  let sent
+  const appAction = { action: 'open_city', city: 'Rome', reply: 'Opening Rome.' }
+  globalThis.fetch = async (url, init) => {
+    sent = JSON.parse(init.body)
+    return { ok: true, json: async () => ({ stop_reason: 'end_turn', content: [{ type: 'text', text: JSON.stringify(appAction) }] }) }
+  }
+  const r = await call('POST', { message: 'open rome', context: { page: { name: 'home' } }, scope: 'app' })
+  assert.equal(r.status, 200)
+  assert.equal(r.json.action.action, 'open_city')
+  assert.ok(sent.output_config.format.schema.properties.action.enum.includes('build_trip'))
+  assert.match(sent.system, /Eurowander/)
+  // A trip-builder action isn't allowed in the app scope, and vice versa.
+  globalThis.fetch = async () => ({ ok: true, json: async () => ({ content: [{ type: 'text', text: JSON.stringify(action) }] }) })
+  assert.equal((await call('POST', { message: 'x', context, scope: 'app' })).status, 502)
+  assert.equal((await call('POST', { message: 'x', context, scope: '__proto__' })).status, 400)
+  assert.equal((await call('POST', { message: 'x', context, scope: 'nope' })).status, 400)
+})

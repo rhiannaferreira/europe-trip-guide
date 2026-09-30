@@ -17,6 +17,7 @@ import { applyChange } from '../planner/modify.js'
 import { planLegs } from '../planner/plan.js'
 import { applyRainSuggestion } from '../planner/weatherPlan.js'
 import { usePlanner } from './usePlanner.js'
+import { setBuilder, takeBuild, useAssistantBridge } from '../assistant/bridge.js'
 import BuilderForm from './BuilderForm.jsx'
 import PlanSummary from './PlanSummary.jsx'
 import RouteEditor from './RouteEditor.jsx'
@@ -86,8 +87,8 @@ export default function BuilderPage() {
 
   useEffect(() => setShare({ status: 'idle', url: '' }), [plan, days])
 
-  const generate = () => {
-    const result = planner.generate(input)
+  const generate = (from = input) => {
+    const result = planner.generate(from)
     const s = computeStats(result.plan)
     track('trip_generated', { cities: s.cities, days: s.days, countries: s.countries.length, warnings: feasibilityWarnings(result.plan, s).length, pace: result.plan.prefs.pace, transport: result.plan.prefs.transport })
     setFormOpen(false)
@@ -111,6 +112,17 @@ export default function BuilderPage() {
     if (replaced) track('city_replaced', { via: 'assistant' })
     if (optimized) track('route_optimized', { via: 'assistant' })
   }
+
+  // The site-wide assistant: it can work on the plan shown here, and hand over a new trip to build.
+  useEffect(() => {
+    setBuilder(plan ? { plan, days, weatherByDay: weather.byDay, input, apply: fromAssistant } : null)
+  }, [plan, days, weather.byDay, input]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => () => setBuilder(null), [])
+  const buildRequest = useAssistantBridge((s) => s.build)
+  useEffect(() => {
+    const next = buildRequest && takeBuild()
+    if (next) generate(next)
+  }, [buildRequest]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const makeShare = async () => {
     setShare({ status: 'working', url: '' })
@@ -155,7 +167,7 @@ export default function BuilderPage() {
             </button>
           </div>
         ) : (
-          <BuilderForm input={input} onChange={planner.setInput} onGenerate={generate} hasPlan={Boolean(plan)} notes={planner.notes} />
+          <BuilderForm input={input} onChange={planner.setInput} onGenerate={() => generate()} hasPlan={Boolean(plan)} notes={planner.notes} />
         )}
 
         {plan && (

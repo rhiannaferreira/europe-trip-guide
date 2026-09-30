@@ -8,6 +8,7 @@ import { NotFound, PageLoadError, PageLoading } from './components/PageStates.js
 import Landing from './pages/Landing.jsx'
 import OfflineNotice from './components/OfflineNotice.jsx'
 import { AccountProvider } from './lib/account.jsx'
+import AssistantButton from './assistant/AssistantButton.jsx'
 
 // The planner (map, lists, trip) is its own download, so other pages open without Leaflet.
 const App = lazy(() => import('./App.jsx'))
@@ -84,6 +85,7 @@ export default function Root() {
         ) : (
           <Missing route={route} />
         )}
+        <AssistantButton route={route} />
       </AccountProvider>
     </ErrorBoundary>
   )

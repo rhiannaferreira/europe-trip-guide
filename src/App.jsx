@@ -45,6 +45,7 @@ import OsmStatus from './components/OsmStatus.jsx'
 import { CityWeather, TripWeather } from './components/Weather.jsx'
 import AccountPanel, { AccountButton, AccountNotice } from './components/Account.jsx'
 import { useCloudSync } from './useCloudSync.js'
+import { takeTool, useAssistantBridge } from './assistant/bridge.js'
 
 const PAGE = 24
 
@@ -198,6 +199,14 @@ export default function App({ route }) {
     if (withCityId) setComparePair(([a, b]) => (a === withCityId || b === withCityId ? [a, b] : [withCityId, a === withCityId ? b : a]))
     setTool('compare')
   }
+
+  // The site-wide assistant can ask for one of the dialogs above.
+  const toolRequest = useAssistantBridge((s) => s.tool)
+  useEffect(() => {
+    const next = toolRequest && takeTool()
+    if (next === 'compare') openCompare()
+    else if (next) setTool(next)
+  }, [toolRequest]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const pickFromSearch = {
     country: (code) => {
