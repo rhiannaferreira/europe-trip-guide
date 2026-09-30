@@ -11,6 +11,8 @@ import { AccountProvider } from './lib/account.jsx'
 
 // The planner (map, lists, trip) is its own download, so other pages open without Leaflet.
 const App = lazy(() => import('./App.jsx'))
+// Build My Europe Trip is its own download too.
+const BuilderPage = lazy(() => import('./builder/BuilderPage.jsx'))
 
 // What browsers (and Vite's preloader) say when a page's code or styles couldn't be downloaded.
 const isLoadError = (error) =>
@@ -67,6 +69,12 @@ export default function Root() {
         <OfflineNotice />
         {route.name === 'home' ? (
           <Landing />
+        ) : route.name === 'build' ? (
+          <ChunkBoundary>
+            <Suspense fallback={<PageLoading />}>
+              <BuilderPage />
+            </Suspense>
+          </ChunkBoundary>
         ) : known ? (
           <ChunkBoundary>
             <Suspense fallback={<PageLoading />}>

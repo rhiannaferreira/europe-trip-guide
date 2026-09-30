@@ -45,7 +45,7 @@ const crumbs = (items) => ({
   itemListElement: items.map(([name, p], i) => ({ '@type': 'ListItem', position: i + 1, name, item: SITE_URL + p })),
 })
 
-const nav = `<nav class="prerender-nav"><a href="/">Eurowander</a> · <a href="/explore">Explore</a> · <a href="/trip">My trip</a></nav>`
+const nav = `<nav class="prerender-nav"><a href="/">Eurowander</a> · <a href="/explore">Explore</a> · <a href="/build">Build a trip</a> · <a href="/trip">My trip</a></nav>`
 
 for (const city of cities) {
   const meta = cityMeta(city)
@@ -106,6 +106,16 @@ write(
   }),
 )
 
+write(
+  'build.html',
+  page({
+    title: 'Build my Europe trip',
+    description: 'Get a Europe trip drafted from your dates, interests and pace: cities in a sensible order, nights per stop, train times, day plans and a rough budget, all editable.',
+    path: '/build',
+    body: `<main class="prerender">${nav}<h1>Build my Europe trip</h1><p>Tell Eurowander your dates, interests, pace and budget, or leave them blank, and get a whole route: cities in order, nights in each, journey times, a plan for every day and a rough budget. Then replace cities, change nights or ask for a more relaxed version.</p></main>`,
+  }),
+)
+
 // The home page: site-wide structured data.
 write(
   'index.html',
@@ -122,7 +132,7 @@ write(
 )
 
 const today = new Date().toISOString().slice(0, 10)
-const urls = ['/', '/explore', ...countries.map((c) => countryMeta(c.code).path), ...cities.map((c) => cityMeta(c).path)]
+const urls = ['/', '/build', '/explore', ...countries.map((c) => countryMeta(c.code).path), ...cities.map((c) => cityMeta(c).path)]
 write(
   'sitemap.xml',
   `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls

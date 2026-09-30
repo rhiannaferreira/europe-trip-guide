@@ -2,7 +2,7 @@
 
 A travel guide for Europe. Pick a country or city, discover places by interest, save favourites, and build a multi-country trip that leans on trains, with a route map, travel-time estimates, pace, local tips, hidden-gem alternatives and seasonal events.
 
-Everything runs in the browser. The guide itself is built-in sample data; photos, extra places and weather come from free, keyless public sources (Wikipedia/Wikimedia Commons, OpenStreetMap and Open-Meteo), and the app works without them. There's no backend, no login and no paid API.
+Everything runs in the browser. The guide itself is built-in sample data; photos, extra places and weather come from free, keyless public sources (Wikipedia/Wikimedia Commons, OpenStreetMap and Open-Meteo), and the app works without them. The only server code is an optional assistant endpoint (`api/assistant.js`); without its key, everything still works on built-in rules.
 
 ## Run it
 
@@ -10,6 +10,7 @@ Everything runs in the browser. The guide itself is built-in sample data; photos
 npm install
 npm run dev      # http://localhost:5173
 npm run build    # production build in dist/
+npm test         # unit tests (Node's built-in test runner, no extra packages)
 ```
 
 ## Pages
@@ -17,6 +18,7 @@ npm run build    # production build in dist/
 | Address | What |
 | --- | --- |
 | `/` | Landing page: what makes Eurowander different, a sample train route, hidden-gem swaps |
+| `/build` | Build My Europe Trip: a whole trip drafted from preferences, then edited piece by piece |
 | `/explore` | The planner |
 | `/country/it` | The planner showing one country |
 | `/city/rome` | The planner showing one city |
@@ -81,6 +83,37 @@ When a source can't be reached, the app says so in a line with a Try again butto
 - Place entry: free €0, $ €10, $$ €20, $$$ €35 per person. Train fare: €0.14 per km, at least €10.
 - Quiz and Surprise Me rules are written out at the top of `src/utils/matching.js`.
 
+## Build My Europe Trip (`/build`)
+
+Fill in any of: dates or a number of days, interests, pace, how you like to travel, the longest journey you'd like, famous or hidden-gem destinations, start and end cities, must-visit cities, countries to include or avoid, budget, currency and travellers. Everything is optional. On a phone the form is five steps (Dates, Preferences, Destinations, Budget, Generate).
+
+The result is a route with nights per stop, every journey (with its source: sample time, distance estimate or flight estimate), trip stats, warnings with one-tap fixes, a map, and tabs for day plans ("Plan my days"), budget, weather, Europe tips (borders, currencies, plugs, Sundays, rail links, events) and an assistant. Every stop can be given more or fewer nights, moved, replaced (with reasons why each alternative fits), swapped for "another option", removed or re-planned from that point on. Quick changes: more relaxed, less train time, best order, cheaper, more hidden gems, more nightlife, more nature. Undo keeps the last 20 versions. "Save as my trip" turns it into the normal trip (the current one is kept as a backup), and "Share link" makes a normal share link.
+
+How it decides (all in `src/planner/`, plain rules, no AI):
+
+- **Nights and days**: a trip of N days has N − 1 nights; the first day at each new stop is a travel day. Same rule as My Trip, so a saved plan keeps its dates.
+- **How many cities**: nights ÷ nights-per-city for the pace (relaxed 3.5, moderate 2.5, fast 1.75).
+- **Which cities**: each city scores points for your interests, the famous/gems mix, the season, the budget and rail links; a city is added only if its points beat the travel it adds (1 point per 75 minutes). Countries you asked for are covered first.
+- **Order**: the quickest order between the fixed start and end (exact search up to 10 stops, otherwise nearest-neighbour + 2-opt), with journeys over your limit counted twice.
+- **Nights per city**: from each city's recommended stay, scaled by pace and fit, largest remainder, at least one night each.
+- **Journeys**: sample fastest train times where Eurowander has them, otherwise distance estimates (`lib/trip.js` rule). "Train, fly if long" suggests a flight on ground legs over 7 hours and 600 km; "Fastest" whenever it saves an hour. Flights are rough door-to-door estimates; there's no flight data.
+- **Warnings**: rushed (under 1.5 days per city), travel-heavy (12+ hours or over 15% of waking hours, 16 a day), backtracking (reordering saves an hour and 12%), three or more travel days in a row, journeys over your limit, very long ground legs, pace different from the one you chose. No overall score.
+- **Budget**: the Budget tab's own estimates (rooms, food and local transport from each city's cost level; distance-based fares; entry fees of planned places) plus 10% for extras. Fits = estimate ≤ 90% of your budget, tight ≤ 100%.
+- **Weather**: a real Open-Meteo forecast within 16 days (only this can suggest moving outdoor plans off a rainy day), last year's weather on the same dates further out, otherwise seasonal notes. Each is labelled.
+
+Every figure carries a label: Live, Estimate, Seasonal, Past data, Your choice or AI suggestion.
+
+### The assistant
+
+Questions ("Which day is busiest?", "Where are we spending the most?") and changes ("Replace Amsterdam with somewhere less touristy", "Add another day in Paris", "What if it rains Tuesday?") are read into one action from a fixed list (`src/planner/assistant/actions.js`), checked, and worked out by the planner. A change shows as a proposal with Apply and Dismiss; nothing changes until Apply.
+
+- **Without a key** the built-in rules (`intents.js`) read the request.
+- **With a key** an AI model reads it through `api/assistant.js`, a Vercel function. Set `ANTHROPIC_API_KEY` in the Vercel project's environment variables (never a `VITE_` variable; it must stay on the server). `ASSISTANT_MODEL` optionally overrides the model. The function only returns the proposed action; the browser checks it and the planner does all the maths. It sends the cities, nights, days and main preferences, never trip names or notes; requests are limited to 500 characters and 20 a minute per visitor. If the AI is unreachable, the rules take over.
+
+### Analytics
+
+The builder records `trip_builder_started`, `trip_generated`, `generated_trip_saved`, `city_replaced`, `route_optimized`, `trip_shared` and `assistant_used`, with small numbers and ids only, never typed text (`src/lib/analytics.js`). They go to Vercel Web Analytics when the build has `VITE_VERCEL_ANALYTICS=1` and Web Analytics is on for the project (custom events need a paid Vercel plan), and are always dispatched as a `eurowander:analytics` browser event.
+
 ## Layout
 
 ```
@@ -127,8 +160,15 @@ src/
     StatusPicker, TripProgress, TripNotes, PrintTrip, Modal, ThemeToggle,
     ShareTrip, Weather, OsmStatus, InstallButton, OfflineNotice, PageStates, ErrorBoundary,
     Account (sign-in, saved trips, header button and notice)
+  planner/                Build My Europe Trip rules (no React): preferences, transport, scoring, route,
+                          plan, feasibility, alternatives, modify, dayPlanner, budget, weatherPlan,
+                          europe, convert, assistant/ (actions, intents, run, context); tests alongside
+  builder/                the /build page: BuilderPage, BuilderForm, RouteEditor, PlanSummary, PlanMap,
+                          DayPlans, PlanBudget, PlanWeather, Assistant, SaveDialog, DataBadge,
+                          usePlanner (state + undo), saveTrip
   pages/Landing.jsx       the home page
-  Root.jsx                routes: landing, planner (loaded on demand), not found
+  Root.jsx                routes: landing, planner and builder (loaded on demand), not found
+api/assistant.js          optional AI reading of assistant requests (Vercel function)
   data/
     countries.js  cities.js  places.js  interests.js
     countryTips.js  trainTimes.js  events.js  costs.js
@@ -153,6 +193,7 @@ Components only read data through the exports of `src/data/` (for example `getCi
 | `travel-app-recent-searches` | The last few search suggestions picked |
 | `travel-app-session` | The signed-in session (accounts only; removed on sign-out) |
 | `travel-app-cloud` | Which of the account's saved trips this browser's trip is (accounts only) |
+| `travel-app-builder` | The trip builder's form, generated plan and undo history |
 | `eurowander-cache-*` | Cached photos, OpenStreetMap places and weather (safe to clear) |
 
 Older trips (the first `{ placeIds, cityOrder }` shape and v2 `{ stops, startDate, endDate }`) are migrated on load: saved places keep their stop and become ❤️ Saved. Nothing is ever deleted from storage. The itinerary is keyed by day number, so changing the start date keeps the plan; if the trip gets shorter, plans past the new end appear under "Outside your dates" instead of disappearing.
@@ -165,7 +206,7 @@ People can sign in with an emailed link to keep their trips in an account and op
 
 - **First sign-in:** the trip in the browser (with its itinerary, budget, notes and statuses) is uploaded as a saved trip. If the browser's trip is empty, the most recent saved trip opens instead.
 - **While signed in:** every change is saved to the account a moment after it's made, and a tab that comes back into focus picks up changes made on another device. The browser copy stays, so the app still works offline.
-- **Your trips:** the header's account button lists saved trips, opens another one, starts a new one or deletes one. Opening a shared trip link while signed in saves it as a new trip rather than writing over the open one.
+- **Your trips:** the header's account button lists saved trips, opens another one, starts a new one or deletes one. Opening a shared trip link, or saving a trip from the builder, while signed in saves it as a new trip rather than writing over the open one.
 - **Sign out:** a copy of the open trip stays in the browser.
 
 Accounts switch on only when the build has both `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` (see `.env.example`). Without them there's no sign-in button and nothing about accounts runs.
@@ -182,4 +223,4 @@ Supabase's built-in email sender is limited to a few emails an hour; for more, a
 
 ## Deploying
 
-The app is a static site, so any static host works. On Vercel: import this repo at vercel.com/new, keep the detected Vite preset (build `npm run build`, output `dist`), and deploy. Every push to `main` redeploys. `vercel.json` handles the clean city/country addresses and sends other paths to the app.
+The app is a static site, so any static host works. On Vercel: import this repo at vercel.com/new, keep the detected Vite preset (build `npm run build`, output `dist`), and deploy. Every push to `main` redeploys. `vercel.json` handles the clean city/country addresses and sends other paths to the app, except `/api/`, which Vercel runs as functions. Optional environment variables: `ANTHROPIC_API_KEY` and `ASSISTANT_MODEL` (assistant), `VITE_VERCEL_ANALYTICS=1` (analytics), and the Supabase pair above.

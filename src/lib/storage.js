@@ -9,6 +9,7 @@
 //   travel-app-theme         'light' or 'dark' (missing means "follow the system")
 //   travel-app-session       the signed-in account's session, when accounts are on (see lib/supabase.js)
 //   travel-app-cloud         which saved trip in the account this browser's trip belongs to (see lib/cloudSync.js)
+//   travel-app-builder       the trip builder's form, generated plan and undo history (see builder/usePlanner.js)
 //
 // Reads never throw: unreadable or missing values come back as `fallback`.
 // Nothing here ever removes a key (signing out removes travel-app-session, in lib/supabase.js).
@@ -22,6 +23,7 @@ export const KEYS = {
   theme: 'travel-app-theme',
   session: 'travel-app-session',
   cloud: 'travel-app-cloud',
+  builder: 'travel-app-builder',
 }
 
 export function readJSON(key, fallback = null) {

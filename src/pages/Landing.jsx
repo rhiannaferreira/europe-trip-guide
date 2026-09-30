@@ -13,6 +13,7 @@ import InstallButton from '../components/InstallButton.jsx'
 
 // Start downloading the planner while people read, so "Start exploring" opens instantly.
 const preloadPlanner = () => import('../App.jsx')
+const preloadBuilder = () => import('../builder/BuilderPage.jsx')
 
 const SAMPLE_ROUTE = ['london', 'paris', 'brussels', 'amsterdam', 'berlin']
 const GEM_SWAPS = [
@@ -41,7 +42,7 @@ const PILLARS = [
   {
     icon: '🧳',
     title: 'Multi-country plans',
-    text: 'Mix stops from any countries, then plan it day by day with the route, a timeline, a rough budget and the weather.',
+    text: 'Mix stops from any countries, or let the trip builder draft the whole route from your dates, interests and pace. Then plan it day by day with a timeline, a rough budget and the weather.',
   },
 ]
 
@@ -82,6 +83,7 @@ export default function Landing() {
         </Link>
         <nav aria-label="Main">
           <Link to="/explore">Explore</Link>
+          <Link to="/build">Build a trip</Link>
           <Link to="/trip">{saved ? `My trip (${saved.count})` : 'My trip'}</Link>
           <InstallButton className="link-btn install-link" />
         </nav>
@@ -96,7 +98,10 @@ export default function Landing() {
               Find places worth seeing, swap the crowded favourites for hidden gems, and stitch cities in different countries into one trip, planned day by day.
             </p>
             <div className="hero-actions">
-              <Link to="/explore" className="btn btn-primary btn-lg" onMouseEnter={preloadPlanner} onFocus={preloadPlanner}>
+              <Link to="/build" className="btn btn-primary btn-lg" onMouseEnter={preloadBuilder} onFocus={preloadBuilder}>
+                Build my Europe trip
+              </Link>
+              <Link to="/explore" className="btn btn-lg" onMouseEnter={preloadPlanner} onFocus={preloadPlanner}>
                 Start exploring
               </Link>
               {saved ? (

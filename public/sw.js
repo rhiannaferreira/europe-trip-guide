@@ -5,8 +5,8 @@
 //                a missing old file is a 404, never the app page, see vercel.json)
 //   icons etc.   served from cache, refreshed in the background
 //   fonts        same, so the headings keep their font offline
-// Map tiles, photos and API calls are left to the browser; the app caches its API results itself.
-const VERSION = 'v2'
+// Map tiles, photos and API calls (including /api/*) are left to the browser; the app caches its API results itself.
+const VERSION = 'v3'
 const SHELL = `eurowander-shell-${VERSION}`
 const ASSETS = `eurowander-assets-${VERSION}`
 const MAX_ASSETS = 80
@@ -79,7 +79,7 @@ self.addEventListener('fetch', (event) => {
   if (url.origin === self.location.origin) {
     if (request.mode === 'navigate') return event.respondWith(networkFirstPage(request))
     if (url.pathname.startsWith('/assets/')) return event.respondWith(cacheFirst(request))
-    if (url.pathname === '/sw.js') return
+    if (url.pathname === '/sw.js' || url.pathname.startsWith('/api/')) return
     return event.respondWith(staleWhileRevalidate(request, SHELL))
   }
   if (url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com') {

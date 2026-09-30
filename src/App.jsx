@@ -251,6 +251,9 @@ export default function App({ route }) {
           onPickPlace={pickFromSearch.place}
         />
         <nav className="header-nav" aria-label="Discover">
+          <Link to="/build" className="btn nav-btn nav-build">
+            <span aria-hidden="true">🗺️</span> <span className="nav-label">Build my trip</span>
+          </Link>
           <button type="button" className="btn nav-btn" onClick={() => openCompare()}>
             <span aria-hidden="true">⚖️</span> <span className="nav-label">Compare</span>
           </button>
