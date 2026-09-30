@@ -7,7 +7,7 @@ import { DEFAULT_TRIP_NAME, STATUSES, VERSION, emptyTrip, migrate } from './lib/
 // The trip's shape and migrations live in lib/tripModel.js; they're re-exported here for older imports.
 export { DEFAULT_TRIP_NAME, STATUSES, emptyTrip, isEmptyTrip, migrate } from './lib/tripModel.js'
 
-function load() {
+function loadSaved() {
   const saved = readJSON(KEYS.trip)
   // Before migrating an older (or unreadable) saved trip, keep a copy of it exactly as it was.
   if (readText(KEYS.trip) !== null && saved?.version !== VERSION) backupOnce(KEYS.trip, KEYS.tripBackup)
@@ -32,7 +32,7 @@ function withoutStatuses(statuses, placeIds) {
 }
 
 export function useTrip() {
-  const [trip, setTrip] = useState(load)
+  const [trip, setTrip] = useState(loadSaved)
 
   useEffect(() => {
     writeJSON(KEYS.trip, trip)
