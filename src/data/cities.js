@@ -54,6 +54,31 @@ export const cities = [
     recommendedDays: [1, 1], beach: false, size: 'small',
   },
 
+  {
+    id: 'lyon', name: 'Lyon', country: 'FR', lat: 45.7640, lng: 4.8357,
+    description: 'France\'s food capital: bouchons, a huge covered market and a Renaissance old town under Fourvière hill.',
+    image: null, emoji: '🍷', interests: ['food', 'history', 'museums'], costLevel: 2,
+    seasons: { bestWeather: [4, 5, 6, 9, 10], busy: [7, 8, 12], lowerCost: [1, 2, 11], special: [{ label: 'Fête des Lumières', months: [12] }] },
+    hiddenGems: [], hiddenGem: false,
+    recommendedDays: [2, 3], beach: false, size: 'major',
+  },
+  {
+    id: 'strasbourg', name: 'Strasbourg', country: 'FR', lat: 48.5734, lng: 7.7521,
+    description: 'Half-timbered Petite France, a soaring cathedral and Alsatian winstubs, right on the German border.',
+    image: null, emoji: '🥨', interests: ['history', 'food'], costLevel: 2,
+    seasons: { bestWeather: [5, 6, 7, 8, 9], busy: [7, 8, 12], lowerCost: [1, 2, 3, 11], special: [{ label: 'Christmas market', months: [12] }] },
+    hiddenGems: [], hiddenGem: false,
+    recommendedDays: [1, 2], beach: false, size: 'small',
+  },
+  {
+    id: 'nice', name: 'Nice', country: 'FR', lat: 43.7102, lng: 7.2620,
+    description: 'The Riviera\'s biggest city: a seafront promenade, pebble beaches and a market-filled old town.',
+    image: null, emoji: '🌊', interests: ['outdoors', 'food', 'history'], costLevel: 3,
+    seasons: { bestWeather: [5, 6, 7, 8, 9, 10], busy: [2, 7, 8], lowerCost: [1, 11, 12], special: [{ label: 'Nice Carnival', months: [2] }] },
+    hiddenGems: [], hiddenGem: false,
+    recommendedDays: [2, 4], beach: true, size: 'major',
+  },
+
   // Italy
   {
     id: 'rome', name: 'Rome', country: 'IT', lat: 41.9028, lng: 12.4964,
@@ -102,6 +127,15 @@ export const cities = [
     seasons: { bestWeather: [4, 5, 6, 9, 10], busy: [7, 8], lowerCost: [1, 2, 11] },
     hiddenGems: [], hiddenGem: true,
     recommendedDays: [1, 2], beach: false, size: 'small',
+  },
+
+  {
+    id: 'milan', name: 'Milan', country: 'IT', lat: 45.4642, lng: 9.1900,
+    description: 'Fashion, design and The Last Supper, with aperitivo along the canals and fast trains in every direction.',
+    image: null, emoji: '🏙️', interests: ['shopping', 'museums', 'food', 'nightlife'], costLevel: 3,
+    seasons: { bestWeather: [4, 5, 6, 9, 10], busy: [4, 9], lowerCost: [1, 2, 8] },
+    hiddenGems: [], hiddenGem: false,
+    recommendedDays: [1, 2], beach: false, size: 'major',
   },
 
   // Spain
@@ -188,6 +222,15 @@ export const cities = [
     seasons: { bestWeather: [5, 6, 7, 8, 9], busy: [7, 9, 10, 12], lowerCost: [1, 2, 3, 11] },
     hiddenGems: [], hiddenGem: false,
     recommendedDays: [2, 3], beach: false, size: 'major',
+  },
+
+  {
+    id: 'cologne', name: 'Cologne', country: 'DE', lat: 50.9375, lng: 6.9603,
+    description: 'A twin-spired cathedral by the station, Kölsch in wood-panelled brewhouses and a lively Rhine riverfront.',
+    image: null, emoji: '⛪', interests: ['history', 'nightlife', 'museums'], costLevel: 2,
+    seasons: { bestWeather: [5, 6, 7, 8, 9], busy: [2, 12], lowerCost: [1, 3, 11], special: [{ label: 'Carnival', months: [2] }, { label: 'Christmas markets', months: [12] }] },
+    hiddenGems: [], hiddenGem: false,
+    recommendedDays: [1, 2], beach: false, size: 'major',
   },
 
   // Netherlands

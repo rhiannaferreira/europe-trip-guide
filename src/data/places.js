@@ -41,6 +41,25 @@ const raw = [
   { id: 'chartres-cathedral', cityId: 'chartres', category: 'history', type: 'landmark', name: 'Chartres Cathedral', lat: 48.4478, lng: 1.4876, rating: 4.8, costLevel: 0, description: 'Over 150 original medieval stained-glass windows.' },
   { id: 'chartres-lower-town', cityId: 'chartres', category: 'outdoors', type: 'walk', name: 'Lower Town riverside walk', lat: 48.4452, lng: 1.4930, rating: 4.5, costLevel: 0, description: 'Old washhouses and bridges along the Eure.' },
 
+  // Lyon
+  { id: 'lyon-halles', cityId: 'lyon', category: 'food', type: 'market', name: 'Les Halles de Lyon Paul Bocuse', lat: 45.7630, lng: 4.8505, rating: 4.6, costLevel: 2, description: 'Covered market of cheese, charcuterie and oyster bars; lunch at the counters.' },
+  { id: 'lyon-vieux-lyon', cityId: 'lyon', category: 'history', type: 'neighbourhood', name: 'Vieux Lyon and its traboules', lat: 45.7622, lng: 4.8271, rating: 4.7, costLevel: 0, description: 'Renaissance lanes with hidden passageways between the houses.' },
+  { id: 'lyon-fourviere', cityId: 'lyon', category: 'history', type: 'church', name: 'Basilica of Notre-Dame de Fourvière', lat: 45.7623, lng: 4.8225, rating: 4.7, costLevel: 0, description: 'Hilltop basilica with the best view over the city.' },
+  { id: 'lyon-confluences', cityId: 'lyon', category: 'museums', type: 'museum', name: 'Musée des Confluences', lat: 45.7327, lng: 4.8180, rating: 4.5, costLevel: 2, description: 'Science and anthropology museum in a glass-and-steel cloud where the rivers meet.' },
+  { id: 'lyon-tete-dor', cityId: 'lyon', category: 'outdoors', type: 'park', name: 'Parc de la Tête d\'Or', lat: 45.7772, lng: 4.8559, rating: 4.7, costLevel: 0, description: 'A huge park with a lake, rose garden and free zoo.' },
+  { id: 'lyon-rhone-quays', cityId: 'lyon', category: 'nightlife', type: 'bar', name: 'Barges on the Rhône quays', lat: 45.7560, lng: 4.8420, rating: 4.3, costLevel: 2, description: 'Bars on moored boats that fill up on summer evenings.' },
+  // Strasbourg
+  { id: 'strasbourg-cathedral', cityId: 'strasbourg', category: 'history', type: 'church', name: 'Strasbourg Cathedral', lat: 48.5818, lng: 7.7509, rating: 4.8, costLevel: 0, description: 'Pink sandstone Gothic cathedral with an astronomical clock.' },
+  { id: 'strasbourg-petite-france', cityId: 'strasbourg', category: 'history', type: 'neighbourhood', name: 'Petite France', lat: 48.5803, lng: 7.7418, rating: 4.8, costLevel: 0, description: 'Canals, covered bridges and half-timbered tanners\' houses.' },
+  { id: 'strasbourg-oeuvre-notre-dame', cityId: 'strasbourg', category: 'museums', type: 'museum', name: 'Musée de l\'Œuvre Notre-Dame', lat: 48.5810, lng: 7.7518, rating: 4.5, costLevel: 1, description: 'Original sculptures and stained glass from the cathedral.' },
+  { id: 'strasbourg-orangerie', cityId: 'strasbourg', category: 'outdoors', type: 'park', name: 'Parc de l\'Orangerie', lat: 48.5906, lng: 7.7765, rating: 4.6, costLevel: 0, description: 'The city\'s oldest park, with storks nesting in the trees.' },
+  { id: 'strasbourg-winstub', cityId: 'strasbourg', category: 'food', type: 'restaurant', name: 'Winstubs around the cathedral', lat: 48.5817, lng: 7.7497, rating: 4.4, costLevel: 2, description: 'Wood-panelled Alsatian taverns serving choucroute and tarte flambée.' },
+  // Nice
+  { id: 'nice-promenade', cityId: 'nice', category: 'outdoors', type: 'walk', name: 'Promenade des Anglais', lat: 43.6950, lng: 7.2650, rating: 4.7, costLevel: 0, description: 'Seven kilometres of seafront walk above the pebble beaches.' },
+  { id: 'nice-cours-saleya', cityId: 'nice', category: 'food', type: 'market', name: 'Cours Saleya market', lat: 43.6955, lng: 7.2757, rating: 4.5, costLevel: 1, description: 'Flower and produce market; try socca, the chickpea pancake.' },
+  { id: 'nice-castle-hill', cityId: 'nice', category: 'outdoors', type: 'viewpoint', name: 'Castle Hill', lat: 43.6950, lng: 7.2810, rating: 4.7, costLevel: 0, description: 'A park with a waterfall and the classic view over the Baie des Anges.' },
+  { id: 'nice-vieux-nice', cityId: 'nice', category: 'history', type: 'neighbourhood', name: 'Vieux Nice', lat: 43.6970, lng: 7.2760, rating: 4.6, costLevel: 0, description: 'Narrow lanes, baroque chapels and pastel façades.' },
+  { id: 'nice-matisse', cityId: 'nice', category: 'museums', type: 'museum', name: 'Musée Matisse', lat: 43.7196, lng: 7.2760, rating: 4.4, costLevel: 1, description: 'Matisse\'s work in a Genoese villa among the Cimiez olive groves.' },
   // Rome
   { id: 'rome-testaccio', cityId: 'rome', category: 'food', type: 'market', name: 'Mercato di Testaccio', lat: 41.8765, lng: 12.4755, rating: 4.6, costLevel: 1, description: 'Local market known for its trapizzino and supplì.' },
   { id: 'rome-villa-borghese', cityId: 'rome', category: 'outdoors', type: 'park', name: 'Villa Borghese', lat: 41.9142, lng: 12.4923, rating: 4.6, costLevel: 0, description: 'Landscaped park with a lake, rowboats and the Pincio terrace.' },
@@ -73,6 +92,13 @@ const raw = [
   { id: 'treviso-canals', cityId: 'treviso', category: 'history', type: 'walk', name: 'Buranelli canal and old town', lat: 45.6660, lng: 12.2460, rating: 4.6, costLevel: 0, description: 'Waterwheels, frescoed houses and the island fish market.' },
   { id: 'treviso-tiramisu', cityId: 'treviso', category: 'food', type: 'restaurant', name: 'Tiramisù trail', lat: 45.6655, lng: 12.2440, rating: 4.5, costLevel: 2, description: 'Try the dessert in the town that claims to have invented it.' },
 
+  // Milan
+  { id: 'milan-duomo', cityId: 'milan', category: 'history', type: 'church', name: 'Milan Cathedral (Duomo)', lat: 45.4641, lng: 9.1919, rating: 4.8, costLevel: 2, description: 'A marble Gothic cathedral with a walkable roof of spires.' },
+  { id: 'milan-last-supper', cityId: 'milan', category: 'museums', type: 'museum', name: 'The Last Supper', lat: 45.4659, lng: 9.1709, rating: 4.7, costLevel: 2, description: 'Leonardo\'s mural in Santa Maria delle Grazie; timed tickets sell out weeks ahead.' },
+  { id: 'milan-brera', cityId: 'milan', category: 'museums', type: 'museum', name: 'Pinacoteca di Brera', lat: 45.4719, lng: 9.1880, rating: 4.6, costLevel: 2, description: 'Italian masters in the arty Brera quarter.' },
+  { id: 'milan-galleria', cityId: 'milan', category: 'shopping', type: 'shop', name: 'Galleria Vittorio Emanuele II', lat: 45.4659, lng: 9.1900, rating: 4.7, costLevel: 3, description: 'A glass-roofed 19th-century arcade of cafés and fashion houses.' },
+  { id: 'milan-navigli', cityId: 'milan', category: 'nightlife', type: 'neighbourhood', name: 'Navigli canals', lat: 45.4520, lng: 9.1760, rating: 4.5, costLevel: 2, description: 'Canal-side bars famous for the evening aperitivo.' },
+  { id: 'milan-sempione', cityId: 'milan', category: 'outdoors', type: 'park', name: 'Parco Sempione', lat: 45.4726, lng: 9.1780, rating: 4.5, costLevel: 0, description: 'A big park behind Sforza Castle, with the Arco della Pace.' },
   // Barcelona
   { id: 'bcn-boqueria', cityId: 'barcelona', category: 'food', type: 'market', name: 'La Boqueria', lat: 41.3817, lng: 2.1716, rating: 4.4, costLevel: 2, description: 'Famous market with tapas counters in the middle of the stalls.' },
   { id: 'bcn-bunkers', cityId: 'barcelona', category: 'outdoors', type: 'viewpoint', name: 'Bunkers del Carmel', lat: 41.4190, lng: 2.1617, rating: 4.7, costLevel: 0, description: 'Old anti-aircraft battery with a 360° city view.' },
@@ -136,6 +162,13 @@ const raw = [
   { id: 'munich-residenz', cityId: 'munich', category: 'history', type: 'palace', name: 'Munich Residenz', lat: 48.1410, lng: 11.5790, rating: 4.7, costLevel: 2, description: 'The Bavarian royal palace, with 130 rooms open to visit.' },
   { id: 'munich-maximilianstrasse', cityId: 'munich', category: 'shopping', type: 'shop', name: 'Maximilianstraße', lat: 48.1390, lng: 11.5830, rating: 4.2, costLevel: 3, description: 'Munich\'s grand boulevard of luxury shops.' },
 
+  // Cologne
+  { id: 'cologne-cathedral', cityId: 'cologne', category: 'history', type: 'church', name: 'Cologne Cathedral', lat: 50.9413, lng: 6.9583, rating: 4.8, costLevel: 0, description: 'The huge twin-spired Gothic cathedral, free to enter; climb the tower for a fee.' },
+  { id: 'cologne-ludwig', cityId: 'cologne', category: 'museums', type: 'museum', name: 'Museum Ludwig', lat: 50.9408, lng: 6.9608, rating: 4.5, costLevel: 2, description: 'Pop art, Picasso and German Expressionism next to the cathedral.' },
+  { id: 'cologne-rheinpark', cityId: 'cologne', category: 'outdoors', type: 'park', name: 'Rheinpark', lat: 50.9470, lng: 6.9800, rating: 4.5, costLevel: 0, description: 'Riverside park with views of the cathedral across the Rhine.' },
+  { id: 'cologne-brauhaus', cityId: 'cologne', category: 'food', type: 'restaurant', name: 'Old Town brewhouses', lat: 50.9401, lng: 6.9567, rating: 4.4, costLevel: 2, description: 'Kölsch served in small glasses with hearty Rhineland dishes.' },
+  { id: 'cologne-zuelpicher', cityId: 'cologne', category: 'nightlife', type: 'bar', name: 'Zülpicher Straße', lat: 50.9290, lng: 6.9380, rating: 4.2, costLevel: 1, description: 'The student quarter\'s bar street, busy most nights.' },
+  { id: 'cologne-ehrenstrasse', cityId: 'cologne', category: 'shopping', type: 'shop', name: 'Ehrenstraße', lat: 50.9380, lng: 6.9420, rating: 4.3, costLevel: 2, description: 'Independent fashion and concept stores.' },
   // Amsterdam
   { id: 'ams-foodhallen', cityId: 'amsterdam', category: 'food', type: 'market', name: 'Foodhallen', lat: 52.3668, lng: 4.8680, rating: 4.4, costLevel: 2, description: 'An indoor food market in an old tram depot.' },
   { id: 'ams-vondelpark', cityId: 'amsterdam', category: 'outdoors', type: 'park', name: 'Vondelpark', lat: 52.3580, lng: 4.8686, rating: 4.7, costLevel: 0, description: "The city's favourite park for cycling and picnics." },

@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build && node scripts/prerender.mjs",
     "preview": "vite preview",
-    "build:preview": "VITE_PREVIEW=1 vite build"
+    "build:preview": "VITE_PREVIEW=1 vite build",
+    "test": "node --test \"src/**/*.test.js\""
   },
   "dependencies": {
     "leaflet": "1.9",

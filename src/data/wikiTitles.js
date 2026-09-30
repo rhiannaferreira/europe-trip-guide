@@ -10,6 +10,17 @@ export const cityWikiTitles = {
 }
 
 export const placeWikiTitles = {
+  'lyon-halles': 'Les Halles de Lyon-Paul Bocuse',
+  'lyon-vieux-lyon': 'Vieux Lyon',
+  'lyon-fourviere': 'Basilica of Notre-Dame de Fourvière',
+  'lyon-rhone-quays': null,
+  'strasbourg-oeuvre-notre-dame': 'Musée de l\'Œuvre Notre-Dame',
+  'strasbourg-winstub': null,
+  'nice-cours-saleya': 'Cours Saleya',
+  'nice-castle-hill': 'Colline du Château',
+  'milan-duomo': 'Milan Cathedral',
+  'cologne-brauhaus': null,
+  'cologne-zuelpicher': null,
   'paris-marche-enfants-rouges': 'Marché des Enfants Rouges',
   'paris-montmartre': 'Sacré-Cœur, Paris',
   'paris-notre-dame': 'Notre-Dame de Paris',
