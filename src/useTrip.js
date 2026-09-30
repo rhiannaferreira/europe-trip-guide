@@ -90,7 +90,7 @@ export function migrate(saved) {
   }
 }
 
-function load() {
+function loadSaved() {
   const saved = readJSON(KEYS.trip)
   // Before migrating an older (or unreadable) saved trip, keep a copy of it exactly as it was.
   if (readText(KEYS.trip) !== null && saved?.version !== VERSION) backupOnce(KEYS.trip, KEYS.tripBackup)
@@ -115,7 +115,7 @@ function withoutStatuses(statuses, placeIds) {
 }
 
 export function useTrip() {
-  const [trip, setTrip] = useState(load)
+  const [trip, setTrip] = useState(loadSaved)
 
   useEffect(() => {
     writeJSON(KEYS.trip, trip)
