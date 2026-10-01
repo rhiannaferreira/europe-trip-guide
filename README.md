@@ -121,7 +121,13 @@ The ✨ **EuroWander** button sits in the corner of every page and opens the cop
 - **Weather** is a live forecast only within 16 days; further ahead it gives seasonal information, never an invented forecast.
 - **Chats** are kept in this browser (New chat, recent chats, delete); they never go to an account or to analytics.
 
-How it works: the request becomes one action from a fixed list (`src/assistant/appActions.js`) and is checked against Eurowander's data and the open trip. Answers come from that data (`appRun.js`) and trip changes from the planner (`tripRun.js`), applied through one trip handle (`tripHandle.js`) so the real trip is the only copy. Without a key, rules (`appIntents.js`) read the request. With a key, `api/assistant.js` reads it with `scope: 'app'`, sending only the page, the open trip's structure (cities, nights, days and their places, budget total, saved place names; never notes, expenses or account details) and the last few exchanges. The AI never supplies facts or numbers and can't change a trip by itself. The copilot downloads the first time it's opened.
+How it works (a hybrid: AI for language, Eurowander's data and planner for facts and changes):
+
+1. **Read.** Short factual requests (a budget total, a train time, opening a page) are read by the built-in rules (`appIntents.js`) and answered from data with no AI. Anything else goes to `api/assistant.js` (`scope: 'app'`), where the AI turns it into one action from a fixed list (`appActions.js`), including `open_question` for anything without an app action, and constraints such as "keep Italy" or "at most an hour more on trains". The action is checked against Eurowander's data and the open trip.
+2. **Work it out.** Eurowander's data (`appRun.js`), the planner (`tripRun.js`), live weather (Open-Meteo) and OpenStreetMap places produce the cards, numbers and proposed changes. Changes are applied only through one trip handle (`tripHandle.js`), only on Apply.
+3. **Answer.** For anything beyond a plain fact, `aiContext.js` builds a small context with just what the message needs (the verified results, the relevant days and places, live data or a note that there is none, the last few exchanges), and the AI writes the reply (`scope: 'answer'`), streamed into the panel. Its answer is checked (`aiAnswer.js`): cards only for cities and places Eurowander has, numbers only from the verified data, no invented live information. Badges show what's Eurowander data, live, an estimate, an AI suggestion or general knowledge.
+
+If the AI can't be reached, the copilot says so and answers from Eurowander's data and rules alone. Only the trip's structure is sent (cities, nights, the days in question, budget total, saved place names; never notes, expenses or account details). The copilot downloads the first time it's opened.
 
 ### Analytics
 

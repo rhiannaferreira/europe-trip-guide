@@ -1135,3 +1135,10 @@ a:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent); ou
   .ask-panel, .cp-typing span { animation: none; }
 }
 @media print { .ask-fab, .ask-panel { display: none !important; } }
+.cp-ai { display: flex; flex-direction: column; gap: 6px; }
+.cp-ai p { margin: 0; }
+.cp-ai ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 3px; }
+.cp-streaming > :last-child::after { content: '▍'; margin-left: 2px; color: var(--muted); animation: cp-blink 1s steps(2) infinite; }
+@keyframes cp-blink { 50% { opacity: 0; } }
+.cp-typing-inline { display: inline-flex; }
+@media (prefers-reduced-motion: reduce) { .cp-streaming > :last-child::after { animation: none; } }

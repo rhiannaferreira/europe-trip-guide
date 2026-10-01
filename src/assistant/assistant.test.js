@@ -197,3 +197,95 @@ test('stored chats keep text and cards but not plans', () => {
   assert.equal(chatTitle([{ q: 'What should I do in Lisbon for three days if it rains a lot?' }]), 'What should I do in Lisbon for three day…')
   assert.equal(chatTitle([{ q: 'Surprise me!' }]), 'Surprise me')
 })
+
+// ----- The AI layer: what it's given, and how its answer is checked -----
+import { ANSWER_SCHEMA, formatMessage, partialMessage, validateAnswer } from './aiAnswer.js'
+import { MAX_AI_CONTEXT, buildAIContext, isFactAction, needsAiAnswer, verifiedFacts } from './aiContext.js'
+import { openQuestion } from './copilot.js'
+
+test('plain facts skip the AI; open questions and options get an AI answer', () => {
+  const h = handleFor()
+  const read = (q) => check(parseAppIntent(q, { handle: h, today: TODAY }), { handle: h, today: TODAY })
+  assert.ok(isFactAction(read('How much will my trip cost?').action))
+  assert.ok(isFactAction(read('open rome').action))
+  assert.ok(!isFactAction(read('Make my trip cheaper').action))
+  const cheap = read('Make my trip cheaper')
+  assert.ok(needsAiAnswer(cheap.action, respond(cheap, { handle: h, today: TODAY })))
+  assert.ok(needsAiAnswer({ action: 'open_question' }, { text: '' }))
+  assert.ok(!needsAiAnswer({ action: 'open_city', city: 'rome' }, { now: { type: 'navigate' } }))
+})
+
+test('limits: cheaper but keep a country, faster but keep a city, at most an hour more travel', () => {
+  const h = handleFor()
+  const [keepFrance, keepPrague, limited] = chat(['Make my trip cheaper but don’t remove France.', 'Reduce train time but keep Prague.', 'Make my trip cheaper but keep Paris and no more than an hour of extra train.'], h)
+  assert.deepEqual(keepFrance.checked.action.limits.keepCountries, ['FR'])
+  for (const o of options(keepFrance.r)) assert.ok(o.preview.after.some((s) => s.cityId === 'paris') && o.preview.cost[1] < o.preview.cost[0])
+  assert.deepEqual(keepPrague.checked.action.limits.keepCities, ['prague'])
+  for (const o of options(keepPrague.r)) assert.ok(o.preview.after.some((s) => s.cityId === 'prague') && o.preview.travel[1] < o.preview.travel[0])
+  assert.equal(limited.checked.action.limits.maxExtraTravel, 60)
+  for (const o of options(limited.r)) assert.ok(o.preview.travel[1] - o.preview.travel[0] <= 60)
+  // The AI's reading of the same request goes through the same check.
+  const ai = check({ ...parseAppIntent('x', {}), action: 'make_cheaper', keepCountries: ['Italy', 'France'], maxExtraTravelMinutes: 60 }, { handle: h })
+  assert.deepEqual(ai.action.limits, { keepCities: [], keepCountries: ['FR'], maxExtraTravel: 60 })
+})
+
+test('"Add the second one" picks from what the chat just showed', () => {
+  const [alts, add] = chat(['Give me somewhere that feels like Amsterdam but is cheaper and quieter.', 'Add the second one.'])
+  const second = block(alts.r, 'cities').items[1].cityId
+  assert.equal(add.raw.action, 'add_city')
+  assert.equal(add.checked.action.city, second)
+  assert.ok(options(add.r)[0].preview.after.some((s) => s.cityId === second))
+})
+
+test('open questions: anywhere is allowed, and the guide supplies matching cities', () => {
+  const c = check({ ...parseAppIntent('x', {}), action: 'open_question', city: 'Ljubljana', interests: ['food'] }, {})
+  assert.ok(c.ok)
+  const vague = openQuestion({ action: 'open_question', interests: ['food'], month: 11, cities: [] })
+  assert.ok(block(vague, 'cities').items.length > 0)
+  assert.ok(openQuestion({ action: 'open_question', interests: [], cities: [] }).followUps.length > 0)
+})
+
+test('the AI context carries verified numbers, only relevant days, and stays small and private', () => {
+  const h = handleFor()
+  const [cheap] = chat(['Make my trip cheaper.'], h)
+  const ctx = buildAIContext({ message: 'Make my trip cheaper.', action: cheap.checked.action, result: cheap.r, handle: h, memory: {}, today: TODAY })
+  const opt = options(cheap.r)[0]
+  assert.equal(ctx.verified.proposedChanges[0].estimatedCost.after, Math.round(opt.preview.cost[1]))
+  assert.match(ctx.verified.note, /Nothing has changed/)
+  assert.deepEqual(ctx.trip.days, []) // no day plans for a whole-trip change
+  const text = JSON.stringify(ctx)
+  assert.ok(!text.includes('private notes') && !text.includes('Book ahead'))
+  assert.ok(text.length <= MAX_AI_CONTEXT)
+  // Travelling: today's city and plans, and the places there, for "what should I do tonight?"
+  const tonight = buildAIContext({ message: 'I’m exhausted. What should I do tonight?', action: { action: 'open_question', interests: [], cities: [] }, result: { text: '' }, handle: h, today: '2027-04-06' })
+  assert.equal(tonight.trip.today.city, 'Paris')
+  assert.deepEqual(tonight.trip.days.map((d) => d.day), [1])
+  assert.ok(tonight.guide.places.length > 0 && tonight.guide.places.every((p) => p.city === 'Paris'))
+  assert.match(tonight.live.weather, /No live forecast/)
+})
+
+test('verified facts keep train times as given', () => {
+  const v = verifiedFacts({ text: 'x', blocks: [{ type: 'route', legs: [{ from: 'paris', to: 'brussels', minutes: 84, mode: 'train', source: 'sample' }], total: 84 }] })
+  assert.deepEqual(v.route.legs, ['Paris → Brussels: 84 min by train'])
+})
+
+test('the streamed answer is read as it arrives and checked when complete', () => {
+  assert.equal(partialMessage('{"message":"Since you just arr'), 'Since you just arr')
+  assert.equal(partialMessage('{"message":"Line one\\nLine \\"two\\"'), 'Line one\nLine "two"')
+  assert.equal(partialMessage('{"message":"Caf\\u00e9 time\\'), 'Café time')
+  assert.equal(partialMessage('{"mess'), '')
+  assert.deepEqual(ANSWER_SCHEMA.required[0], 'message')
+  const a = validateAnswer(
+    { message: ' Try **Haarlem**. ', cities: ['Haarlem', 'Atlantis', 'Utrecht'], places: ['Louvre Museum', 'Made-up Bistro'], followUps: [{ label: 'Add Haarlem', prompt: 'Add Haarlem to my trip' }, { label: '', prompt: 'x' }], generalKnowledge: true },
+    { placeIds: ['paris-louvre'] },
+  )
+  assert.equal(a.message, 'Try **Haarlem**.')
+  assert.ok(!a.cities.includes(null) && a.cities.every((id) => typeof id === 'string'))
+  assert.deepEqual(a.places, ['paris-louvre'])
+  assert.equal(a.followUps.length, 1)
+  assert.equal(validateAnswer({ message: '' }), null)
+  assert.deepEqual(formatMessage('Hi **there**\n- one\n- two'), [
+    { type: 'p', spans: [{ text: 'Hi ' }, { bold: true, text: 'there' }] },
+    { type: 'list', items: [[{ text: 'one' }], [{ text: 'two' }]] },
+  ])
+})

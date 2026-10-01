@@ -4,18 +4,21 @@ import { HASH_MODE, cityPath, navigate } from '../lib/router.jsx'
 import { KEYS, readJSON, writeJSON } from '../lib/storage.js'
 import { TRIP_CHANGED, readSavedTrip, updateSavedTrip, withCity, withPlace } from '../lib/tripStore.js'
 import { cityById } from '../data/cities.js'
-import { placeById } from '../data/places.js'
+import { placeById, placesInCity } from '../data/places.js'
 import { useAiReady } from '../builder/Assistant.jsx'
 import { TRIP_PROMPTS, WELCOME_PROMPTS, parseAppIntent } from './appIntents.js'
 import { appContext } from './appContext.js'
+import { formatMessage } from './aiAnswer.js'
+import { readAction, streamAnswer } from './aiClient.js'
+import { buildAIContext, focusCities, isFactAction, needsAiAnswer } from './aiContext.js'
 import Block, { Sources } from './blocks.jsx'
 import { requestBuild, requestFocus, requestTab, requestTool, useAssistantBridge } from './bridge.js'
 import { check, needsWeather, respond } from './copilot.js'
 import { deleteChat, newChatId, readChats, saveChat } from './history.js'
+import { whyLabels } from './appRun.js'
 import { dayName } from './tripRun.js'
 import { openTripHandle, tripKey, tripMode } from './tripHandle.js'
 
-const API = '/api/assistant'
 const PLANNER_PAGES = ['explore', 'city', 'country', 'trip']
 const FORECAST_REACH_DAYS = 15
 const todayIso = () => {
@@ -31,28 +34,27 @@ const fit = (el) => {
 const readFlags = () => readJSON(KEYS.copilot, {}) || {}
 const writeFlags = (patch) => writeJSON(KEYS.copilot, { ...readFlags(), ...patch })
 
-// The AI reads the request into one action (never facts, never a change). Returns { action } or { error }.
-async function readWithAi(message, context) {
-  if (typeof navigator !== 'undefined' && navigator.onLine === false) return { error: 'offline' }
-  const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), 25000)
-  try {
-    const r = await fetch(API, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ message, context, scope: 'app' }), signal: controller.signal })
-    if (r.status === 429) return { error: 'rate' }
-    if (!r.ok) return { error: 'failed' }
-    const data = await r.json()
-    return data?.action ? { action: data.action } : { error: 'failed' }
-  } catch {
-    return { error: typeof navigator !== 'undefined' && navigator.onLine === false ? 'offline' : 'failed' }
-  } finally {
-    clearTimeout(timer)
-  }
+const AI_NOTES = {
+  offline: 'You seem to be offline, so I’m answering from Eurowander’s own data.',
+  rate: 'Lots of questions at once, so I answered this one from Eurowander’s own data.',
+  failed: 'I’m having trouble reaching the travel assistant right now, but I can still help with your trip and Eurowander’s guide.',
+}
+const timeOfDay = () => {
+  const h = new Date().getHours()
+  return h < 12 ? 'morning' : h < 17 ? 'afternoon' : h < 21 ? 'evening' : 'night'
 }
 
-const AI_NOTES = {
-  offline: 'You seem to be offline, so I read this with the built-in rules.',
-  rate: 'Lots of questions at once, so I read this one with the built-in rules.',
-  failed: 'The AI didn’t answer just now, so I read this with the built-in rules.',
+// More real places for a city from OpenStreetMap, for questions about places there (best effort, a few seconds).
+async function morePlaces(cityId) {
+  const city = cityById[cityId]
+  if (!city) return false
+  try {
+    const { loadOsmPlaces } = await import('../lib/osmPlaces.js')
+    const list = await Promise.race([loadOsmPlaces(city), new Promise((resolve) => setTimeout(() => resolve(null), 6000))])
+    return Boolean(list?.length)
+  } catch {
+    return false
+  }
 }
 
 // Live weather for My trip's days within forecast reach (the Build page already has its own).
@@ -72,6 +74,30 @@ async function tripWeather(handle, today) {
     return { byDay: {}, failed: true }
   }
 }
+
+// The AI's reply: short paragraphs, bullets and bold, rendered as text (never as HTML).
+function AiText({ text, streaming }) {
+  return (
+    <div className={`cp-ai${streaming ? ' cp-streaming' : ''}`}>
+      {formatMessage(text).map((b, i) =>
+        b.type === 'list' ? (
+          <ul key={i}>
+            {b.items.map((spans, k) => (
+              <li key={k}>
+                <Spans spans={spans} />
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p key={i}>
+            <Spans spans={b.spans} />
+          </p>
+        ),
+      )}
+    </div>
+  )
+}
+const Spans = ({ spans }) => spans.map((s, i) => (s.bold ? <strong key={i}>{s.text}</strong> : <span key={i}>{s.text}</span>))
 
 function Intro({ onDone }) {
   return (
@@ -174,7 +200,8 @@ export default function AssistantPanel({ route, open, onClose }) {
     endRef.current?.scrollIntoView({ block: 'end', behavior: 'smooth' })
   }, [entries.length, busy])
   useEffect(() => {
-    if (entries.length) setChats(saveChat(chatId, entries))
+    // Saved once each answer has finished arriving.
+    if (entries.length && !entries.some((e) => e.ai?.status === 'streaming')) setChats(saveChat(chatId, entries))
   }, [entries, chatId])
 
   const mark = (entryId, key, note) => setEntries((l) => l.map((e) => (e.id === entryId ? { ...e, done: { ...(e.done || {}), [key]: note } } : e)))
@@ -259,6 +286,14 @@ export default function AssistantPanel({ route, open, onClose }) {
     mark(entry.id, `${blockId}:applied`, { option: index, undo, short: 'Applied' })
   }
 
+  const patch = (id, fn) => setEntries((l) => l.map((e) => (e.id === id ? fn(e) : e)))
+
+  // One message, end to end:
+  //   1. read it: plain facts (a budget total, a train time, opening a page) by the built-in rules and
+  //      Eurowander's data alone; anything else by the AI, into one action the app checks
+  //   2. work it out from Eurowander's data, live weather and places, and the planner (cards, numbers,
+  //      proposed changes); nothing changes until Apply
+  //   3. the AI writes the reply from that verified data, streamed in; if it can't, the app's own answer shows
   async function send(message, { force = false, source = 'typed' } = {}) {
     const q = String(message || '').trim().slice(0, 500)
     if (!q || busy) return
@@ -268,52 +303,99 @@ export default function AssistantPanel({ route, open, onClose }) {
     setView('chat')
     if (source !== 'typed') track('chat_quick_action_used', { source })
     const h = handleRef.current
-    const ctx = { handle: h, pageCityId, memory: memory.current, today, force, builderInput: builder?.input || readJSON(KEYS.builder)?.input }
+    const mem = memory.current
+    const ctx = { handle: h, pageCityId, memory: mem, today, force, builderInput: builder?.input || readJSON(KEYS.builder)?.input }
+    const rules = check(parseAppIntent(q, ctx), ctx)
+    let checked = null
     let via = 'rules'
     let note = ''
-    let checked = null
-    if (aiReady && !force) {
-      const r = await readWithAi(q, appContext({ route, handle: h, today, memory: memory.current }))
+    let gap = ''
+    let aiOk = false
+    // Short factual requests skip the AI; anything longer may carry nuance the rules would miss.
+    if (force || (rules.ok && isFactAction(rules.action) && q.split(/\s+/).length <= 12)) checked = rules
+    else if (aiReady) {
+      const r = await readAction(q, appContext({ route, handle: h, today, memory: mem }))
       if (r.action) {
-        const c = check(r.action, ctx)
-        // The AI's reading wins unless it couldn't place the request; then the rules get a go.
-        if (c.ok ? c.action.action !== 'unknown' : c.noTrip || c.needsDates) {
-          checked = c
-          via = 'ai'
+        aiOk = true
+        via = 'ai'
+        checked = check(r.action, ctx)
+        // Something the app has no action or data for (a city it doesn't cover, say): an open question.
+        const uncovered = !checked.ok && /isn’t one of Eurowander’s|couldn’t find/.test(checked.error)
+        if (uncovered || (checked.ok && checked.action.action === 'unknown')) {
+          if (uncovered) gap = checked.error
+          checked = check({ ...r.action, action: 'open_question' }, ctx)
         }
       } else {
-        note = AI_NOTES[r.error] || ''
-        track('chat_error', { kind: r.error })
+        note = AI_NOTES[r.error] || AI_NOTES.failed
+        track('chat_error', { kind: `read_${r.error}` })
       }
     }
-    if (!checked) checked = check(parseAppIntent(q, ctx), ctx)
+    if (!checked) checked = rules
+
+    // Live data the answer needs: the trip's weather, and more places in the city in question.
     let weatherByDay = h?.weatherByDay || {}
     let weatherFailed = false
-    if (checked.ok && h?.kind === 'saved' && needsWeather(checked.action)) {
+    const act = checked.ok ? checked.action : null
+    const jobs = []
+    if (act && h?.kind === 'saved' && needsWeather(act, q)) {
       const key = currentKey
-      if (!weatherCache.current[key]) weatherCache.current[key] = await tripWeather(h, today)
-      weatherByDay = weatherCache.current[key].byDay
-      weatherFailed = weatherCache.current[key].failed
-      if (weatherFailed) delete weatherCache.current[key]
+      jobs.push(
+        (weatherCache.current[key] ||= tripWeather(h, today)).then((w) => {
+          weatherByDay = w.byDay
+          weatherFailed = w.failed
+          if (w.failed) delete weatherCache.current[key]
+        }),
+      )
     }
+    const placeCity = act && ['places_near', 'suggest_places', 'open_question', 'plan_day'].includes(act.action) ? focusCities({ action: act, handle: h, today, pageCityId, memory: mem, message: q })[0] : null
+    if (placeCity) jobs.push(morePlaces(placeCity))
+    await Promise.all(jobs)
+
     const result = respond(checked, { ...ctx, weatherByDay })
     if (weatherFailed) result.note = 'I couldn’t reach the weather service just now, so this uses seasonal information.'
-    else if (note) result.note = note
-    const action = checked.ok ? checked.action.action : 'invalid'
-    const reply = via === 'ai' && checked.ok ? checked.action.reply : ''
-    memory.current = {
-      ...memory.current,
-      ...(result.memory || {}),
-      exchanges: [...(memory.current.exchanges || []), { q: q.slice(0, 160), a: String(result.text || '').slice(0, 200) }].slice(-3),
-    }
-    track('chat_message_sent', { via, action, trip: h?.kind || 'none', mode: tripMode(h, today) })
+    else if (note && (!checked.ok || checked.action.action !== 'open_question')) result.note = note
+    const action = act ? act.action : 'invalid'
+    const compose = aiOk && needsAiAnswer(act, result)
+    track('chat_message_sent', { via, action, ai_answer: compose, trip: h?.kind || 'none', mode: tripMode(h, today) })
     if (result.tone === 'error') track('chat_error', { kind: 'answer', action })
     const options = result.blocks?.find((b) => b.type === 'options')
     if (options) track('chat_trip_change_proposed', { action, options: options.options.length, trip: h.kind })
-    const entry = { id: `${Date.now()}`, q, via, action, reply, result, done: {} }
-    setEntries((l) => [...l, entry].slice(-40))
+    const id = `${Date.now()}`
+    memory.current = { ...mem, ...(result.memory || {}) }
+    setEntries((l) => [...l, { id, q, via, action, reply: '', result, done: {}, ai: compose ? { status: 'streaming', text: '' } : null }].slice(-40))
+    if (result.now) run(result.now, id)
+
+    let shown = String(result.text || '')
+    if (compose) {
+      const aiCtx = buildAIContext({ message: q, action: act, result, handle: h, memory: mem, today, timeOfDay: timeOfDay(), pageCityId, weatherByDay, weatherFailed, note: gap })
+      // Cards can only be drawn for places the AI was shown: those in the cities in question, and the answer's own.
+      const placeIds = [
+        ...focusCities({ action: act, handle: h, today, pageCityId, memory: mem, message: q }).flatMap((c) => placesInCity(c).map((p) => p.id)),
+        ...(result.blocks || []).filter((b) => b.type === 'places').flatMap((b) => b.items.map((i) => i.placeId)),
+      ]
+      const r = await streamAnswer(q, aiCtx, { placeIds, onText: (t) => patch(id, (e) => ({ ...e, ai: { status: 'streaming', text: t } })) })
+      if (r.answer) {
+        const ans = r.answer
+        shown = ans.message
+        const has = (type) => (result.blocks || []).some((b) => b.type === type)
+        const open = act.action === 'open_question'
+        // The AI's picks become cards when the app hasn't already shown cards of that kind.
+        const blocks = [
+          ...(open ? (result.blocks || []).filter((b) => b.type !== 'cities') : result.blocks || []),
+          ...(ans.cities.length && (open || !has('cities')) ? [{ type: 'cities', items: ans.cities.map((c) => ({ cityId: c, why: whyLabels(cityById[c], { interests: act.interests || [], month: act.month, hiddenGems: act.hiddenGems }), train: null })) }] : []),
+          ...(ans.places.length && !has('places') ? [{ type: 'places', items: ans.places.map((placeId) => ({ placeId })) }] : []),
+        ]
+        const followUps = [...ans.followUps, ...(result.followUps || [])].filter((f, i, all) => all.findIndex((x) => x.label === f.label) === i).slice(0, 5)
+        const shownIds = [...ans.cities, ...ans.places]
+        if (shownIds.length) memory.current = { ...memory.current, lastList: shownIds, anchorCity: ans.cities[0] || memory.current.anchorCity }
+        patch(id, (e) => ({ ...e, ai: { status: 'done', text: ans.message, generalKnowledge: ans.generalKnowledge }, result: { ...e.result, blocks, followUps } }))
+      } else {
+        track('chat_error', { kind: `answer_${r.error}` })
+        patch(id, (e) => ({ ...e, ai: { status: 'failed' }, result: { ...e.result, note: act.action === 'open_question' ? AI_NOTES[r.error] || AI_NOTES.failed : e.result.note } }))
+      }
+    }
+    memory.current = { ...memory.current, exchanges: [...(mem.exchanges || []), { q: q.slice(0, 160), a: shown.slice(0, 300) }].slice(-3) }
     setBusy(false)
-    if (result.now) run(result.now, entry.id)
   }
 
   const newChat = () => {
@@ -439,14 +521,29 @@ export default function AssistantPanel({ route, open, onClose }) {
                   mark: (key, n) => mark(e.id, key, n),
                   applyOption: (blockId, i, o) => applyOption(e, blockId, i, o),
                 }
+                const ai = e.ai?.status === 'streaming' || e.ai?.status === 'done' ? e.ai : null
+                // An open question's own cards wait for the AI's picks (they're only the fallback).
+                const holdCards = e.ai?.status === 'streaming' && e.action === 'open_question'
                 return (
-                  <li key={e.id}>
+                  <li key={e.id} aria-busy={e.ai?.status === 'streaming'}>
                     <p className="cp-q">{e.q}</p>
                     <div className={`cp-a${r.tone ? ` cp-${r.tone}` : ''}`}>
                       {r.note && <p className="cp-note">{r.note}</p>}
                       {e.reply && <p className="cp-understood">{e.reply}</p>}
-                      {r.text && <p>{r.text}</p>}
-                      {(r.blocks || []).map((b, i) =>
+                      {ai ? (
+                        ai.text ? (
+                          <AiText text={ai.text} streaming={ai.status === 'streaming'} />
+                        ) : (
+                          <span className="cp-typing cp-typing-inline" aria-label="EuroWander is writing">
+                            <span />
+                            <span />
+                            <span />
+                          </span>
+                        )
+                      ) : (
+                        r.text && <p>{r.text}</p>
+                      )}
+                      {!holdCards && (r.blocks || []).map((b, i) =>
                         b.restored && (b.type === 'options' || b.type === 'build') ? (
                           <p key={i} className="cp-sub">
                             {b.type === 'options' ? `${b.options.length} option${b.options.length === 1 ? '' : 's'} were suggested here. Ask again to see them for your trip now.` : 'A trip was suggested here. Ask again to build it.'}
@@ -461,12 +558,12 @@ export default function AssistantPanel({ route, open, onClose }) {
                         const follow = (r.followUps || []).filter((f) => !(settled && f.effect?.type === 'dismiss'))
                         return follow.length > 0 && <div className="cp-follow">{follow.map((f) => followUpButton(f, e))}</div>
                       })()}
-                      <Sources sources={r.sources} ai={e.via === 'ai'} />
+                      {e.ai?.status !== 'streaming' && <Sources sources={[...(r.sources || []), ...(e.ai?.generalKnowledge ? ['knowledge'] : [])]} ai={e.via === 'ai'} />}
                     </div>
                   </li>
                 )
               })}
-              {busy && (
+              {busy && !entries.some((e) => e.ai?.status === 'streaming') && (
                 <li className="cp-typing" aria-label="EuroWander is thinking">
                   <span />
                   <span />

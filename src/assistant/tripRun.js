@@ -3,6 +3,7 @@
 // for each option, and the numbers behind it. Nothing is applied here; the panel applies an option when
 // the traveller presses Apply, through the trip handle, so the real trip stays the only copy.
 import { cityById } from '../data/cities.js'
+import { countryByCode } from '../data/countries.js'
 import { placeById, placesInCity } from '../data/places.js'
 import { formatDuration, monthNames, monthRange } from '../lib/format.js'
 import { formatMoney } from '../utils/budgetCalculations.js'
@@ -153,8 +154,9 @@ export function runTripAction(a, ctx) {
       }
     }
     case 'make_cheaper':
-      return cheaper(handle, a.amount)
+      return hasLimits(a.limits) ? withLimits(handle, a.limits, 'cost', a.amount) : cheaper(handle, a.amount)
     case 'reduce_travel': {
+      if (hasLimits(a.limits)) return withLimits(handle, a.limits, 'travel')
       const opts = []
       const main = applyChange(plan, { type: 'reduce_travel' })
       if (main.changed) opts.push(option(handle, main.summary, main.plan, null, (main.reasons || []).join(' · ')))
@@ -183,6 +185,72 @@ export function runTripAction(a, ctx) {
     default:
       if (!L) return { text: 'I can’t do that to a trip yet.' }
       return fromPlanner(runAction(L, { plan, days, weather }), handle, a)
+  }
+}
+
+// Constraints from requests like "cheaper, but keep Italy and no more than an hour of extra train":
+//   limits: { keepCities: [ids], keepCountries: [codes], maxExtraTravel: minutes | null }
+export const hasLimits = (l) => Boolean(l && (l.keepCities?.length || l.keepCountries?.length || l.maxExtraTravel != null))
+const countIn = (stops, code) => stops.filter((s) => cityById[s.cityId]?.country === code).length
+
+export function meetsLimits(o, limits, plan) {
+  const after = o.preview.after
+  if ((limits.keepCities || []).some((id) => !after.some((s) => s.cityId === id))) return false
+  // A kept country keeps as many stops as it had (a stop can still be swapped for another city there).
+  if ((limits.keepCountries || []).some((code) => countIn(after, code) < countIn(plan.stops, code))) return false
+  if (limits.maxExtraTravel != null && o.preview.travel[1] - o.preview.travel[0] > limits.maxExtraTravel) return false
+  return true
+}
+
+export function limitsText(limits) {
+  const keep = [...(limits.keepCities || []).map(cityName), ...(limits.keepCountries || []).map((c) => countryByCode[c]?.name || c)]
+  return [keep.length ? `keeping ${list(keep)}` : '', limits.maxExtraTravel != null ? (limits.maxExtraTravel === 0 ? 'with no extra travel' : `with at most ${hours(limits.maxExtraTravel)} of extra travel`) : ''].filter(Boolean).join(' and ')
+}
+
+// Every single-step change worth trying (swap any stop, drop it, a night fewer, reorder), checked
+// against the limits and ranked by the goal: 'cost' (money saved) or 'travel' (time saved).
+function withLimits(handle, limits, goal, amount = null) {
+  const { plan } = handle
+  const currency = plan.prefs.currency
+  const kept = (id) => (limits.keepCities || []).includes(id)
+  const cands = []
+  const push = (title, r, detail = '') => r?.changed !== false && r?.plan && cands.push(option(handle, title, r.plan, null, detail))
+  const main = applyChange(plan, { type: goal === 'cost' ? 'make_cheaper' : 'reduce_travel' })
+  push(main.summary, main, (main.reasons || []).join(' · '))
+  if (goal === 'travel') push('Reorder the route', applyChange(plan, { type: 'optimize_order' }))
+  plan.stops.forEach((s, index) => {
+    if (kept(s.cityId)) return
+    const sameCountry = (limits.keepCountries || []).includes(cityById[s.cityId]?.country)
+    const alts = alternativesFor(plan, index, { goal: goal === 'cost' ? { cheaper: true } : {}, limit: 6 })
+      .filter((x) => !sameCountry || cityById[x.cityId].country === cityById[s.cityId].country)
+      .slice(0, 2)
+    for (const alt of alts) push(`Replace ${cityName(s.cityId)} with ${cityName(alt.cityId)}`, replaceStop(plan, index, alt.cityId), alt.reasons.join(' · '))
+    if (plan.stops.length > 2) push(`Drop ${cityName(s.cityId)}`, removeStop(plan, index))
+    if (goal === 'cost' && s.nights > 1) push(`One night fewer in ${cityName(s.cityId)}, one more somewhere cheaper`, changeNights(plan, index, -1, { keepLength: true }))
+  })
+  const gain = (o) => (goal === 'cost' ? o.preview.cost[0] - o.preview.cost[1] : o.preview.travel[0] - o.preview.travel[1])
+  const ok = dedupe(cands.filter((o) => gain(o) > 0 && meetsLimits(o, limits, plan))).sort((x, y) => gain(y) - gain(x)).slice(0, 3)
+  const how = limitsText(limits)
+  if (!ok.length) {
+    return {
+      text: `I couldn’t find a ${goal === 'cost' ? 'cheaper' : 'faster'} version ${how}. Want to relax one of those?`,
+      followUps: [{ label: goal === 'cost' ? 'Show all cheaper options' : 'Show all faster options', prompt: goal === 'cost' ? 'Make my trip cheaper' : 'Reduce my train time' }],
+      sources: ['estimate'],
+      facts: { limits: how, found: 0 },
+    }
+  }
+  for (const o of ok) o.detail = [goal === 'cost' ? savingText(o, currency) : travelSaving(o), goal === 'cost' ? travelSaving(o) : savingText(o, currency), o.detail].filter(Boolean).join(' · ')
+  const best = gain(ok[0])
+  return {
+    text:
+      goal === 'cost'
+        ? amount && best < amount
+          ? `The biggest cut ${how} is about ${formatMoney(best, currency)}, short of ${formatMoney(amount, currency)}:`
+          : `${ok.length === 1 ? 'One way' : `${ok.length} ways`} to lower the cost ${how}:`
+        : `${ok.length === 1 ? 'One way' : `${ok.length} ways`} to cut travel time ${how}:`,
+    blocks: [optionsBlock(handle, ok)],
+    followUps: [keep],
+    sources: ['estimate'],
   }
 }
 
@@ -271,7 +339,7 @@ function movePlace(handle, placeId, n) {
   return { text: `Moving ${p.name} to ${dayName(day)}${from ? ` from ${dayName(from)}` : ''}:`, blocks: [dayChange(handle, `Move ${p.name} to ${dayName(day)}`, next)], followUps: [keep] }
 }
 
-function nearPlaces(handle, a) {
+export function nearPlaces(handle, a) {
   let anchors = []
   let where = ''
   if (a.place) {
@@ -281,12 +349,12 @@ function nearPlaces(handle, a) {
     anchors = dayOf(handle, a.day).items.map((i) => placeById[i.placeId]).filter(Boolean)
     where = `near your plans on ${dayName(dayOf(handle, a.day))}`
   } else {
-    anchors = Object.keys(handle.trip?.statuses || {}).map((id) => placeById[id]).filter(Boolean)
-    if (!anchors.length) anchors = handle.days.flatMap((d) => d.items.map((i) => placeById[i.placeId])).filter(Boolean)
+    anchors = Object.keys(handle?.trip?.statuses || {}).map((id) => placeById[id]).filter(Boolean)
+    if (!anchors.length) anchors = (handle?.days || []).flatMap((d) => d.items.map((i) => placeById[i.placeId])).filter(Boolean)
     where = 'near your saved places'
   }
   if (!anchors.length) return { text: 'Save a few places first, and I can find things near them.' }
-  const have = new Set([...Object.keys(handle.trip?.statuses || {}), ...handle.days.flatMap((d) => d.items.map((i) => i.placeId))])
+  const have = new Set([...Object.keys(handle?.trip?.statuses || {}), ...(handle?.days || []).flatMap((d) => d.items.map((i) => i.placeId))])
   const found = new Map()
   for (const anc of anchors) {
     for (const n of nearbyPlaces(anc, { radiusKm: 2.5, limit: 20 })) {
@@ -305,13 +373,13 @@ function nearPlaces(handle, a) {
     picks = best(inCities)
     // Still nothing: the rest of the trip's cities.
     if (!picks.length) {
-      picks = best(handle.plan.stops.map((s) => s.cityId).filter((c) => !inCities.includes(c)))
+      picks = best((handle?.plan.stops || []).map((s) => s.cityId).filter((c) => !inCities.includes(c)))
       if (picks.length) wideTrip = true
     }
   }
   const what = a.category ? { food: 'Food spots', museums: 'Museums', outdoors: 'Outdoor places', nightlife: 'Bars and nightlife', history: 'Historic sights', shopping: 'Shops' }[a.category] : 'Places'
   if (!picks.length) return { text: `${what} ${where}: nothing else in Eurowander’s guide yet.` }
-  const day = a.day || (a.place ? handle.days.find((d) => d.items.some((i) => i.placeId === a.place))?.number : null)
+  const day = a.day || (a.place && handle ? handle.days.find((d) => d.items.some((i) => i.placeId === a.place))?.number : null)
   return {
     text: wideTrip ? `You’ve already saved the ${what.toLowerCase()} Eurowander lists near your saved places. These are the best elsewhere on your route:` : wide ? `Nothing new within walking distance ${where.replace('near', 'of')}, but these are nearby in the same city:` : `${what} ${where}:`,
     blocks: [{ type: 'places', items: picks.map((x) => ({ placeId: x.place.id, note: x.km == null ? '' : `${x.km < 1 ? `${Math.round(x.km * 1000)} m` : `${x.km.toFixed(1)} km`} from ${x.anchor.name}` })), day }],

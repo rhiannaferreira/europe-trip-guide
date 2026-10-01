@@ -45,7 +45,7 @@ const MONTHS = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 
 const NUMBER_WORDS = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12, fourteen: 14, a: 1 }
 const LESS_TOURISTY = /less touristy|less crowded|hidden gems?|off the beaten|fewer tourists|not (so |too )?touristy|underrated|quieter|quiet|lesser[- ]known/
 
-const blank = { city: '', cities: [], country: '', countries: [], place: '', page: 'none', interests: [], category: 'none', hiddenGems: false, month: null, tripDays: null, startDate: '', pace: 'none', budget: null, currency: 'none', travellers: null, startCity: '', targetCity: '', day: null, nights: null, delta: null, amount: null, question: 'none', criterion: 'none', topic: 'none', reply: '' }
+const blank = { city: '', cities: [], country: '', countries: [], place: '', page: 'none', interests: [], category: 'none', hiddenGems: false, month: null, tripDays: null, startDate: '', pace: 'none', budget: null, currency: 'none', travellers: null, startCity: '', targetCity: '', day: null, nights: null, delta: null, amount: null, question: 'none', criterion: 'none', topic: 'none', keepCities: [], keepCountries: [], maxExtraTravelMinutes: null, reply: '' }
 const act = (action, extra = {}) => ({ ...blank, action, ...extra })
 
 // Countries mentioned in the text (names and aliases), in the order they appear.
@@ -182,12 +182,35 @@ export function parseAppIntent(text, ctx = {}) {
   if (/\b(after|next)\b/.test(t) && /\b(where|what|which)\b/.test(t) && /\b(go|head|visit|city|stop)\b/.test(t)) return act('next_after', { city: name(city || tripIds[tripIds.length - 1] || memory.anchorCity || ''), hiddenGems: gems, interests })
 
   // Quieter alternatives.
-  if ((gems || /\balternative\b/.test(t)) && city && /\b(to|than|instead of|near|like|around|alternative)\b/.test(t) && !tripIds.includes(city)) return act('alternatives_to', { city: name(city) })
+  if ((gems || /\b(alternative|cheaper)\b/.test(t)) && city && /\b(to|than|instead of|near|like|around|alternative)\b/.test(t) && (!tripIds.includes(city) || /\b(feels like|similar to|somewhere like)\b/.test(t))) return act('alternatives_to', { city: name(city), hiddenGems: gems, criterion: /\bcheaper\b/.test(t) ? 'cheapest' : 'none' })
   // "Give me somewhere less touristy" right after the chat showed some cities: quieter places near them.
   if (gems && !city && !codes.length && !interests.length && memory.anchorCity && (memory.lastList || []).some((id) => cityById[id]) && /\b(somewhere|something|place|city|give me|show me)\b/.test(t)) return act('alternatives_to', { city: name(memory.anchorCity) })
 
+  // "Add the second one": a city from the list the chat just showed.
+  const nth = /\badd (?:the )?(first|second|third|fourth|last|1st|2nd|3rd|4th|number \d)(?: one| city| option)?\b/.exec(t)
+  if (nth && !cityIds.length) {
+    const shown = (memory.lastList || []).filter((id) => cityById[id])
+    const i = { first: 0, '1st': 0, second: 1, '2nd': 1, third: 2, '3rd': 2, fourth: 3, '4th': 3, last: shown.length - 1 }[nth[1]] ?? Number(nth[1].slice(-1)) - 1
+    if (shown[i]) return act('add_city', { city: name(shown[i]) })
+  }
+
   // ----- The open trip -----
   if (handle) {
+    // Cheaper or faster, with limits: "but keep Italy", "no more than an hour of extra train".
+    const cheapGoal = /\b(cheaper|cut (the )?costs?|save money|lower (the )?cost|less expensive)\b/.test(t) && /\b(my|our|this|the) trip\b|^make (it|this) cheaper\b/.test(t)
+    const fastGoal = /\b(reduce|cut|less|shorter|fewer)\b.*\b(train|travel)\b/.test(t)
+    const limited = /\b(keep|but|don'?t|do not|without|no more than|at most|max(imum)?|up to)\b/.test(t)
+    if ((cheapGoal || fastGoal) && limited) {
+      const max = /\b(?:no more than|at most|max(?:imum)?|up to|under|less than)\s+(an?|one|two|three|\d+(?:\.\d+)?)\s*(hours?|hrs?|h|minutes?|mins?)\b/.exec(t)
+      const n = max ? ({ a: 1, an: 1, one: 1, two: 2, three: 3 }[max[1]] ?? Number(max[1])) : null
+      const amount = /(?:[$€£]\s?(\d[\d,]*)|(\d[\d,]*)\s?(?:\$|€|£|euros?|dollars?|pounds?))/.exec(t)
+      return act(cheapGoal ? 'make_cheaper' : 'reduce_travel', {
+        keepCities: inTrip.map(name),
+        keepCountries: codes.filter((c) => tripIds.some((id) => cityById[id].country === c)),
+        maxExtraTravelMinutes: n == null ? (/\bno (more|extra) (train|travel)\b/.test(t) ? 0 : null) : Math.round(/^h/.test(max[2]) ? n * 60 : n),
+        amount: cheapGoal && amount ? Number((amount[1] || amount[2]).replace(/,/g, '')) : null,
+      })
+    }
     if (/\b(too )?(rushed|hectic|fast[- ]paced)\b|\btoo much\b.*\btrip\b|\b(what'?s|how is) (the |my )?pace\b/.test(t)) return act('trip_question', { question: 'rushed' })
     if (/\bwhat (should|do|can) (i|we) do next\b|\bwhat next\b|\bnext steps?\b/.test(t)) return act('trip_question', { question: 'next_step' })
     if (/\bcheck (my |the )?route\b|\bis (my|the) route ok\b/.test(t)) return act('trip_question', { question: 'route_check' })
@@ -219,7 +242,8 @@ export function parseAppIntent(text, ctx = {}) {
     if (/\bwhat'?s the weather\b|\bweather (during|for|on)\b|\bgoing to rain\b|\bwill it rain\b|\bforecast\b/.test(t)) return act('trip_question', { question: 'weather', day: dayField })
     if (notInTrip[0] && !inTrip.length && /\b(add|include|also visit|squeeze in|fit in)\b/.test(t)) return act('add_city', { city: name(notInTrip[0]) })
     if (/\boptimi[sz]e (my |the )?(route|order)\b|\bbest order\b/.test(t)) return act('optimize_route')
-    const old = parseIntent(text, { plan: handle.plan, timeline: handle.days })
+    // The planner's older reader is for short commands; long, nuanced messages are left to the AI.
+    const old = t.split(/\s+/).length <= 14 ? parseIntent(text, { plan: handle.plan, timeline: handle.days }) : { action: 'unknown' }
     if (old.action !== 'unknown') {
       const map = OLD_TO_NEW[old.action]
       const r = map ? map(old) : act(old.action, { day: old.day })

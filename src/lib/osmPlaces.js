@@ -111,6 +111,21 @@ async function fetchCity(city) {
   return toPlaces(city, data.elements)
 }
 
+// The same, outside React (the travel copilot): registers the city's OpenStreetMap places and returns them.
+// Throws if Overpass can't be reached and nothing is cached.
+export async function loadOsmPlaces(city) {
+  const cached = cache.get(city.id)
+  if (cached) {
+    registerPlaces(cached)
+    return cached
+  }
+  if (!inflight.has(city.id)) inflight.set(city.id, fetchCity(city).finally(() => inflight.delete(city.id)))
+  const list = await inflight.get(city.id)
+  cache.set(city.id, list)
+  registerPlaces(list)
+  return list
+}
+
 // { status: 'idle' | 'loading' | 'ready' | 'error', count, error, retry }
 export function useOsmPlaces(city) {
   const [state, setState] = useState({ status: 'idle', count: 0 })

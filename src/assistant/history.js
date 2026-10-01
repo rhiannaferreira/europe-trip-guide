@@ -23,7 +23,8 @@ export function storableEntry(e) {
     b.type === 'options' ? { ...b, restored: true, options: b.options.map(({ plan: _p, days: _d, ...o }) => o) } : b.type === 'build' ? { ...b, restored: true } : b,
   )
   const done = Object.fromEntries(Object.entries(e.done || {}).map(([k, v]) => [k, typeof v === 'object' && v ? { short: v.short || '', option: v.option } : v]))
-  return { id: e.id, q: e.q, via: e.via, result: { ...e.result, blocks, now: undefined }, done }
+  const ai = e.ai?.status === 'done' ? { status: 'done', text: e.ai.text, generalKnowledge: Boolean(e.ai.generalKnowledge) } : null
+  return { id: e.id, q: e.q, via: e.via, action: e.action, result: { ...e.result, blocks, now: undefined }, done, ai }
 }
 
 export const readChats = () => {

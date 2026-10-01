@@ -26,6 +26,9 @@ export const DISCOVERY_ACTIONS = [
   'open_page',
   'show_on_map',
   'help',
+  // Anything that isn't one of the app's actions: a travel question the AI answers, using whatever
+  // verified Eurowander data fits (see aiContext.js). The rules never produce it.
+  'open_question',
 ]
 // Need a trip open (My trip, or the Build page's plan).
 export const TRIP_ACTIONS = [
@@ -66,7 +69,7 @@ const num = (description) => ({ type: ['integer', 'null'], description })
 export const APP_ACTION_SCHEMA = {
   type: 'object',
   additionalProperties: false,
-  required: ['action', 'city', 'cities', 'country', 'countries', 'place', 'page', 'interests', 'category', 'hiddenGems', 'month', 'tripDays', 'startDate', 'pace', 'budget', 'currency', 'travellers', 'startCity', 'targetCity', 'day', 'nights', 'delta', 'amount', 'question', 'criterion', 'topic', 'reply'],
+  required: ['action', 'city', 'cities', 'country', 'countries', 'place', 'page', 'interests', 'category', 'hiddenGems', 'month', 'tripDays', 'startDate', 'pace', 'budget', 'currency', 'travellers', 'startCity', 'targetCity', 'day', 'nights', 'delta', 'amount', 'question', 'criterion', 'topic', 'keepCities', 'keepCountries', 'maxExtraTravelMinutes', 'reply'],
   properties: {
     action: { type: 'string', enum: APP_ACTIONS },
     city: str('The one city the request is about (or the new city to add / use as a replacement), or empty'),
@@ -94,6 +97,9 @@ export const APP_ACTION_SCHEMA = {
     question: { type: 'string', enum: [...QUESTIONS, 'none'] },
     criterion: { type: 'string', enum: [...CRITERIA, 'none'], description: 'pick_from_list: how to choose among recent.lastShown' },
     topic: { type: 'string', enum: [...HELP_TOPICS, 'none'] },
+    keepCities: list('make_cheaper / reduce_travel: cities in the trip they said to keep'),
+    keepCountries: list('make_cheaper / reduce_travel: countries they said to keep'),
+    maxExtraTravelMinutes: num('make_cheaper / reduce_travel: the most extra travel time they will accept, in minutes (0 for none)'),
     reply: str('One short, friendly sentence saying what you understood; no facts, prices, times or recommendations'),
   },
 }
@@ -130,10 +136,12 @@ export function validateAppAction(raw, ctx = {}) {
   const a = { action: raw.action, reply: typeof raw.reply === 'string' ? raw.reply.slice(0, 300) : '' }
   const tripIds = handle ? handle.plan.stops.map((s) => s.cityId) : []
 
+  // An open question may be about anywhere; it just gets less Eurowander data to work with.
+  const open = raw.action === 'open_question'
   const city = given(raw.city) ? resolveCity(raw.city) : null
-  if (given(raw.city) && !city) return { ok: false, error: `${cut(raw.city)} isn’t one of Eurowander’s cities yet.` }
+  if (given(raw.city) && !city && !open) return { ok: false, error: `${cut(raw.city)} isn’t one of Eurowander’s cities yet.` }
   const country = given(raw.country) ? resolveCountry(raw.country) : null
-  if (given(raw.country) && !country) return { ok: false, error: `${cut(raw.country)} isn’t one of Eurowander’s countries yet.` }
+  if (given(raw.country) && !country && !open) return { ok: false, error: `${cut(raw.country)} isn’t one of Eurowander’s countries yet.` }
   const cityList = [...new Set(arr(raw.cities).map(resolveCity).filter(Boolean))]
   const badCities = arr(raw.cities).filter((c) => !resolveCity(c)).map(cut)
   a.interests = [...new Set(arr(raw.interests).filter((i) => builderInterestById[i]))]
@@ -142,7 +150,8 @@ export function validateAppAction(raw, ctx = {}) {
   a.month = int(raw.month, 1, 12)
   const anchor = city || pageCityId || memory.anchorCity || null
 
-  if (TRIP_ACTIONS.includes(a.action) && !handle) {
+  // Places near a named place, and adding a named city to an empty My trip, don't need a trip open.
+  if (TRIP_ACTIONS.includes(a.action) && !handle && !(a.action === 'places_near' && given(raw.place)) && !(a.action === 'add_city' && city)) {
     return { ok: false, error: 'That needs a trip. Build one (try “Plan 10 days in Italy”), or add cities to My trip first.', noTrip: true }
   }
   const target = given(raw.targetCity) ? resolveCity(raw.targetCity) : null
@@ -262,7 +271,19 @@ export function validateAppAction(raw, ctx = {}) {
       if (!a.interests.length) return { ok: false, error: 'More of what? Food, nightlife, museums, nature…' }
       break
     case 'make_cheaper':
-      a.amount = int(raw.amount, 1, 1_000_000)
+    case 'reduce_travel': {
+      if (a.action === 'make_cheaper') a.amount = int(raw.amount, 1, 1_000_000)
+      const keepCities = [...new Set(arr(raw.keepCities).map(resolveCity).filter(inTrip))]
+      const keepCountries = [...new Set(arr(raw.keepCountries).map(resolveCountry).filter((c) => c && tripIds.some((id) => cityById[id].country === c)))]
+      const maxExtraTravel = int(raw.maxExtraTravelMinutes, 0, 24 * 60)
+      a.limits = keepCities.length || keepCountries.length || maxExtraTravel != null ? { keepCities, keepCountries, maxExtraTravel } : null
+      break
+    }
+    case 'open_question':
+      a.city = city
+      a.cities = cityList
+      a.country = country
+      a.place = given(raw.place) ? resolvePlace(raw.place, { cityId: city, prefer: tripIds })?.id || null : null
       break
     case 'lighten_day':
     case 'plan_day':

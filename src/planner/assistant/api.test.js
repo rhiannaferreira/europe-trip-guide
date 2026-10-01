@@ -59,10 +59,75 @@ test('scope app uses the site-wide actions and rejects unknown scopes', async ()
   assert.equal(r.status, 200)
   assert.equal(r.json.action.action, 'open_city')
   assert.ok(sent.output_config.format.schema.properties.action.enum.includes('build_trip'))
-  assert.match(sent.system, /Eurowander/)
+  assert.match(sent.system[0].text, /Eurowander/)
+  assert.deepEqual(sent.system[0].cache_control, { type: 'ephemeral' })
+  assert.ok(sent.output_config.format.schema.properties.action.enum.includes('open_question'))
   // A trip-builder action isn't allowed in the app scope, and vice versa.
   globalThis.fetch = async () => ({ ok: true, json: async () => ({ content: [{ type: 'text', text: JSON.stringify({ ...action, action: 'answer' }) }] }) })
   assert.equal((await call('POST', { message: 'x', context, scope: 'app' })).status, 502)
   assert.equal((await call('POST', { message: 'x', context, scope: '__proto__' })).status, 400)
   assert.equal((await call('POST', { message: 'x', context, scope: 'nope' })).status, 400)
+})
+
+// A streamed response: the mock writes SSE events like the Messages API; `call` collects what the handler writes.
+function sse(events) {
+  const text = events.map((e) => `event: ${e.type}\ndata: ${JSON.stringify(e)}\n\n`).join('')
+  return new ReadableStream({
+    start(c) {
+      // Split mid-event, as a network would.
+      const enc = new TextEncoder()
+      c.enqueue(enc.encode(text.slice(0, 37)))
+      c.enqueue(enc.encode(text.slice(37)))
+      c.close()
+    },
+  })
+}
+function callStream(body) {
+  const res = { statusCode: 0, headers: {}, chunks: [] }
+  res.status = (s) => ((res.statusCode = s), res)
+  res.setHeader = (k, v) => (res.headers[k.toLowerCase()] = v)
+  res.write = (b) => res.chunks.push(b)
+  res.end = (b) => b && res.chunks.push(b)
+  return handler({ method: 'POST', body, headers: { 'x-forwarded-for': `10.1.0.${Math.floor(Math.random() * 250)}` } }, res).then(() => ({
+    status: res.statusCode,
+    type: res.headers['content-type'],
+    lines: res.chunks.join('').split('\n').filter(Boolean).map((l) => JSON.parse(l)),
+  }))
+}
+
+test('scope answer streams only the answer text, then done', async () => {
+  process.env.ANTHROPIC_API_KEY = 'test-key'
+  let sent
+  globalThis.fetch = async (url, init) => {
+    sent = JSON.parse(init.body)
+    return {
+      ok: true,
+      body: sse([
+        { type: 'message_start', message: { id: 'm' } },
+        { type: 'content_block_start', index: 0, content_block: { type: 'thinking', thinking: '' } },
+        { type: 'content_block_delta', index: 0, delta: { type: 'thinking_delta', thinking: 'secret reasoning' } },
+        { type: 'content_block_delta', index: 1, delta: { type: 'text_delta', text: '{"message":"Walk the ' } },
+        { type: 'content_block_delta', index: 1, delta: { type: 'text_delta', text: 'Arno."' } },
+        { type: 'message_delta', delta: { stop_reason: 'end_turn' } },
+        { type: 'message_stop' },
+      ]),
+    }
+  }
+  const r = await callStream({ message: 'What should I do tonight?', context: { trip: null }, scope: 'answer' })
+  assert.equal(r.status, 200)
+  assert.match(r.type, /ndjson/)
+  assert.equal(sent.stream, true)
+  assert.ok(sent.output_config.format.schema.properties.message)
+  assert.match(sent.system[0].text, /Never invent live information/)
+  assert.deepEqual(r.lines, [{ type: 'text', text: '{"message":"Walk the ' }, { type: 'text', text: 'Arno."' }, { type: 'done' }])
+  assert.ok(!JSON.stringify(r.lines).includes('secret'))
+})
+
+test('scope answer reports a refusal or a failed model call', async () => {
+  process.env.ANTHROPIC_API_KEY = 'test-key'
+  globalThis.fetch = async () => ({ ok: true, body: sse([{ type: 'content_block_delta', delta: { type: 'text_delta', text: '{"mes' } }, { type: 'message_delta', delta: { stop_reason: 'refusal' } }]) })
+  const r = await callStream({ message: 'hi', context: { trip: null }, scope: 'answer' })
+  assert.deepEqual(r.lines[r.lines.length - 1], { type: 'error', error: 'declined' })
+  globalThis.fetch = async () => ({ ok: false, status: 529 })
+  assert.equal((await call('POST', { message: 'hi', context: { trip: null }, scope: 'answer' })).status, 502)
 })
