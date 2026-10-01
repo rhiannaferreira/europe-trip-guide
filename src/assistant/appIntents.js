@@ -58,7 +58,22 @@ export function countriesIn(text) {
     .map((x) => x.code)
 }
 
-const interestsIn = (t) => INTEREST_WORDS.filter(([, re]) => re.test(t)).map(([id]) => id)
+// Interests mentioned, minus ones the text rules out ("she hates museums but I love history" → history).
+// A clause that says no to something before naming it drops it.
+const DISLIKE = /\b(hates?|hated|dislikes?|can'?t stand|(does|do|did)n'?t (like|love|enjoy|want|care for)|not (into|a fan of|keen on|big on|interested in)|isn'?t into|bored (by|of)|sick of|tired of|avoid|skip|no more|without|no)\b/
+const interestsIn = (t) => {
+  const clauses = t.split(/\bbut\b|\bwhile\b|\bwhereas\b|\bthough\b|[,;.!?]/)
+  const ruledOut = new Set()
+  for (const c of clauses) {
+    const no = c.search(DISLIKE)
+    if (no < 0) continue
+    for (const [id, re] of INTEREST_WORDS) {
+      const at = c.search(re)
+      if (at > no) ruledOut.add(id)
+    }
+  }
+  return INTEREST_WORDS.filter(([id, re]) => re.test(t) && !ruledOut.has(id)).map(([id]) => id)
+}
 export const monthIn = (t) => {
   const i = MONTHS.findIndex((m) => new RegExp(`\\b(${m}|${m.slice(0, 3)})\\b`).test(t) && !(m === 'may' && /\bmay (i|we|be)\b/.test(t)))
   return i >= 0 ? i + 1 : null

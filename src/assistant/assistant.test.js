@@ -289,3 +289,11 @@ test('the streamed answer is read as it arrives and checked when complete', () =
     { type: 'list', items: [[{ text: 'one' }], [{ text: 'two' }]] },
   ])
 })
+
+test('interests the user rules out are dropped', () => {
+  const a = parseAppIntent('My girlfriend hates museums but I love history, one afternoon in Rome', {})
+  assert.equal(a.action, 'suggest_places')
+  assert.equal(a.category, 'history')
+  assert.equal(parseAppIntent('museums in Paris without the crowds', {}).category, 'museums')
+  assert.equal(parseAppIntent("food in Rome, we're not into nightlife", {}).category, 'food')
+})
