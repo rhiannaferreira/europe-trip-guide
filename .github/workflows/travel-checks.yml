@@ -7,6 +7,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: |
-          for u in https://eurowander.vercel.app/trip https://eurowander.vercel.app/build https://eurowander.vercel.app/explore https://eurowander.vercel.app/zzz https://eurowander.vercel.app/city/rome https://eurowander.vercel.app/travel ; do
+          for u in https://eurowander.vercel.app/travel https://eurowander.vercel.app/trip https://eurowander.vercel.app/zzz https://eurowander.vercel.app/build https://eurowander.vercel.app/ ; do
             echo "=== $u"; curl -sS -o /tmp/b -D - "$u" | grep -iE "^HTTP|^x-vercel|^location|^server" ; head -c 300 /tmp/b; echo
           done
