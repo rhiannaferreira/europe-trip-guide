@@ -2,28 +2,11 @@ name: travel-mode-checks
 on:
   push:
     branches: [travel-mode-checks]
-permissions:
-  contents: write
 jobs:
-  e2e:
+  probe:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - run: npm ci
-      - run: npm test
-      - run: npm run build
-      - run: npm i --no-save playwright@1.56.1 @axe-core/playwright@4
-      - run: npx playwright install --with-deps chromium
-      - run: (npx vite preview --port 4173 --strictPort &) && sleep 3
-      - run: node .ci/travel.e2e.mjs
-      - name: Publish screenshots
-        if: always()
-        run: |
-          cd screens
-          git init -q -b travel-mode-screens
-          git config user.name ci && git config user.email ci@example.invalid
-          git add -A && git commit -qm "screens ${GITHUB_SHA::7}"
-          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" travel-mode-screens
+      - run: |
+          for u in https://eurowander-o1xy54uez-rhiannaferreira.vercel.app/travel https://eurowander-o1xy54uez-rhiannaferreira.vercel.app/ https://eurowander-git-travel-mode-rhiannaferreira.vercel.app/ https://eurowander-git-travel-mode-rhiannaferreira.vercel.app/travel https://eurowander.vercel.app/travel https://eurowander.vercel.app/ ; do
+            echo "=== $u"; curl -sS -o /tmp/b -D - "$u" | grep -iE "^HTTP|^x-vercel|^location|^server" ; head -c 300 /tmp/b; echo
+          done
