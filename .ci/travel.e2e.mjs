@@ -64,6 +64,7 @@ async function open({ name, tripData, time, path = '/travel', tz = 'America/New_
   await page.waitForTimeout(800)
   return { page, context, errors, shot: async (file) => page.screenshot({ path: `${OUT}/${file}.png`, fullPage: true }) }
 }
+const step = async (fn) => { try { await fn() } catch (e) { ok('scenario crashed', false, e.message.split('\n')[0]) } }
 const text = (page) => page.locator('body').innerText()
 const axe = async (page, name) => {
   const r = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).exclude('.leaflet-container').analyze()
@@ -71,7 +72,7 @@ const axe = async (page, name) => {
 }
 
 // 1. Middle of the trip, phone on New York time, 10:00 in Paris, rain this afternoon.
-{
+await step(async () => {
   const { page, errors, shot, context } = await open({ name: 'active', tripData: trip(BUSY), time: '2026-06-18T08:00:00Z' })
   const t = await text(page)
   ok('active: shows Paris and day 4', /PARIS/.test(t) && /Day 4 of 6/.test(t), t.slice(0, 200))
@@ -98,7 +99,7 @@ const axe = async (page, name) => {
   await shot('03-activity-sheet')
   await page.getByLabel('Move to another day').selectOption('3')
   ok('move: confirmation', /now on day 3/.test(await text(page)))
-  await page.getByRole('button', { name: 'Done' }).click()
+  await page.getByRole('button', { name: 'Done', exact: true }).click()
   const it = await page.evaluate(() => JSON.parse(localStorage.getItem('travel-app-trip')).itinerary)
   ok('move: planning trip shows it on day 3', it['3'].placeIds.includes('paris-marche-enfants-rouges') && !it['4'].placeIds.includes('paris-marche-enfants-rouges'))
   // Nearby without location
@@ -110,7 +111,7 @@ const axe = async (page, name) => {
   await shot('04-nearby-no-location')
   await page.keyboard.press('Escape')
   // Map tab
-  await page.getByRole('button', { name: 'Map' }).last().click()
+  await page.locator('.tm-nav').getByRole('button', { name: 'Map' }).click()
   await page.waitForSelector('.leaflet-container', { timeout: 10000 })
   ok('map: renders with today’s stops', (await page.locator('.tm-maplist li').count()) >= 2)
   await shot('05-map')
@@ -147,10 +148,10 @@ const axe = async (page, name) => {
   ok('offline: weather is labelled as saved', /Saved forecast from/.test(ot), ot.match(/forecast[^\n]*/gi)?.join(' | '))
   await shot('10-offline')
   ok('active: no page errors', errors.length === 0, errors.join(' | '))
-}
+})
 
 // 2. Location granted
-{
+await step(async () => {
   const { page, shot, errors } = await open({ tripData: trip(BUSY), time: '2026-06-18T08:00:00Z', geo: { latitude: 48.8606, longitude: 2.3376 } })
   await page.getByRole('button', { name: '☕ Coffee' }).first().click().catch(() => {})
   await page.getByRole('button', { name: /Use my location/ }).click()
@@ -158,10 +159,10 @@ const axe = async (page, name) => {
   ok('location granted: nearby uses your location', /Near your location/.test(await text(page)))
   await shot('11-nearby-location')
   ok('location: no page errors', errors.length === 0, errors.join(' | '))
-}
+})
 
 // 3. Travel day (London → Paris) with a train time, early morning in London
-{
+await step(async () => {
   const t = trip(BUSY); t.itinerary['3'].depart = '09:01'
   const { page, shot } = await open({ tripData: t, time: '2026-06-17T06:30:00Z', tz: 'Europe/Paris' })
   const x = await text(page)
@@ -170,30 +171,30 @@ const axe = async (page, name) => {
   ok('travel day: departure and arrival estimate', /09:01 → ~11:17/.test(x))
   ok('travel day: no live status faked', /aren’t in Eurowander/.test(x))
   await shot('12-travel-day')
-}
+})
 
 // 4. Trip starts today, 23:30 UTC = 00:30 in London
-{
+await step(async () => {
   const { page } = await open({ tripData: trip(BUSY), time: '2026-06-14T23:30:00Z', tz: 'America/Los_Angeles' })
   ok('starts today in London even though the phone says the 14th', /Day 1 of 6/.test(await text(page)))
-}
+})
 
 // 5. Final day in Athens and completed
-{
+await step(async () => {
   const { page, shot } = await open({ tripData: trip(BUSY), time: '2026-06-20T20:30:00Z' })
   ok('final day: Athens day 6 at 23:30', /ATHENS/.test(await text(page)) && /Day 6 of 6/.test(await text(page)) && /last day/.test(await text(page)))
   await shot('13-final-day')
-}
-{
+})
+await step(async () => {
   const t = trip(BUSY); t.itinerary['4'].done = ['paris-louvre']
   const { page, shot } = await open({ tripData: t, time: '2026-06-25T10:00:00Z' })
   const x = await text(page)
   ok('completed: read-only history', /This trip is over/.test(x) && !/Mark .* done/.test(await page.locator('main').innerHTML()))
   await shot('14-completed')
-}
+})
 
 // 6. Future trip preview
-{
+await step(async () => {
   const { page, shot } = await open({ tripData: trip(BUSY), time: '2026-06-01T10:00:00Z' })
   const x = await text(page)
   ok('preview: banner and day 1', /Preview/.test(x) && /starts in 14 days/.test(x) && /LONDON/.test(x))
@@ -201,10 +202,10 @@ const axe = async (page, name) => {
   ok('preview: can move between days', /Day 2 of 6/.test(await text(page)))
   await shot('15-preview')
   await axe(page, 'preview')
-}
+})
 
 // 7. No itinerary today, weather API failure
-{
+await step(async () => {
   const t = trip({}); 
   const { page, shot, errors } = await open({ tripData: t, time: '2026-06-18T13:00:00Z', weather: 'fail' })
   const x = await text(page)
@@ -212,17 +213,17 @@ const axe = async (page, name) => {
   ok('weather failure: says so, no fake weather', /Couldn’t load the weather/.test(x) && !/°C/.test(x))
   await shot('16-empty-day-weather-fail')
   ok('empty day: no page errors', errors.length === 0, errors.join(' | '))
-}
+})
 
 // 8. Single activity, desktop size
-{
+await step(async () => {
   const { page, shot } = await open({ tripData: trip({ 4: { placeIds: ['paris-orsay'], note: '' } }), time: '2026-06-18T07:00:00Z', viewport: { width: 1280, height: 900 } })
   ok('single activity: next up Orsay', /Musée d'Orsay/.test(await text(page)))
   await shot('17-desktop')
-}
+})
 
 // 9. Entry points: My trip panel and landing page
-{
+await step(async () => {
   const { page, shot } = await open({ tripData: trip(BUSY), time: '2026-06-18T08:00:00Z', path: '/trip', viewport: { width: 1280, height: 900 } })
   ok('my trip: "Your trip is happening now" + Enter Travel Mode', /Your trip is happening now/.test(await text(page)) && (await page.getByRole('link', { name: /Enter Travel Mode/ }).count()) > 0)
   await shot('18-mytrip-entry')
@@ -230,8 +231,8 @@ const axe = async (page, name) => {
   await page.waitForTimeout(800)
   ok('entry: opens Travel Mode', /Day 4 of 6/.test(await text(page)))
   // Planning shows the time and done marks set in Travel Mode
-}
-{
+})
+await step(async () => {
   const t = trip(BUSY); t.itinerary['4'].times = { 'paris-louvre': '09:15' }; t.itinerary['4'].done = ['paris-louvre']
   const { page, shot } = await open({ tripData: t, time: '2026-06-18T08:00:00Z', path: '/trip', viewport: { width: 1280, height: 900 } })
   await page.getByRole('tab', { name: /Days/ }).click()
@@ -239,29 +240,29 @@ const axe = async (page, name) => {
   const x = await text(page)
   ok('planning: shows travel mode time and done', /09:15/.test(x) && /✓ Done/.test(x))
   await shot('19-planning-days')
-}
-{
+})
+await step(async () => {
   const { page, shot } = await open({ tripData: trip(BUSY), time: '2026-06-01T08:00:00Z', path: '/trip', viewport: { width: 1280, height: 900 } })
   ok('my trip: upcoming shows Preview Travel Mode', (await page.getByRole('link', { name: /Preview Travel Mode/ }).count()) > 0)
-}
-{
+})
+await step(async () => {
   const { page, shot } = await open({ tripData: trip(BUSY), time: '2026-06-18T08:00:00Z', path: '/' })
   ok('landing: shows Enter Travel Mode while travelling', (await page.getByRole('link', { name: /Enter Travel Mode/ }).count()) > 0)
   await shot('20-landing-entry')
-}
+})
 // 10. No trip
-{
+await step(async () => {
   const { page, shot } = await open({ tripData: null, time: '2026-06-18T08:00:00Z' })
   ok('no trip: friendly empty state', /Start with a trip/.test(await text(page)))
-}
+})
 // 11. Dark mode
-{
+await step(async () => {
   const { page, shot } = await open({ tripData: trip(BUSY), time: '2026-06-18T08:00:00Z' })
   await page.emulateMedia({ colorScheme: 'dark' })
   await page.waitForTimeout(200)
   await shot('21-dark')
   await axe(page, 'dark today')
-}
+})
 
 await open.browser?.close()
 const failed = results.filter(([c]) => !c)
