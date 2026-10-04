@@ -1,0 +1,48 @@
+PASS active: shows Paris and day 4
+PASS active: local time is Paris time, not the phone
+PASS active: next up is the Louvre at 09:30 (now)
+PASS active: weather shown
+PASS active: rain warning
+PASS active: rain affects outdoor plans
+PASS active: tomorrow preview
+PASS axe active today: no violations
+PASS done: progress updates
+PASS done: stored on the real trip
+PASS skip: marked skipped, not deleted
+PASS move: confirmation
+PASS move: planning trip shows it on day 3
+PASS nearby: falls back to the next activity and says so
+PASS nearby: lists places with distances
+PASS map: renders with today’s stops
+PASS trip tab: days, transport, notes, tips
+PASS axe trip tab: no violations
+PASS more tab: 112
+PASS axe more tab: no violations
+PASS copilot: opens with the tired request and proposes a lighter today
+PASS copilot: "what next" answers from today without AI
+PASS offline: says so and keeps the plan
+PASS offline: weather is labelled as saved
+PASS active: no page errors
+PASS location granted: nearby uses your location
+PASS location: no page errors
+PASS travel day: recognised
+PASS travel day: before and after the train
+PASS travel day: departure and arrival estimate
+PASS travel day: no live status faked
+PASS starts today in London even though the phone says the 14th
+PASS final day: Athens day 6 at 23:30
+PASS completed: read-only history
+PASS preview: banner and day 1
+PASS preview: can move between days
+PASS axe preview: no violations
+PASS empty day: open afternoon
+PASS weather failure: says so, no fake weather
+PASS empty day: no page errors
+PASS single activity: next up Orsay
+PASS my trip: "Your trip is happening now" + Enter Travel Mode
+PASS entry: opens Travel Mode
+PASS planning: shows travel mode time and done
+PASS my trip: upcoming shows Preview Travel Mode
+PASS landing: shows Enter Travel Mode while travelling
+PASS no trip: friendly empty state
+PASS axe dark today: no violations
