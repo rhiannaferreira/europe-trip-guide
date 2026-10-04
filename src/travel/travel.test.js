@@ -244,6 +244,8 @@ test('quick actions read as the right copilot actions for today, without the AI'
   assert.equal(lunch.action, 'places_near')
   assert.equal(lunch.category, 'food')
   assert.equal(parseAppIntent('What’s nearby?', ctx).action, 'places_near')
+  assert.equal(parseAppIntent('What should we do next?', ctx).action, 'open_question')
+  assert.equal(parseAppIntent('We finished early, what now?', ctx).action, 'open_question')
   // Without the AI, an open question in Travel Mode answers with what's left of today.
   const r = respond(check({ ...parseAppIntent('Make my trip cheaper', ctx), action: 'open_question', city: '', cities: [], country: '' }, ctx), { ...ctx, weatherByDay: {} })
   assert.match(r.text, /Next up: Louvre Museum/)

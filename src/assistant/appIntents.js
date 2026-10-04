@@ -151,6 +151,7 @@ export function parseAppIntent(text, ctx = {}) {
       if (/\b(lunch|dinner|breakfast|eat|food|hungry|restaurant|coffee|cafe|drinks?|bar)\b/.test(t) && /\b(find|where|near|nearby|close|around|somewhere|hungry|should)\b/.test(t) && !/\b(move|skip)\b/.test(t)) {
         return act('places_near', { category: /\b(drinks?|bar)\b/.test(t) ? 'nightlife' : 'food', day: n })
       }
+      if (/\b(what'?s next|what now|what (should|can|could|shall) (we|i) do( next| now| tonight| this (afternoon|evening))?|plans? changed|finished early|done early)\b/.test(t) && !/\btomorrow\b/.test(t)) return act('open_question')
       if (/\b(near me|nearby|near here|around here|close by|what'?s near)\b/.test(t)) return act('places_near', { category: 'none', day: n })
     }
   }

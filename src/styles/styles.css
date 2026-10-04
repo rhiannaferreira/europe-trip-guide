@@ -1224,7 +1224,7 @@ a:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent); ou
 .tm-tl-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
 .tm-done .tm-tl-actions .btn { min-height: 40px; }
 .tm-done-btn { border-color: var(--good); color: var(--good) !important; font-weight: 700; }
-.tm-undo { color: var(--muted); text-decoration: underline; min-height: 40px; padding: 0 6px; }
+.tm-undo { color: var(--text); text-decoration: underline; min-height: 40px; padding: 0 6px; }
 .tm-tl-label { font-size: 0.8rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); padding: 10px 0 2px; }
 .tm-tl-break .tm-tl-body { font-style: italic; }
 .tm-tl-journey { border-left-style: dashed; }
