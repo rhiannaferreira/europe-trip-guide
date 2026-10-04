@@ -116,6 +116,12 @@ write(
   }),
 )
 
+// The app's private pages get a file too, so opening or refreshing them never depends on the
+// catch-all rewrite. They hold personal trip data, so search engines are asked to skip them.
+const noindex = (html) => html.replace('</head>', '    <meta name="robots" content="noindex" />\n  </head>')
+write('trip.html', noindex(page({ title: 'My trip', description: DEFAULT_DESCRIPTION, path: '/trip', body: '' })))
+write('travel.html', noindex(page({ title: 'Travel Mode', description: 'Your trip today: what’s next, nearby places, weather and the plan, on your phone.', path: '/travel', body: '' })))
+
 // The home page: site-wide structured data.
 write(
   'index.html',
