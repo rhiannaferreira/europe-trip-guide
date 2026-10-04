@@ -3,7 +3,7 @@ import { placeById } from './data/places.js'
 import { KEYS, backupOnce, readJSON, readText, writeJSON } from './lib/storage.js'
 import { persistTripPlaces } from './lib/extraPlaces.js'
 import { TRIP_CHANGED, withCity, withPlace } from './lib/tripStore.js'
-import { DEFAULT_TRIP_NAME, STATUSES, VERSION, emptyTrip, migrate } from './lib/tripModel.js'
+import { DEFAULT_TRIP_NAME, STATUSES, VERSION, dayExtras, dayHasContent, dayWithout, emptyTrip, migrate } from './lib/tripModel.js'
 
 // The trip's shape and migrations live in lib/tripModel.js; they're re-exported here for older imports.
 export { DEFAULT_TRIP_NAME, STATUSES, emptyTrip, isEmptyTrip, migrate } from './lib/tripModel.js'
@@ -17,11 +17,10 @@ function loadSaved() {
 
 // Remove places from every itinerary day (used when places are unsaved or their stop is removed).
 function withoutPlaces(itinerary, placeIds) {
-  const drop = new Set(placeIds)
   const next = {}
   for (const [n, day] of Object.entries(itinerary)) {
-    const kept = day.placeIds.filter((id) => !drop.has(id))
-    if (kept.length || day.note) next[n] = { ...day, placeIds: kept }
+    const kept = dayWithout(day, placeIds)
+    if (dayHasContent(kept)) next[n] = kept
   }
   return next
 }
@@ -105,9 +104,10 @@ export function useTrip() {
   // ----- Itinerary -----
   const updateDay = (t, n, fn) => {
     const day = t.itinerary[n] || { placeIds: [], note: '' }
-    const next = fn(day)
+    const changed = fn(day)
+    const next = { placeIds: changed.placeIds, note: changed.note || '', ...dayExtras(changed) }
     const itinerary = { ...t.itinerary }
-    if (next.placeIds.length || next.note) itinerary[n] = next
+    if (dayHasContent(next)) itinerary[n] = next
     else delete itinerary[n]
     return { ...t, itinerary }
   }

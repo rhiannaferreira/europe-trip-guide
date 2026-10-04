@@ -46,6 +46,8 @@ export function respond(checked, ctx) {
 // A question only the AI can answer well. What the app adds is data: the guide's best matching cities
 // when the question names none. Without the AI, those cities are the answer.
 export function openQuestion(a, ctx = {}) {
+  // In Travel Mode with no city named, the question is about today: the facts are today's plan.
+  if (ctx.travel && !a.city && !a.cities?.length && !a.country) return travelToday(ctx.travel)
   const exclude = ctx.handle ? ctx.handle.plan.stops.map((s) => s.cityId) : []
   const ids = a.city ? [a.city, ...(a.cities || []).filter((c) => c !== a.city)] : a.cities?.length ? a.cities : candidateCities(a, { exclude })
   return {
@@ -54,6 +56,25 @@ export function openQuestion(a, ctx = {}) {
     followUps: ids.length ? [] : [{ label: '🗺️ Plan a trip', prompt: 'Plan a trip' }, { label: '💎 Hidden gems', prompt: 'Show me less touristy cities' }, { label: '🎲 Surprise me', prompt: 'Surprise me' }],
     memory: ids.length ? { lastList: ids.slice(0, 4), anchorCity: ids[0] } : {},
     sources: ids.length ? ['sample'] : [],
+    open: true,
+  }
+}
+
+// What's left of today, from Travel Mode's context: the answer without the AI, and the facts the AI explains.
+export function travelToday(t) {
+  const left = (t.today || []).filter((e) => e.status === 'current' || e.status === 'upcoming')
+  const items = left.map((e) => `${e.time ? `${e.time} ` : ''}${e.what}${e.status === 'current' ? ' (now)' : ''}${e.time && e.timeIs === 'suggested by Eurowander' ? ' (suggested time)' : ''}`)
+  const next = t.next ? `Next up: ${t.next.place}${t.next.time ? ` at ${t.next.time}` : ''}${t.next.startsIn && t.next.startsIn !== 'now' ? `, in ${t.next.startsIn}` : t.next.startsIn === 'now' ? ', happening now' : ''}.` : 'Nothing else is planned today.'
+  const free = t.freeTime?.length ? ` You’re free ${t.freeTime.join(' and ')}.` : ''
+  return {
+    text: `${next}${free}`,
+    blocks: items.length ? [{ type: 'list', items }] : [],
+    followUps: [
+      { label: '🍽️ Food nearby', prompt: 'Find food nearby' },
+      { label: '📍 What’s nearby?', prompt: 'What’s nearby?' },
+      { label: '😮‍💨 Make today easier', prompt: 'I’m tired. Make the rest of today easier.' },
+    ],
+    facts: { todayLeft: items, localTime: t.localTime },
     open: true,
   }
 }

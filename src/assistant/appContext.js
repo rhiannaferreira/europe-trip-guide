@@ -10,6 +10,11 @@ import { planLegs } from '../planner/plan.js'
 import { tripMode } from './tripHandle.js'
 
 const name = (id) => cityById[id]?.name || id
+const addDays = (iso, n) => {
+  const d = new Date(`${iso}T00:00:00`)
+  d.setDate(d.getDate() + n)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
 export function tripContext(handle, today) {
@@ -44,9 +49,11 @@ export function tripContext(handle, today) {
   }
 }
 
-export function appContext({ route, handle, today, memory = {} }) {
-  return {
+// `travel`: Travel Mode's context (travel/travelContext.js) when the copilot was opened there, else null.
+export function appContext({ route, handle, today, memory = {}, travel = null }) {
+  const ctx = {
     today,
+    travelMode: travel || undefined,
     page: {
       name: route?.name || 'home',
       city: route?.name === 'city' && cityById[route.id] ? name(route.id) : null,
@@ -62,4 +69,12 @@ export function appContext({ route, handle, today, memory = {} }) {
     cities: cities.map((c) => c.name),
     countries: countries.map((c) => c.name),
   }
+  // Keep it under the server's limit (14,000 characters): the day list goes first, then Travel Mode's extras.
+  const steps = [
+    () => ctx.trip?.days && (ctx.trip.days = ctx.trip.days.filter((d) => !d.date || (d.date >= today && d.date <= addDays(today, 3)))),
+    () => ctx.travelMode && (ctx.travelMode.savedInCity = undefined),
+    () => ctx.trip && (ctx.trip.savedPlaces = ctx.trip.savedPlaces.slice(0, 8)),
+  ]
+  for (const step of steps) if (JSON.stringify(ctx).length > 13500) step()
+  return ctx
 }

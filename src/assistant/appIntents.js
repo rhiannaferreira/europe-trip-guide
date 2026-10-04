@@ -141,6 +141,20 @@ export function parseAppIntent(text, ctx = {}) {
     if (hit) return act('help', { topic: hit[0] })
   }
 
+  // In Travel Mode, short in-the-moment requests mean today, where they are.
+  if (ctx.travel && handle) {
+    const todayN = tripDayIn('today', { handle, today })
+    const n = day != null && day !== -1 ? day : todayN
+    if (n != null && n !== -1 && !cityIds.length) {
+      if (/\b(tired|exhausted|knackered|worn out|take it easy|slow down|easier|lighter|less busy|too much)\b/.test(t) && !/\b(tomorrow)\b/.test(t)) return act('lighten_day', { day: n })
+      if (/\b(rain|raining|rainy|wet|storm)\b/.test(t) && !/\bwill it\b/.test(t)) return act('rain_plan', { day: n })
+      if (/\b(lunch|dinner|breakfast|eat|food|hungry|restaurant|coffee|cafe|drinks?|bar)\b/.test(t) && /\b(find|where|near|nearby|close|around|somewhere|hungry|should)\b/.test(t) && !/\b(move|skip)\b/.test(t)) {
+        return act('places_near', { category: /\b(drinks?|bar)\b/.test(t) ? 'nightlife' : 'food', day: n })
+      }
+      if (/\b(near me|nearby|near here|around here|close by|what'?s near)\b/.test(t)) return act('places_near', { category: 'none', day: n })
+    }
+  }
+
   // A new trip, or an answer to the question the last reply asked about one.
   const days = tripLengthIn(t)
   const build = /\b(plan|build|make|create|generate|design)\b.*\b(trip|itinerary|route|holiday|vacation|getaway|europe)\b|\bplan me\b|\bjust build it\b/.test(t) && !/\b(my|our|this) (trip|itinerary|route)\b/.test(t) && !/\bplan (day|today|tomorrow|monday|tuesday|wednesday|thursday|friday|saturday|sunday|my next day)\b/.test(t)
@@ -328,6 +342,15 @@ export const WELCOME_PROMPTS = [
   { label: '💰 Help with my budget', prompt: 'Can I afford this trip?' },
   { label: '📅 Plan my days', prompt: 'Plan my next day' },
   { label: '🎲 Surprise me', prompt: 'Surprise me' },
+]
+// Travel Mode: what people ask while they're out and about.
+export const TRAVEL_PROMPTS = [
+  { label: 'What should we do next?', prompt: 'What should we do next?' },
+  { label: 'Find lunch nearby', prompt: 'Find lunch nearby' },
+  { label: 'I’m tired', prompt: 'I’m tired. Make the rest of today easier.' },
+  { label: 'It’s raining', prompt: 'It’s raining. What should I move?' },
+  { label: 'What should we do tonight?', prompt: 'What should we do tonight?' },
+  { label: 'Do I have time before my train?', prompt: 'Do I have enough time before my train?' },
 ]
 export const TRIP_PROMPTS = [
   { label: 'Make my trip cheaper', prompt: 'Make my trip cheaper' },

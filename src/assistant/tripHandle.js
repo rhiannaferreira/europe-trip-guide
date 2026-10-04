@@ -12,6 +12,10 @@ import { readSavedTrip, updateSavedTrip, withPlace } from '../lib/tripStore.js'
 import { tripToPlan } from '../planner/convert.js'
 import { planTimeline, planTotals, stopDays } from '../planner/plan.js'
 import { addDaysIso } from '../planner/preferences.js'
+import { dayExtras, dayHasContent } from '../lib/tripModel.js'
+
+// Places marked done or skipped in Travel Mode are history: the copilot plans around them, never moves them.
+const settled = (day) => new Set([...(day?.done || []), ...(day?.skipped || [])])
 
 const CURRENCIES = ['EUR', 'USD', 'GBP']
 
@@ -34,22 +38,27 @@ export function itineraryDays(trip, plan) {
     kind: d.leg ? 'arrival' : 'full',
     leg: d.leg,
     departure: d.departure,
-    items: (trip.itinerary?.[d.number]?.placeIds || []).filter((id) => placeById[id]).map((id) => ({ slot: 'afternoon', placeId: id, label: placeById[id].name, reasons: [] })),
+    items: (trip.itinerary?.[d.number]?.placeIds || []).filter((id) => placeById[id] && !settled(trip.itinerary[d.number]).has(id)).map((id) => ({ slot: 'afternoon', placeId: id, label: placeById[id].name, reasons: [] })),
     notes: [],
   }))
 }
 
 // Day plans back into My trip's itinerary. Places new to the trip are saved; day notes stay.
+// Places done or skipped in Travel Mode stay where they were (the day plans never include them), and a place
+// that stays on its day keeps the start time the traveller gave it.
 export function applyDaysToTrip(trip, days) {
   let t = trip
   const itinerary = {}
+  const planned = new Set(days.flatMap((d) => d.items.map((it) => it.placeId)))
   for (const d of days) {
-    const placeIds = [...new Set(d.items.map((it) => it.placeId).filter((id) => id && placeById[id]))]
+    const old = trip.itinerary?.[d.number]
+    const kept = (old?.placeIds || []).filter((id) => settled(old).has(id) && !planned.has(id))
+    const placeIds = [...new Set([...kept, ...d.items.map((it) => it.placeId).filter((id) => id && placeById[id])])]
     for (const id of placeIds) t = withPlace(t, id)
-    const note = trip.itinerary?.[d.number]?.note || ''
-    if (placeIds.length || note) itinerary[d.number] = { placeIds, note }
+    const day = { placeIds, note: old?.note || '', ...dayExtras(old || {}, placeIds) }
+    if (dayHasContent(day)) itinerary[d.number] = day
   }
-  // Notes on days the plan doesn't list (outside the trip) are kept as they were.
+  // Days the plan doesn't list (outside the trip) are kept as they were, if they hold a note.
   for (const [n, day] of Object.entries(trip.itinerary || {})) if (!itinerary[n] && day.note) itinerary[n] = { placeIds: [], note: day.note }
   return { ...t, itinerary }
 }
@@ -81,7 +90,8 @@ export function applyPlanToTrip(trip, before, after) {
     const to = newByKey[d.key]
     if (!day || !to) continue
     const placeIds = day.placeIds.filter((id) => !dropped.includes(id))
-    if (placeIds.length || day.note) itinerary[to] = { placeIds, note: day.note }
+    const next = { placeIds, note: day.note, ...dayExtras(day, placeIds) }
+    if (dayHasContent(next)) itinerary[to] = next
   }
   const { days } = planTotals(after)
   return { ...trip, stops, statuses, itinerary, endDate: trip.startDate ? addDaysIso(trip.startDate, days - 1) : trip.endDate }

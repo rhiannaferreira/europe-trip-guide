@@ -30,9 +30,41 @@ export const emptyTrip = () => ({
 //     statuses: { [placeId]: 'saved' | 'want' | 'visited' },   one per saved place
 //     itinerary: { [dayNumber]: { placeIds: [], note: '' } },  keyed by day number (1, 2, 3...) so moving the
 //         start date keeps the plan. A place is on at most one day.
+//         Optional, added by Travel Mode (only present when set):
+//           times:   { [placeId]: 'HH:MM' }   a start time the traveller set, in the destination's local time
+//           done:    [placeId]                 marked done while travelling
+//           skipped: [placeId]                 skipped while travelling (still on the day, never deleted)
+//           depart:  'HH:MM'                   the traveller's own departure time on a travel day
 //     notes: { trip: '', cities: { [cityId]: '' } },
 //   }
 //
+const HM = /^([01]\d|2[0-3]):[0-5]\d$/
+export const isTime = (v) => typeof v === 'string' && HM.test(v)
+
+// A day's optional Travel Mode fields, kept only for places still on the day (and dropped when empty).
+export function dayExtras(day, placeIds = day?.placeIds || []) {
+  const on = new Set(placeIds)
+  const out = {}
+  const times = Object.fromEntries(Object.entries(day?.times || {}).filter(([id, v]) => on.has(id) && isTime(v)))
+  if (Object.keys(times).length) out.times = times
+  const done = [...new Set((Array.isArray(day?.done) ? day.done : []).filter((id) => on.has(id)))]
+  if (done.length) out.done = done
+  const skipped = [...new Set((Array.isArray(day?.skipped) ? day.skipped : []).filter((id) => on.has(id) && !done.includes(id)))]
+  if (skipped.length) out.skipped = skipped
+  if (isTime(day?.depart)) out.depart = day.depart
+  return out
+}
+
+// Whether a day holds anything worth keeping.
+export const dayHasContent = (day) => Boolean(day && ((day.placeIds || []).length || (day.note || '').trim() || isTime(day.depart)))
+
+// A day with some places taken off (their times and done/skipped marks go with them).
+export function dayWithout(day, placeIds) {
+  const drop = new Set(placeIds)
+  const kept = day.placeIds.filter((id) => !drop.has(id))
+  return { placeIds: kept, note: day.note || '', ...dayExtras(day, kept) }
+}
+
 // Older shapes are migrated when loaded, never thrown away:
 //   v1 { placeIds, cityOrder }                   first version
 //   v2 { stops: [{ cityId, auto, placeIds }], startDate, endDate }
@@ -69,7 +101,8 @@ export function migrate(saved) {
     if (!Number.isInteger(n) || n < 1 || !day) continue
     const placeIds = (day.placeIds || []).filter((id) => seenPlaces.has(id) && !placed.has(id) && placed.add(id))
     const note = typeof day.note === 'string' ? day.note : ''
-    if (placeIds.length || note) itinerary[n] = { placeIds, note }
+    const extras = dayExtras(day, placeIds)
+    if (placeIds.length || note || extras.depart) itinerary[n] = { placeIds, note, ...extras }
   }
 
   const notes = {

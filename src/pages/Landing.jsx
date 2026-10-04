@@ -6,6 +6,8 @@ import { trainTimes } from '../data/trainTimes.js'
 import { tripLegs } from '../lib/trip.js'
 import { formatDuration } from '../lib/format.js'
 import { KEYS, readJSON } from '../lib/storage.js'
+import { migrate } from '../lib/tripModel.js'
+import TravelEntry from '../travel/TravelEntry.jsx'
 import { Link, cityPath, countryPath } from '../lib/router.jsx'
 import { setPageMeta } from '../lib/meta.js'
 import Thumb from '../components/Thumb.jsx'
@@ -92,6 +94,7 @@ export default function Landing() {
       <main id="landing-main" tabIndex={-1}>
         <section className="hero">
           <div className="hero-text">
+            <TravelEntry trip={migrate(readJSON(KEYS.trip))} variant="landing" />
             <p className="eyebrow">A trip guide for Europe</p>
             <h1>See more of Europe, one train ride at a time.</h1>
             <p className="hero-sub">

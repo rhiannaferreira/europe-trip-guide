@@ -14,6 +14,8 @@ import AssistantButton from './assistant/AssistantButton.jsx'
 const App = lazy(() => import('./App.jsx'))
 // Build My Europe Trip is its own download too.
 const BuilderPage = lazy(() => import('./builder/BuilderPage.jsx'))
+// Travel Mode too: it loads the trip, today's places and (only when its Map tab opens) Leaflet.
+const TravelPage = lazy(() => import('./travel/TravelPage.jsx'))
 
 // What browsers (and Vite's preloader) say when a page's code or styles couldn't be downloaded.
 const isLoadError = (error) =>
@@ -67,13 +69,20 @@ export default function Root() {
   return (
     <ErrorBoundary>
       <AccountProvider>
-        <OfflineNotice />
+        {/* Travel Mode says what's offline itself, next to the information it affects. */}
+        {route.name !== 'travel' && <OfflineNotice />}
         {route.name === 'home' ? (
           <Landing />
         ) : route.name === 'build' ? (
           <ChunkBoundary>
             <Suspense fallback={<PageLoading />}>
               <BuilderPage />
+            </Suspense>
+          </ChunkBoundary>
+        ) : route.name === 'travel' ? (
+          <ChunkBoundary>
+            <Suspense fallback={<PageLoading />}>
+              <TravelPage />
             </Suspense>
           </ChunkBoundary>
         ) : known ? (

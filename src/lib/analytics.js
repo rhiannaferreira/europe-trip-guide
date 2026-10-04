@@ -21,6 +21,15 @@ export const EVENTS = [
   'chat_trip_change_proposed',
   'chat_trip_change_applied',
   'chat_error',
+  // Travel Mode. Never a location: only which button, counts and the trip's status.
+  'travel_mode_entered',
+  'activity_completed',
+  'activity_skipped',
+  'nearby_opened',
+  'travel_mode_copilot_used',
+  'today_replanned',
+  'directions_opened',
+  'saved_place_added_today',
 ]
 const allowed = new Set(EVENTS)
 

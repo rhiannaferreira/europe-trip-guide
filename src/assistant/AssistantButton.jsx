@@ -53,6 +53,8 @@ export default function AssistantButton({ route }) {
           <AssistantPanel route={route} open={open} onClose={close} />
         </Suspense>
       )}
+      {/* Travel Mode has its own Ask button in its bottom bar. */}
+      {route.name !== 'travel' && (
       <button
         ref={buttonRef}
         type="button"
@@ -68,6 +70,7 @@ export default function AssistantButton({ route }) {
         </span>
         {hint && !open && <span className="ask-fab-dot" aria-hidden="true" />}
       </button>
+      )}
     </>
   )
 }

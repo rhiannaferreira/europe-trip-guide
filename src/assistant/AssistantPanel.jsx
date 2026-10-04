@@ -6,13 +6,13 @@ import { TRIP_CHANGED, readSavedTrip, updateSavedTrip, withCity, withPlace } fro
 import { cityById } from '../data/cities.js'
 import { placeById, placesInCity } from '../data/places.js'
 import { useAiReady } from '../builder/Assistant.jsx'
-import { TRIP_PROMPTS, WELCOME_PROMPTS, parseAppIntent } from './appIntents.js'
+import { TRAVEL_PROMPTS, TRIP_PROMPTS, WELCOME_PROMPTS, parseAppIntent } from './appIntents.js'
 import { appContext } from './appContext.js'
 import { formatMessage } from './aiAnswer.js'
 import { readAction, streamAnswer } from './aiClient.js'
 import { buildAIContext, focusCities, isFactAction, needsAiAnswer } from './aiContext.js'
 import Block, { Sources } from './blocks.jsx'
-import { requestBuild, requestFocus, requestTab, requestTool, useAssistantBridge } from './bridge.js'
+import { requestBuild, requestFocus, requestTab, requestTool, takeAsk, useAssistantBridge } from './bridge.js'
 import { check, needsWeather, respond } from './copilot.js'
 import { deleteChat, newChatId, readChats, saveChat } from './history.js'
 import { whyLabels } from './appRun.js'
@@ -157,6 +157,9 @@ function History({ chats, current, onOpen, onDelete, onBack }) {
 export default function AssistantPanel({ route, open, onClose }) {
   const aiReady = useAiReady()
   const builder = useAssistantBridge((s) => s.builder)
+  // Travel Mode, while it's open: today's plan, the time there, weather (see travel/travelContext.js).
+  const travel = useAssistantBridge((s) => s.travel)
+  const ask = useAssistantBridge((s) => s.ask)
   const [tripVersion, setTripVersion] = useState(0)
   const [text, setText] = useState('')
   const [busy, setBusy] = useState(false)
@@ -169,7 +172,8 @@ export default function AssistantPanel({ route, open, onClose }) {
   const weatherCache = useRef({})
   const inputRef = useRef(null)
   const endRef = useRef(null)
-  const today = todayIso()
+  // In Travel Mode, "today" is the date where the traveller is, not on this device's clock.
+  const today = travel?.todayIso || todayIso()
   const pageCityId = route.name === 'city' ? route.id : null
 
   // The open trip, kept current as it changes elsewhere (the planner, the Build page, another tab).
@@ -196,6 +200,18 @@ export default function AssistantPanel({ route, open, onClose }) {
   useEffect(() => {
     if (open && view === 'chat') setTimeout(() => inputRef.current?.focus(), 30)
   }, [open, view])
+  // A button elsewhere (Travel Mode's quick actions) asked for a message to be sent.
+  useEffect(() => {
+    if (!open || !ask || busy) return
+    const a = takeAsk()
+    if (!a) return
+    if (!introSeen) {
+      writeFlags({ introSeen: true })
+      setIntroSeen(true)
+    }
+    if (a.source === 'travel_mode') track('travel_mode_copilot_used', { kind: a.kind })
+    send(a.prompt, { source: a.source })
+  }, [open, ask, busy]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: 'end', behavior: 'smooth' })
   }, [entries.length, busy])
@@ -283,6 +299,7 @@ export default function AssistantPanel({ route, open, onClose }) {
     }
     h.apply(option.plan, { days: option.days, message: option.title })
     track('chat_trip_change_applied', { action: entry.action || 'change', trip: h.kind, option: index + 1 })
+    if (route.name === 'travel') track('today_replanned', { action: entry.action || 'change' })
     mark(entry.id, `${blockId}:applied`, { option: index, undo, short: 'Applied' })
   }
 
@@ -304,7 +321,8 @@ export default function AssistantPanel({ route, open, onClose }) {
     if (source !== 'typed') track('chat_quick_action_used', { source })
     const h = handleRef.current
     const mem = memory.current
-    const ctx = { handle: h, pageCityId, memory: mem, today, force, builderInput: builder?.input || readJSON(KEYS.builder)?.input }
+    const travelNow = travel?.get?.() || null
+    const ctx = { handle: h, pageCityId, memory: mem, today, force, travel: travelNow, builderInput: builder?.input || readJSON(KEYS.builder)?.input }
     const rules = check(parseAppIntent(q, ctx), ctx)
     let checked = null
     let via = 'rules'
@@ -314,7 +332,7 @@ export default function AssistantPanel({ route, open, onClose }) {
     // Short factual requests skip the AI; anything longer may carry nuance the rules would miss.
     if (force || (rules.ok && isFactAction(rules.action) && q.split(/\s+/).length <= 12)) checked = rules
     else if (aiReady) {
-      const r = await readAction(q, appContext({ route, handle: h, today, memory: mem }))
+      const r = await readAction(q, appContext({ route, handle: h, today, memory: mem, travel: travelNow }))
       if (r.action) {
         aiOk = true
         via = 'ai'
@@ -367,7 +385,7 @@ export default function AssistantPanel({ route, open, onClose }) {
 
     let shown = String(result.text || '')
     if (compose) {
-      const aiCtx = buildAIContext({ message: q, action: act, result, handle: h, memory: mem, today, timeOfDay: timeOfDay(), pageCityId, weatherByDay, weatherFailed, note: gap })
+      const aiCtx = buildAIContext({ message: q, action: act, result, handle: h, memory: mem, today, timeOfDay: travelNow?.partOfDay || timeOfDay(), pageCityId, weatherByDay, weatherFailed, note: gap, travel: travelNow })
       // Cards can only be drawn for places the AI was shown: those in the cities in question, and the answer's own.
       const placeIds = [
         ...focusCities({ action: act, handle: h, today, pageCityId, memory: mem, message: q }).flatMap((c) => placesInCity(c).map((p) => p.id)),
@@ -432,7 +450,7 @@ export default function AssistantPanel({ route, open, onClose }) {
     }
   }, [open, handle, entries.length, today])
 
-  const modeWord = { planning: 'Planning', editing: 'Your trip', traveling: 'Travelling' }[tripMode(handle, today)]
+  const modeWord = travel ? 'Travel Mode' : { planning: 'Planning', editing: 'Your trip', traveling: 'Travelling' }[tripMode(handle, today)]
   const followUpButton = (f, e) => (
     <button key={f.label} type="button" className="chip cp-chip" disabled={busy} onClick={() => (f.prompt ? send(f.prompt, { source: 'follow_up' }) : run(f.effect, e?.id))}>
       {f.label}
@@ -493,16 +511,16 @@ export default function AssistantPanel({ route, open, onClose }) {
                 <Intro onDone={finishIntro} />
               ) : (
                 <div className="cp-welcome">
-                  <h3>{handle ? 'Welcome back 👋' : 'Where to next? 🌍'}</h3>
-                  <p className="cp-sub">{handle ? `Ask me anything about ${handle.kind === 'built' ? 'the trip you’re building' : 'your trip'}, or pick one:` : 'Ask me anything about travelling in Europe, or pick one:'}</p>
+                  <h3>{travel ? 'How’s today going? 🧭' : handle ? 'Welcome back 👋' : 'Where to next? 🌍'}</h3>
+                  <p className="cp-sub">{travel ? 'I can see today’s plan, the time there and the weather. Ask me anything, or pick one:' : handle ? `Ask me anything about ${handle.kind === 'built' ? 'the trip you’re building' : 'your trip'}, or pick one:` : 'Ask me anything about travelling in Europe, or pick one:'}</p>
                   <div className="cp-prompts">
-                    {(handle ? TRIP_PROMPTS : WELCOME_PROMPTS).map((p) => (
+                    {(travel ? TRAVEL_PROMPTS : handle ? TRIP_PROMPTS : WELCOME_PROMPTS).map((p) => (
                       <button key={p.label} type="button" className="cp-prompt" onClick={() => send(p.prompt, { source: 'welcome' })} disabled={busy}>
                         {p.label}
                       </button>
                     ))}
                   </div>
-                  {hint && (
+                  {hint && !travel && (
                     <div className="cp-hint">
                       <p>💡 {hint.text}</p>
                       {hint.followUps?.length > 0 && <div className="cp-actions">{hint.followUps.slice(0, 2).map((f) => followUpButton(f))}</div>}

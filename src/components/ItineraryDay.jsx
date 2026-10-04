@@ -17,6 +17,10 @@ export default function ItineraryDay({ day, entry, days, unscheduled, trip, sele
   const country = countryByCode[city.country]
   const placeIds = entry?.placeIds || []
   const note = entry?.note || ''
+  // Set in Travel Mode: start times, and what was done or skipped on the day.
+  const times = entry?.times || {}
+  const done = new Set(entry?.done || [])
+  const skipped = new Set(entry?.skipped || [])
   const fromCity = day.leg ? day.leg.from : null
   const advice = travelDayAdvice(day, placeIds.length)
 
@@ -56,6 +60,7 @@ export default function ItineraryDay({ day, entry, days, unscheduled, trip, sele
         <p className="day-leg">
           {modeIcon(day.leg.mode)} {fromCity.name} → {city.name}: ~{formatDuration(day.leg.minutes)}{' '}
           <span className="estimate">{day.leg.estimated ? 'rough estimate' : 'estimate'}</span>
+          {entry?.depart && <span className="day-depart"> · departs {entry.depart}</span>}
           {day.leg.estimated && day.leg.note && <span className="leg-note">{day.leg.note}</span>}
         </p>
       )}
@@ -73,6 +78,13 @@ export default function ItineraryDay({ day, entry, days, unscheduled, trip, sele
                   <button type="button" className="link-btn" onClick={() => onFocusPlace(id)}>
                     {place.name}
                   </button>
+                  {(times[id] || done.has(id) || skipped.has(id)) && (
+                    <small className="day-travel-marks">
+                      {times[id] && <span>🕘 {times[id]}</span>}
+                      {done.has(id) && <span className="done">✓ Done</span>}
+                      {skipped.has(id) && <span>Skipped</span>}
+                    </small>
+                  )}
                   {otherCity && <small className="warn-text">In {otherCity.name}, not {city.name}</small>}
                 </div>
                 <div className="day-place-tools">

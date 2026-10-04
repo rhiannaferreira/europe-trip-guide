@@ -9,19 +9,8 @@ export const FORECAST_DAYS = 16
 const forecastCache = createCache('forecast', { ttlDays: 0.125, max: 60 })
 const archiveCache = createCache('weather-last-year', { ttlDays: 30, max: 120 })
 
-// WMO weather codes → icon and words.
-export function describe(code) {
-  if (code === 0) return { icon: '☀️', text: 'Clear' }
-  if (code <= 2) return { icon: '🌤️', text: 'Partly cloudy' }
-  if (code === 3) return { icon: '☁️', text: 'Cloudy' }
-  if (code <= 48) return { icon: '🌫️', text: 'Fog' }
-  if (code <= 57) return { icon: '🌦️', text: 'Drizzle' }
-  if (code <= 67) return { icon: '🌧️', text: 'Rain' }
-  if (code <= 77) return { icon: '🌨️', text: 'Snow' }
-  if (code <= 82) return { icon: '🌦️', text: 'Showers' }
-  if (code <= 86) return { icon: '🌨️', text: 'Snow showers' }
-  return { icon: '⛈️', text: 'Thunderstorms' }
-}
+// WMO weather codes → icon and words (in weatherCodes.js, so code without React can use them).
+export { describe } from './weatherCodes.js'
 
 export const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n)
@@ -42,6 +31,34 @@ function rows(daily, rainKey) {
   })).filter((d) => d.code != null && d.max != null)
 }
 
+// Hour by hour for today and tomorrow, for Travel Mode: { at (fetched, ms), current: { temp, code } | null,
+// hours: [{ time: 'YYYY-MM-DDTHH:00' in the city's own time, temp, code, rain (chance %) }] }. Cached 1 hour.
+const hourlyCache = createCache('forecast-hourly', { ttlDays: 1 / 24, max: 20 })
+export async function getHourly(city) {
+  const hit = hourlyCache.get(city.id)
+  if (hit) return hit
+  const data = await fetchJSON(
+    `${FORECAST_API}?${new URLSearchParams({
+      latitude: city.lat,
+      longitude: city.lng,
+      current: 'temperature_2m,weather_code',
+      hourly: 'temperature_2m,weather_code,precipitation_probability',
+      timezone: 'auto',
+      forecast_days: '2',
+    })}`,
+  )
+  const h = data.hourly || {}
+  const out = {
+    at: Date.now(),
+    current: data.current?.temperature_2m != null && data.current?.weather_code != null ? { temp: data.current.temperature_2m, code: data.current.weather_code } : null,
+    hours: (h.time || []).map((time, i) => ({ time, temp: h.temperature_2m?.[i], code: h.weather_code?.[i], rain: h.precipitation_probability?.[i] })).filter((x) => x.code != null && x.temp != null),
+  }
+  hourlyCache.set(city.id, out)
+  return out
+}
+// The last hourly forecast stored for a city, however old, or null (for offline use; always labelled).
+export const lastHourly = (city) => hourlyCache.peek(city.id)?.value || null
+
 export async function getForecast(city) {
   const hit = forecastCache.get(city.id)
   if (hit) return hit
@@ -57,6 +74,11 @@ export async function getForecast(city) {
   const days = rows(data.daily, 'precipitation_probability_max')
   forecastCache.set(city.id, days)
   return days
+}
+// The last daily forecast stored for a city, however old: { days, at } or null.
+export const lastForecast = (city) => {
+  const hit = forecastCache.peek(city.id)
+  return hit ? { days: hit.value, at: hit.at } : null
 }
 
 // The same calendar dates one year earlier (29 Feb becomes 28 Feb).

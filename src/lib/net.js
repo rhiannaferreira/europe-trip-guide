@@ -41,6 +41,12 @@ export function createCache(name, { ttlDays, max = 400 }) {
       if (Date.now() - hit.t > (hit.ttl ?? ttl)) return undefined
       return hit.v
     },
+    // The last stored value even when it has expired, with when it was stored: { value, at } or undefined.
+    // For showing labelled, older data while offline.
+    peek(id) {
+      const hit = load()[id]
+      return hit ? { value: hit.v, at: hit.t } : undefined
+    },
     set(id, value, ttlOverrideDays) {
       const s = load()
       s[id] = { t: Date.now(), v: value, ...(ttlOverrideDays ? { ttl: ttlOverrideDays * 86400000 } : {}) }

@@ -209,7 +209,7 @@ export function liveFacts({ weatherByDay, weatherFailed, handle }) {
 }
 
 // Everything the AI gets for one answer.
-export function buildAIContext({ message, action, result, handle, memory = {}, today, timeOfDay = null, pageCityId = null, weatherByDay = null, weatherFailed = false, note = '' }) {
+export function buildAIContext({ message, action, result, handle, memory = {}, today, timeOfDay = null, pageCityId = null, weatherByDay = null, weatherFailed = false, note = '', travel = null }) {
   const focus = focusCities({ action, handle, today, pageCityId, memory, message })
   const tripIds = handle ? handle.plan.stops.map((s) => s.cityId) : []
   const shownCities = new Set((result?.blocks || []).filter((b) => b.type === 'cities').flatMap((b) => b.items.map((i) => i.cityId)))
@@ -232,6 +232,8 @@ export function buildAIContext({ message, action, result, handle, memory = {}, t
   const ctx = {
     today,
     timeOfDay: timeOfDay || undefined,
+    // In Travel Mode: they're on the trip right now. Today's plan, the local time, weather and journey.
+    travelMode: travel || undefined,
     request: action ? { understoodAs: action.action, interests: action.interests?.length ? action.interests : undefined, category: category || undefined, month: action.month ? MONTHS[action.month - 1] : undefined } : undefined,
     verified: verifiedFacts(result),
     note: note || undefined,
@@ -259,6 +261,9 @@ export function trimContext(ctx) {
     () => ctx.trip && (ctx.trip.legs = undefined),
     () => ctx.verified?.places?.forEach((p) => (p.about = undefined)),
     () => ctx.guide.places.splice(0),
+    () => ctx.travelMode && (ctx.travelMode.savedInCity = undefined),
+    () => ctx.trip && (ctx.trip.days = undefined),
+    () => ctx.travelMode?.today?.splice(10),
   ]
   for (const step of steps) {
     if (size() <= MAX_AI_CONTEXT) break

@@ -46,6 +46,7 @@ import { CityWeather, TripWeather } from './components/Weather.jsx'
 import AccountPanel, { AccountButton, AccountNotice } from './components/Account.jsx'
 import { useCloudSync } from './useCloudSync.js'
 import { takeFocus, takeTab, takeTool, useAssistantBridge } from './assistant/bridge.js'
+import TravelEntry from './travel/TravelEntry.jsx'
 
 const PAGE = 24
 
@@ -466,6 +467,7 @@ export default function App({ route }) {
         <TripPanel tab={tripTab} onTabChange={setTripTab}>
           {tripTab === 'trip' && (
             <>
+              <TravelEntry trip={trip.raw} />
               <TripBoard
                 trip={trip}
                 legs={legs}

@@ -7,9 +7,12 @@
 //   tool      a planner dialog waiting to be opened ('compare', 'quiz', 'surprise', or { name: 'compare', cities }), or null
 //   focus     a city or place waiting to be shown on the explorer map ({ cityId, placeId }), or null
 //   tab       a My trip tab waiting to be opened ('trip', 'days', 'budget'), or null
+//   travel    { todayIso, get } while Travel Mode is open, else null: `get()` gives Travel Mode's context
+//             for the copilot (travel/travelContext.js), read fresh for every message
+//   ask       a message waiting to be sent by the panel ({ prompt, source, kind }), or null
 import { useSyncExternalStore } from 'react'
 
-let state = { open: false, builder: null, build: null, tool: null, focus: null, tab: null }
+let state = { open: false, builder: null, build: null, tool: null, focus: null, tab: null, travel: null, ask: null }
 const listeners = new Set()
 
 function set(patch) {
@@ -33,6 +36,9 @@ export const requestBuild = (input) => set({ build: input })
 export const requestTool = (tool) => set({ tool })
 export const requestFocus = (focus) => set({ focus })
 export const requestTab = (tab) => set({ tab })
+export const setTravel = (travel) => set({ travel })
+// Open the copilot and send a message from a button (Travel Mode's quick actions).
+export const requestAsk = (prompt, { source = 'travel_mode', kind = 'ask' } = {}) => set({ open: true, ask: { prompt, source, kind } })
 
 // Take (and clear) a waiting request.
 export function takeBuild() {
@@ -49,6 +55,11 @@ export function takeFocus() {
   const focus = state.focus
   if (focus) set({ focus: null })
   return focus
+}
+export function takeAsk() {
+  const ask = state.ask
+  if (ask) set({ ask: null })
+  return ask
 }
 export function takeTab() {
   const tab = state.tab

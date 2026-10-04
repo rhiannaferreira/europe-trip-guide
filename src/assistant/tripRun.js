@@ -348,6 +348,12 @@ export function nearPlaces(handle, a) {
   } else if (a.day) {
     anchors = dayOf(handle, a.day).items.map((i) => placeById[i.placeId]).filter(Boolean)
     where = `near your plans on ${dayName(dayOf(handle, a.day))}`
+    // Nothing (left) planned that day: around the city centre.
+    if (!anchors.length) {
+      const c = cityById[dayOf(handle, a.day).cityId]
+      anchors = [{ ...c, name: `the centre of ${c.name}` }]
+      where = `in central ${c.name}`
+    }
   } else {
     anchors = Object.keys(handle?.trip?.statuses || {}).map((id) => placeById[id]).filter(Boolean)
     if (!anchors.length) anchors = (handle?.days || []).flatMap((d) => d.items.map((i) => placeById[i.placeId])).filter(Boolean)
