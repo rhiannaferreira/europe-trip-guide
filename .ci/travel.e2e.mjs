@@ -139,7 +139,8 @@ await step(async () => {
   ok('copilot: "what next" answers from today without AI', /Next up/.test(ct2), ct2.slice(-400))
   await shot('09-copilot-next')
   // Offline
-  await page.locator('#ask-panel').getByRole('button', { name: 'Close the assistant' }).click()
+  await page.keyboard.press('Escape')
+  await page.waitForTimeout(300)
   await context.setOffline(true)
   await page.evaluate(() => window.dispatchEvent(new Event('offline')))
   await page.waitForTimeout(500)
