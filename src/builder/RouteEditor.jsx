@@ -6,12 +6,25 @@ import { additionIdeas, alternativesFor } from '../planner/alternatives.js'
 import { addStop, anotherOption, changeNights, moveStop, regenerateFrom, removeStop, replaceStop } from '../planner/modify.js'
 import { modeIcon, sourceLabel } from '../planner/transport.js'
 import DataBadge from './DataBadge.jsx'
+import TrainSearchModal from '../components/TrainSearch.jsx'
+import { hasRail } from '../services/live/trains.js'
 
 const ROLE = { start: 'Your start', end: 'Your end', must: 'Your pick', user: 'You added' }
 const byName = [...cities].sort((a, b) => a.name.localeCompare(b.name))
 
-function Leg({ leg, limit }) {
+// The date of the travel day into stop i: the start date plus the nights before it.
+function legDate(plan, i) {
+  if (!plan.prefs.startDate) return ''
+  const d = new Date(`${plan.prefs.startDate}T12:00:00`)
+  d.setDate(d.getDate() + plan.stops.slice(0, i).reduce((sum, s) => sum + s.nights, 0))
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+function Leg({ leg, limit, date = '' }) {
+  const [trains, setTrains] = useState(false)
   if (!leg) return null
+  // Real timetables only once the trip has dates, and only when asked: nothing is searched in the background.
+  const canSearch = date && leg.mode !== 'flight' && hasRail(leg.from.id) && hasRail(leg.to.id)
   const over = limit && leg.minutes > limit
   return (
     <li className={`plan-leg${over ? ' over' : ''}`}>
@@ -24,6 +37,12 @@ function Leg({ leg, limit }) {
         {over && <small className="leg-note warn-text">Longer than your {formatDuration(limit)} limit</small>}
       </span>
       <DataBadge kind="estimate" title={`${sourceLabel(leg.source)}. Not a live timetable.`} />
+      {canSearch && (
+        <button type="button" className="btn btn-small leg-trains" onClick={() => setTrains(true)}>
+          🚆 Real trains
+        </button>
+      )}
+      {trains && <TrainSearchModal fromCityId={leg.from.id} toCityId={leg.to.id} date={date} estimate={leg} onClose={() => setTrains(false)} />}
     </li>
   )
 }
@@ -135,7 +154,7 @@ export default function RouteEditor({ plan, legs, keepLength, openIndex, onOpen,
           const c = cityById[stop.cityId]
           const leg = i > 0 ? legs[i - 1] : null
           return [
-            leg && <Leg key={`leg-${i}`} leg={leg} limit={limit} />,
+            leg && <Leg key={`leg-${i}`} leg={leg} limit={limit} date={legDate(plan, i)} />,
             <li key={stop.cityId} className="plan-stop">
               <div className="plan-stop-head">
                 <span className="stop-number">{i + 1}</span>
