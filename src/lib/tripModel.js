@@ -16,6 +16,7 @@ export const emptyTrip = () => ({
   statuses: {},
   itinerary: {},
   notes: { trip: '', cities: {} },
+  journeys: {},
 })
 
 // Trip shape (also what's saved in localStorage under travel-app-trip):
@@ -36,6 +37,9 @@ export const emptyTrip = () => ({
 //           skipped: [placeId]                 skipped while travelling (still on the day, never deleted)
 //           depart:  'HH:MM'                   the traveller's own departure time on a travel day
 //     notes: { trip: '', cities: { [cityId]: '' } },
+//     journeys: { ['fromCityId>toCityId']: journey },   a real train the traveller picked for a hop (a
+//         compact copy of the timetable result, see services/live/trains.js journeySnapshot). Kept on this
+//         device and in the account, never in share links.
 //   }
 //
 const HM = /^([01]\d|2[0-3]):[0-5]\d$/
@@ -64,6 +68,47 @@ export function dayWithout(day, placeIds) {
   const kept = day.placeIds.filter((id) => !drop.has(id))
   return { placeIds: kept, note: day.note || '', ...dayExtras(day, kept) }
 }
+
+// A picked train, checked field by field (it comes back from storage and the account).
+const str = (v, max = 200) => (typeof v === 'string' && v.length <= max ? v : undefined)
+const iso = (v) => (typeof v === 'string' && !Number.isNaN(Date.parse(v)) && v.length <= 40 ? v : undefined)
+const stop = (s) => (s && str(s.id) ? { id: s.id, name: str(s.name) || '', tz: str(s.tz, 60), lat: Number.isFinite(s.lat) ? s.lat : undefined, lng: Number.isFinite(s.lng) ? s.lng : undefined } : null)
+const drop = (o) => Object.fromEntries(Object.entries(o).filter(([, v]) => v !== undefined))
+export function cleanJourney(j) {
+  if (!j || typeof j !== 'object') return null
+  const origin = stop(j.origin)
+  const destination = stop(j.destination)
+  const dep = iso(j.departure?.scheduled)
+  const arr = iso(j.arrival?.scheduled)
+  if (!origin || !destination || !dep || !arr) return null
+  const legs = (Array.isArray(j.legs) ? j.legs : []).slice(0, 12).map((l) =>
+    drop({
+      mode: str(l?.mode, 40),
+      operator: str(l?.operator),
+      service: str(l?.service),
+      tripId: str(l?.tripId, 300),
+      from: drop({ ...drop(stop(l?.from) || {}), scheduled: iso(l?.from?.scheduled), scheduledTrack: str(l?.from?.scheduledTrack, 20) }),
+      to: drop({ ...drop(stop(l?.to) || {}), scheduled: iso(l?.to?.scheduled) }),
+    }),
+  )
+  return drop({
+    id: str(j.id, 2000),
+    provider: str(j.provider, 40),
+    origin: drop(origin),
+    destination: drop(destination),
+    departure: drop({ scheduled: dep, scheduledTrack: str(j.departure?.scheduledTrack, 20) }),
+    arrival: { scheduled: arr },
+    durationMin: Number.isFinite(j.durationMin) ? j.durationMin : undefined,
+    transfers: Number.isInteger(j.transfers) ? j.transfers : undefined,
+    changes: (Array.isArray(j.changes) ? j.changes : []).map((c) => str(c)).filter(Boolean).slice(0, 10),
+    operators: (Array.isArray(j.operators) ? j.operators : []).map((c) => str(c)).filter(Boolean).slice(0, 10),
+    legs,
+    bookingUrl: typeof j.bookingUrl === 'string' && /^https:\/\//.test(j.bookingUrl) ? str(j.bookingUrl, 1000) : undefined,
+    savedAt: iso(j.savedAt),
+  })
+}
+
+export const journeyKey = (fromId, toId) => `${fromId}>${toId}`
 
 // Older shapes are migrated when loaded, never thrown away:
 //   v1 { placeIds, cityOrder }                   first version
@@ -110,6 +155,14 @@ export function migrate(saved) {
     cities: Object.fromEntries(Object.entries(saved.notes?.cities || {}).filter(([id, text]) => cityById[id] && typeof text === 'string')),
   }
 
+  // Picked trains, only for hops between consecutive stops.
+  const hops = new Set(stops.slice(1).map((s, i) => journeyKey(stops[i].cityId, s.cityId)))
+  const journeys = {}
+  for (const [key, j] of Object.entries(saved.journeys || {})) {
+    const clean = hops.has(key) && cleanJourney(j)
+    if (clean) journeys[key] = clean
+  }
+
   return {
     version: VERSION,
     name: typeof saved.name === 'string' ? saved.name : '',
@@ -119,6 +172,7 @@ export function migrate(saved) {
     statuses,
     itinerary,
     notes,
+    journeys,
   }
 }
 

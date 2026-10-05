@@ -30,6 +30,10 @@ function needPlaces() {
   if (!places.configured()) throw new ProviderError('not_configured')
 }
 
+function needRail() {
+  if (!rail.configured()) throw new ProviderError('not_configured')
+}
+
 export const ROUTES = {
   'places/search': {
     bucket: 'places',
@@ -74,6 +78,7 @@ export const ROUTES = {
     bucket: 'trains',
     provider: PROVIDERS.rail,
     async run(q) {
+      needRail()
       const t = text(q.q, { min: 3, max: 60 })
       const near = q.lat != null ? coords(q.lat, q.lng, { decimals: 1 }) : null
       const key = `st|${t.toLowerCase()}|${near ? `${near.lat},${near.lng}` : ''}`
@@ -85,6 +90,7 @@ export const ROUTES = {
     bucket: 'trains',
     provider: PROVIDERS.rail,
     async run(q) {
+      needRail()
       const from = providerId(q.from)
       const to = providerId(q.to)
       if (from === to) throw new BadInput('Pick two different stations.')
@@ -105,6 +111,7 @@ export const ROUTES = {
     bucket: 'status',
     provider: PROVIDERS.rail,
     async run(q) {
+      needRail()
       const id = q.id ? opaqueId(q.id) : null
       const from = q.from ? providerId(q.from) : null
       const to = q.to ? providerId(q.to) : null

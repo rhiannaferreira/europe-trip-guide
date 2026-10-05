@@ -22,6 +22,7 @@ import { interestFit, scoreCity } from '../planner/scoring.js'
 import { legBetween } from '../planner/transport.js'
 import { connectionsFrom, stayText } from '../utils/cityInfo.js'
 import { HELP } from './help.js'
+import { trainsAnswer } from './liveData.js'
 
 export const cityName = (id) => cityById[id]?.name || id
 export const flag = (id) => countryByCode[cityById[id]?.country]?.flag || ''
@@ -182,6 +183,9 @@ export function runAppAction(a, ctx = {}) {
         memory: { lastList: conns.map((x) => x.city.id), anchorCity: a.city },
       }
     }
+
+    case 'find_trains':
+      return trainsAnswer(a, ctx.liveTrains)
 
     case 'next_after': {
       const from = cityById[a.city]

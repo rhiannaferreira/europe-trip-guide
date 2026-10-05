@@ -1,16 +1,24 @@
 import * as rail from '../server/live/providers/transitous.js'
-const out = (label, v) => console.log(`\n=== ${label}\n` + JSON.stringify(v).slice(0, 2500))
-const pick = async (q, lat, lng) => (await rail.searchStations(q, { lat, lng }))
-try {
-  const b = await pick('Berlin Hbf', 52.5, 13.4); out('berlin', b.map((s) => [s.name, s.area]))
-  const h = await pick('Hamburg Hbf', 53.6, 10); out('hamburg', h.map((s) => [s.name, s.area]))
-  const now = await rail.searchJourneys({ from: b[0].id, to: h[0].id, windowMin: 120 })
-  out('berlin-hamburg now', now.journeys.map((x) => ({ dep: x.departure, arr: x.arrival, rt: x.realtime, c: x.cancelled, legs: x.legs.map((l) => [l.service, l.operator, l.realtime, l.from.track, l.from.expected, l.alerts]) })))
-  const m = await pick('München Hbf', 48.1, 11.6); const w = await pick('Wien Hbf', 48.2, 16.4)
-  out('munich/vienna', [m[0]?.name, w[0]?.name])
-  const mw = await rail.searchJourneys({ from: m[0].id, to: w[0].id, windowMin: 180 })
-  out('munich-vienna now', mw.journeys.map((x) => ({ dep: x.departure, rt: x.realtime, c: x.cancelled, legs: x.legs.map((l) => [l.service, l.realtime, l.from.track, l.from.expected]) })))
-  const p = await pick('Paris', 48.85, 2.35); out('paris plain', p.map((s) => [s.name, s.area]))
-  const a = await pick('Amsterdam', 52.37, 4.9); out('amsterdam plain', a.map((s) => [s.name, s.area]))
-  const ro = await pick('Rome', 41.9, 12.5); out('rome plain', ro.map((s) => [s.name, s.area]))
-} catch (e) { console.log('PROBE ERROR', e.code, e.status, e.message, e.stack) }
+import { cities, cityById } from '../src/data/cities.js'
+import { stationQuery } from '../src/data/stations.js'
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
+const km = (a, b) => {
+  const r = Math.PI / 180
+  const x = Math.sin(((b.lat - a.lat) * r) / 2) ** 2 + Math.cos(a.lat * r) * Math.cos(b.lat * r) * Math.sin(((b.lng - a.lng) * r) / 2) ** 2
+  return 12742 * Math.asin(Math.sqrt(x))
+}
+const jobs = cities.map((c) => [c.id, null])
+jobs.push(['paris', 'amsterdam'], ['paris', 'lyon'], ['paris', 'strasbourg'], ['paris', 'chartres'], ['london', 'paris'], ['london', 'edinburgh'])
+for (const [id, toward] of jobs) {
+  const c = cityById[id]
+  const q = stationQuery(id, toward)
+  if (!q) { console.log(`${id}: no rail`); continue }
+  try {
+    const list = await rail.searchStations(q, { lat: Math.round(c.lat * 10) / 10, lng: Math.round(c.lng * 10) / 10 })
+    const hit = list.find((s) => km(s, c) < 25)
+    console.log(`${id}${toward ? '>' + toward : ''}: q="${q}" -> ${hit ? `${hit.name} (${km(hit, c).toFixed(1)} km)` : 'MISSING'} | top: ${list.slice(0, 3).map((s) => s.name).join(' / ')}`)
+  } catch (e) {
+    console.log(`${id}: ERROR ${e.code}`)
+  }
+  await sleep(400)
+}

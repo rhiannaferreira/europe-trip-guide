@@ -2,7 +2,7 @@
 // through lib/tripStore.updateSavedTrip, so planning mode (and the copilot) see the same change at once.
 // Nothing is ever deleted: done and skipped places stay on their day.
 import { placeById } from '../data/places.js'
-import { dayExtras, dayHasContent, dayWithout, isTime } from '../lib/tripModel.js'
+import { cleanJourney, dayExtras, dayHasContent, dayWithout, isTime, journeyKey } from '../lib/tripModel.js'
 import { withPlace } from '../lib/tripStore.js'
 
 const dayOf = (t, n) => t.itinerary?.[n] || { placeIds: [], note: '' }
@@ -51,6 +51,15 @@ export function setDeparture(t, n, time) {
   if (isTime(time)) next.depart = time
   else delete next.depart
   return putDay(t, n, next)
+}
+
+// The real train picked for the hop between two stops, or null to forget it.
+export function setJourney(t, fromId, toId, journey) {
+  const journeys = { ...(t.journeys || {}) }
+  const clean = journey && cleanJourney(journey)
+  if (clean) journeys[journeyKey(fromId, toId)] = clean
+  else delete journeys[journeyKey(fromId, toId)]
+  return { ...t, journeys }
 }
 
 // One step earlier or later in the day's order.

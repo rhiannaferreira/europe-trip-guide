@@ -45,8 +45,31 @@ const MONTHS = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 
 const NUMBER_WORDS = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12, fourteen: 14, a: 1 }
 const LESS_TOURISTY = /less touristy|less crowded|hidden gems?|off the beaten|fewer tourists|not (so |too )?touristy|underrated|quieter|quiet|lesser[- ]known/
 
-const blank = { city: '', cities: [], country: '', countries: [], place: '', page: 'none', interests: [], category: 'none', hiddenGems: false, month: null, tripDays: null, startDate: '', pace: 'none', budget: null, currency: 'none', travellers: null, startCity: '', targetCity: '', day: null, nights: null, delta: null, amount: null, question: 'none', criterion: 'none', topic: 'none', keepCities: [], keepCountries: [], maxExtraTravelMinutes: null, reply: '' }
+const blank = { city: '', cities: [], country: '', countries: [], place: '', page: 'none', interests: [], category: 'none', hiddenGems: false, month: null, tripDays: null, startDate: '', pace: 'none', budget: null, currency: 'none', travellers: null, startCity: '', targetCity: '', day: null, nights: null, delta: null, amount: null, question: 'none', criterion: 'none', topic: 'none', keepCities: [], keepCountries: [], maxExtraTravelMinutes: null, time: '', transfers: null, reply: '' }
 const act = (action, extra = {}) => ({ ...blank, action, ...extra })
+
+// A departure time in a train request: "at 9", "after 10:30", "at 6pm", or a part of the day. '' if none.
+export function trainTimeIn(t) {
+  const m = t.match(/\b(?:at|after|from|around|by)\s+(\d{1,2})(?:[:.h](\d{2}))?\s*(am|pm)?\b/)
+  if (m) {
+    let h = Number(m[1])
+    if (m[3] === 'pm' && h < 12) h += 12
+    if (m[3] === 'am' && h === 12) h = 0
+    if (h <= 23) return `${String(h).padStart(2, '0')}:${m[2] || '00'}`
+  }
+  if (/\bearly\b/.test(t)) return '06:00'
+  if (/\bmorning\b/.test(t)) return '08:00'
+  if (/\b(midday|noon|lunchtime)\b/.test(t)) return '12:00'
+  if (/\bafternoon\b/.test(t)) return '13:00'
+  if (/\b(evening|tonight)\b/.test(t)) return '17:00'
+  return ''
+}
+
+const addDays = (iso, n) => {
+  const d = new Date(`${iso}T12:00:00`)
+  d.setDate(d.getDate() + n)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
 
 // Countries mentioned in the text (names and aliases), in the order they appear.
 export function countriesIn(text) {
@@ -139,6 +162,29 @@ export function parseAppIntent(text, ctx = {}) {
   if (/\b(how (do|can|should) (i|we)|how to|where (do|can) (i|we) (find|see)|is there a way to)\b/.test(t) && !/\b(get|travel|go) (to|from|between)\b/.test(t) && !cityIds.length) {
     const hit = HELP_WORDS.find(([, re]) => re.test(t))
     if (hit) return act('help', { topic: hit[0] })
+  }
+
+  // Real trains: "trains from Paris to Amsterdam tomorrow morning", and follow-ups on the trains just shown.
+  const trainWords = /\b(trains?|rail|railway|eurostar|ice|tgv|frecciarossa)\b/.test(t)
+  if (trainWords && cityIds.length >= 2 && /\b(from|to|between|and)\b/.test(t) && !/\b(add|remove|replace|route|itinerary)\b/.test(t)) {
+    const date = /\btomorrow\b/.test(t) && today ? addDays(today, 1) : /\b(today|tonight|this (morning|afternoon|evening))\b/.test(t) ? today : ''
+    return act('find_trains', { cities: cityIds.slice(0, 2).map(name), startDate: date, time: trainTimeIn(t), transfers: /\bdirect\b/.test(t) ? 0 : null })
+  }
+  const lastTrains = memory.lastTrains
+  if (lastTrains && !cityIds.length && /\b(later|earlier|fewer (changes|transfers)|less changes|direct|no changes|tomorrow|another (one|train)|next one)\b/.test(t) && !/\b(add|move|remove|plan)\b/.test(t)) {
+    const shift = (m) => {
+      const [h, mm] = lastTrains.time.split(':').map(Number)
+      const x = Math.min(23 * 60 + 30, Math.max(0, h * 60 + mm + m))
+      return `${String(Math.floor(x / 60)).padStart(2, '0')}:${String(x % 60).padStart(2, '0')}`
+    }
+    const time = trainTimeIn(t) || (/\blater|next one|another\b/.test(t) ? shift(lastTrains.lastDeparture ? 0 : 120) : /\bearlier\b/.test(t) ? shift(-120) : lastTrains.time)
+    const later = /\blater|next one|another\b/.test(t) && lastTrains.lastDeparture && !trainTimeIn(t) ? lastTrains.lastDeparture : time
+    return act('find_trains', {
+      cities: [name(lastTrains.from), name(lastTrains.to)],
+      startDate: /\btomorrow\b/.test(t) && today ? addDays(today, 1) : lastTrains.date,
+      time: later,
+      transfers: /\b(direct|no changes)\b/.test(t) ? 0 : /\b(fewer|less) (changes|transfers)\b/.test(t) ? Math.max(0, (lastTrains.minTransfers ?? 1) - 1) : lastTrains.transfers ?? null,
+    })
   }
 
   // In Travel Mode, short in-the-moment requests mean today, where they are.

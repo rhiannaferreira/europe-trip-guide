@@ -12,7 +12,9 @@ import { getJSON, ProviderError } from '../http.js'
 export const ATTRIBUTION = { text: 'Timetables via Transitous and its open data sources', links: ['https://transitous.org/sources/'] }
 const base = () => (process.env.TRANSITOUS_API_BASE || 'https://api.transitous.org').replace(/\/+$/, '')
 
-export const configured = () => true
+// On for previews and local work. Production waits for LIVE_TRAINS=on, set once Transitous has said yes to
+// routine journey planning from EuroWander (their terms ask to get in touch first). LIVE_TRAINS=off turns it off anywhere.
+export const configured = () => (process.env.LIVE_TRAINS ? process.env.LIVE_TRAINS === 'on' : process.env.VERCEL_ENV !== 'production')
 
 function headers() {
   const contact = process.env.TRANSITOUS_CONTACT || 'https://eurowander.vercel.app'

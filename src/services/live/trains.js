@@ -9,6 +9,7 @@
 // nothing may call it "on time".
 import { cityById } from '../../data/cities.js'
 import { distanceKm } from '../../utils/distance.js'
+import { stationQuery, hasRail } from '../../data/stations.js'
 import { liveGet } from './http.js'
 import { cityZoneOf } from './places.js'
 import { delayMinutes, zonedIso } from './time.js'
@@ -22,11 +23,13 @@ export async function searchStations(q, near = null) {
   return r.data.stations || []
 }
 
-// The main station for a guide city: the most important rail stop near the centre.
-export async function mainStation(cityId) {
+// The main station for a guide city, toward another city (Paris and London have one per direction):
+// the first match for EuroWander's station name near the centre. null when the city has no trains.
+export async function mainStation(cityId, toward = null) {
   const city = cityById[cityId]
-  if (!city) return null
-  const list = await searchStations(city.name, city)
+  const q = city && stationQuery(cityId, toward)
+  if (!q) return null
+  const list = await searchStations(q, city)
   return list.find((s) => distanceKm(s, city) < 25) || null
 }
 
@@ -63,14 +66,26 @@ export async function getJourneyStatus(saved) {
 }
 
 // What a journey's times mean right now. Kinds:
-//   'cancelled' · 'delayed' (real-time, ≥ 2 min late) · 'realtime' (real-time, on schedule) · 'scheduled'
+//   'cancelled'  the provider says a train on it is cancelled
+//   'delayed'    real-time data, departure (or, failing that, arrival) 2+ minutes late
+//   'realtime'   real-time data and it matches the timetable
+//   'partial'    real-time data for some trains only (no live departure or arrival time)
+//   'scheduled'  timetable only: nothing is known about delays
 export function journeyState(j) {
   if (!j) return { kind: 'scheduled', delay: null }
   if (j.cancelled) return { kind: 'cancelled', delay: null }
-  const d = delayMinutes(j.departure)
-  if (j.realtime && d != null && d >= 2) return { kind: 'delayed', delay: d }
-  if (j.realtime && d != null) return { kind: 'realtime', delay: d }
-  return { kind: 'scheduled', delay: null }
+  const dep = delayMinutes(j.departure)
+  const arr = delayMinutes(j.arrival)
+  const d = dep ?? arr
+  if (!j.realtime || d == null) return { kind: j.realtime ? 'partial' : 'scheduled', delay: null }
+  if (d >= 2) return { kind: 'delayed', delay: d, at: dep != null ? 'departure' : 'arrival' }
+  return { kind: 'realtime', delay: d, at: dep != null ? 'departure' : 'arrival' }
+}
+
+// Some timetables shout ("ROMA TERMINI"): show station names in normal case.
+export function stationName(name) {
+  if (!name || name !== name.toUpperCase() || !/[A-Z]{3}/.test(name)) return name || ''
+  return name.toLowerCase().replace(/(^|[\s\-'./(])(\p{L})/gu, (_, a, b) => a + b.toUpperCase())
 }
 
 // The compact copy kept in a trip: enough to show the journey and look it up again, nothing more.
@@ -100,4 +115,17 @@ export function journeySnapshot(j, { savedAt = new Date().toISOString() } = {}) 
   }
 }
 
+// When live status is worth checking for a picked train: 'before' (more than four hours to departure),
+// 'live', or 'after' (an hour past arrival).
+export function statusWindow(journey, now = Date.now()) {
+  const dep = Date.parse(journey?.departure?.scheduled)
+  const arr = Date.parse(journey?.arrival?.scheduled)
+  if (!Number.isFinite(dep) || !Number.isFinite(arr)) return 'after'
+  if (now < dep - 4 * 3600000) return 'before'
+  if (now > arr + 3600000) return 'after'
+  return 'live'
+}
+
 export const defaultZone = (cityId) => cityZoneOf(cityId)
+
+export { hasRail }

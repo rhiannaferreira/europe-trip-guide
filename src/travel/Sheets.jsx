@@ -11,6 +11,12 @@ import { savedBudgetPrefs } from '../assistant/tripHandle.js'
 import { addToDay, markDone, markSkipped, moveToDay, setStartTime, shiftInDay } from './travelActions.js'
 import { FINDERS, hm, placesNear, referencePoint } from './travelModel.js'
 import { Directions } from './ui.jsx'
+import { registerPlaces } from '../lib/extraPlaces.js'
+import { distanceKm } from '../utils/distance.js'
+import { searchPlaces, PLACE_KINDS } from '../services/live/places.js'
+import { openNow } from '../services/live/openingHours.js'
+import { cityZoneOf } from '../services/live/places.js'
+import { LiveLoading, LiveUnavailable, SourceLabel } from '../components/LiveBits.jsx'
 
 const fmtDay = (d) => d.date.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
 const distance = (km) => (km < 1 ? `${Math.max(50, Math.round((km * 1000) / 50) * 50)} m` : `${km.toFixed(1)} km`)
@@ -229,6 +235,32 @@ export function SkipSheet({ env, id, onClose }) {
 
 const NEARBY_FILTERS = ['all', 'food', 'coffee', 'drinks', 'sights', 'outdoors', 'saved']
 const MEALS = ['breakfast', 'lunch', 'dinner']
+// Which live search answers each Nearby filter ('saved' is the traveller's own places only).
+const LIVE_KIND = { all: 'attractions', food: 'food', coffee: 'cafe', drinks: 'bar', sights: 'sights', outdoors: 'park', breakfast: 'cafe', lunch: 'food', dinner: 'restaurant' }
+
+// Real places near the reference point, from the live places service, when online.
+function useLiveNearby({ ref, finder, online, cityId }) {
+  const [state, setState] = useState({ status: 'idle', list: [] })
+  const [attempt, setAttempt] = useState(0)
+  const kind = LIVE_KIND[finder]
+  useEffect(() => {
+    if (!ref || !kind || !online) return setState({ status: online ? 'idle' : 'offline', list: [] })
+    let live = true
+    setState((s) => ({ status: 'loading', list: s.list }))
+    searchPlaces({ lat: ref.lat, lng: ref.lng, radius: 1500, kind, limit: 15, cityId }).then(
+      (r) => live && setState({ status: 'ready', list: r.places, at: r.retrievedAt }),
+      (error) => {
+        if (!live) return
+        setState({ status: 'error', list: [], error })
+        track('live_data_failed', { what: 'places', code: error.code || 'unavailable' })
+      },
+    )
+    return () => {
+      live = false
+    }
+  }, [ref?.lat, ref?.lng, kind, online, attempt]) // eslint-disable-line react-hooks/exhaustive-deps
+  return { ...state, kind, retry: () => setAttempt((n) => n + 1) }
+}
 
 export function NearbySheet({ env, finder: initial, onClose }) {
   const { trip, schedule, day, change, location, online, city, readOnly } = env
@@ -244,15 +276,28 @@ export function NearbySheet({ env, finder: initial, onClose }) {
   const saved = useMemo(() => new Set(Object.keys(trip.statuses || {})), [trip.statuses])
   const onDay = new Set(trip.itinerary?.[day.number]?.placeIds || [])
   const budget = Boolean(savedBudgetPrefs().budget)
-  const list = placesNear(ref, {
+  const radiusKm = location.position ? 2 : 2.5
+  const guide = placesNear(ref, {
     finder: finder === 'saved' ? 'all' : finder,
-    radiusKm: location.position ? 2 : 2.5,
+    radiusKm,
     limit: 10,
     exclude: onDay,
     saved,
     budget,
   }).filter((x) => finder !== 'saved' || x.saved)
+  const liveNear = useLiveNearby({ ref, finder: finder === 'saved' ? null : finder, online, cityId: day.cityId })
+  // Guide places and live results together, closest first; a place in both shows once.
+  const seen = new Set(guide.map((x) => x.place.id))
+  const live = liveNear.list
+    .filter((p) => !seen.has(p.id) && !onDay.has(p.id))
+    .map((p) => {
+      const km = distanceKm(ref, p)
+      return { place: p, km, walk: Math.max(1, Math.round(((km * 1.3) / 4.5) * 60)), saved: saved.has(p.id), live: true }
+    })
+    .filter((x) => x.km <= radiusKm)
+  const list = [...guide, ...live].sort((a, b) => a.km - b.km).slice(0, 14)
   const meal = MEALS.includes(finder)
+  const zone = cityZoneOf(day.cityId)
 
   return (
     <Modal title={meal ? `${FINDERS[finder].label} nearby` : 'Near you'} onClose={onClose}>
@@ -293,23 +338,32 @@ export function NearbySheet({ env, finder: initial, onClose }) {
             </button>
           ))}
         </div>
-        {list.length === 0 ? (
+        {liveNear.status === 'loading' && <LiveLoading text={PLACE_KINDS[liveNear.kind]?.loading || 'Searching nearby…'} />}
+        {liveNear.status === 'error' && <LiveUnavailable error={liveNear.error} onRetry={liveNear.retry} fallback="These are from EuroWander’s guide." />}
+        {list.length === 0 && liveNear.status !== 'loading' ? (
           <p className="tm-muted">
-            Nothing {finder === 'saved' ? 'you saved' : 'in Eurowander’s guide'} within walking distance{finder !== 'all' ? ' for this filter' : ''}.
-            {!online && ' More places load when you’re back online.'}
+            Nothing {finder === 'saved' ? 'you saved' : 'found'} within walking distance{finder !== 'all' ? ' for this filter' : ''}.
+            {!online && ' Live places load when you’re back online.'}
           </p>
         ) : (
           <ul className="tm-near">
-            {list.map(({ place, km, walk, saved: isSaved }) => (
+            {list.map(({ place, km, walk, saved: isSaved, live: isLive }) => {
+              const hours = isLive && place.openingHours ? openNow(place.openingHours, zone) : null
+              return (
               <li key={place.id}>
                 <div className="tm-near-main">
                   <strong>
-                    {place.name} {isSaved && <span aria-label="saved">♥</span>}
+                    {place.name} {isSaved && <span aria-label="saved">♥</span>} <SourceLabel kind={isLive || place.source === 'live' ? 'live' : place.source === 'osm' ? 'osm' : 'curated'} />
                   </strong>
                   <span className="tm-muted">
-                    {distance(km)} · ~{walk} min walk · {place.type}
+                    {distance(km)} · ~{walk} min walk · {place.description && isLive ? place.description : place.type}
                     {place.costLevel != null ? ` · ${costLabel(place.costLevel)}` : ''}
                   </span>
+                  {hours?.text && (
+                    <span className={hours.state.open ? 'tm-open' : 'tm-closed'}>
+                      {hours.text} <span className="tm-muted">(listed hours)</span>
+                    </span>
+                  )}
                 </div>
                 <div className="tm-near-actions">
                   <Directions place={place} className="btn tm-btn-sm" label="Go" />
@@ -321,6 +375,7 @@ export function NearbySheet({ env, finder: initial, onClose }) {
                         type="button"
                         className="btn tm-btn-sm"
                         onClick={() => {
+                          if (isLive) registerPlaces([place])
                           change((t) => addToDay(t, day.number, place.id))
                           setAdded((a) => ({ ...a, [place.id]: true }))
                           track('saved_place_added_today', { from: 'nearby', saved: isSaved })
@@ -334,6 +389,7 @@ export function NearbySheet({ env, finder: initial, onClose }) {
                     type="button"
                     className="btn tm-btn-sm"
                     onClick={() => {
+                      if (isLive) registerPlaces([place])
                       onClose()
                       env.showOnMap(place.id)
                     }}
@@ -343,10 +399,21 @@ export function NearbySheet({ env, finder: initial, onClose }) {
                   </button>
                 </div>
               </li>
-            ))}
+              )
+            })}
           </ul>
         )}
-        <p className="tm-source">Straight-line distances; walking times are rough. Opening hours aren’t in Eurowander’s data{meal ? ', so check before you go' : ''}.</p>
+        <p className="tm-source">
+          Straight-line distances; walking times are rough. Live places: Powered by{' '}
+          <a href="https://www.geoapify.com/" target="_blank" rel="noopener noreferrer">
+            Geoapify
+          </a>{' '}
+          · ©{' '}
+          <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">
+            OpenStreetMap contributors
+          </a>
+          ; listed hours can be out of date{meal ? ', so check before you go' : ''}.
+        </p>
       </div>
     </Modal>
   )

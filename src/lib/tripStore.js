@@ -2,6 +2,7 @@
 // assistant. The change is written to this browser's storage and announced, so an open planner
 // (useTrip.js) picks it up straight away and one opened later reads it from storage.
 import { placeById } from '../data/places.js'
+import { persistTripPlaces } from './extraPlacesCore.js'
 import { KEYS, readJSON, writeJSON } from './storage.js'
 import { migrate } from './tripModel.js'
 
@@ -34,6 +35,8 @@ export const readSavedTrip = () => migrate(readJSON(KEYS.trip))
 export function updateSavedTrip(fn) {
   const next = fn(readSavedTrip())
   writeJSON(KEYS.trip, next)
+  // Extra places (OpenStreetMap and live) the trip uses must be stored with it, or a reload drops them.
+  persistTripPlaces(next)
   try {
     window.dispatchEvent(new CustomEvent(TRIP_CHANGED))
   } catch {

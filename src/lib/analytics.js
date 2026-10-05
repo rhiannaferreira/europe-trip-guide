@@ -30,6 +30,12 @@ export const EVENTS = [
   'today_replanned',
   'directions_opened',
   'saved_place_added_today',
+  // Live data. Never a location or a search text: only the kind of search, counts and outcomes.
+  'live_places_searched',
+  'live_place_saved',
+  'live_trains_searched',
+  'live_train_saved',
+  'live_data_failed',
 ]
 const allowed = new Set(EVENTS)
 

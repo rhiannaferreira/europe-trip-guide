@@ -16,6 +16,9 @@ import { computeStats } from '../planner/feasibility.js'
 import { planLegs } from '../planner/plan.js'
 import { rankCities } from './appRun.js'
 import { tripMode } from './tripHandle.js'
+import { trainFact } from './liveData.js'
+import { openNow } from '../services/live/openingHours.js'
+import { cityZoneOf } from '../services/live/places.js'
 
 export const MAX_AI_CONTEXT = 14000
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -65,9 +68,22 @@ const placeFacts = (p, extra = {}) => ({
   rating: p.rating ?? undefined,
   cost: p.costLevel == null ? undefined : p.costLevel === 0 ? 'free' : '$'.repeat(p.costLevel),
   about: p.description ? p.description.slice(0, 140) : undefined,
-  source: p.source === 'osm' ? 'OpenStreetMap' : 'Eurowander guide',
+  source: p.source === 'live' ? 'Live places service (OpenStreetMap data), fetched just now' : p.source === 'osm' ? 'OpenStreetMap' : 'Eurowander guide',
+  ...(p.source === 'live' ? liveExtras(p) : {}),
   ...extra,
 })
+
+// What a live place really has: cuisine, listed hours and whether they say it's open now, the address.
+function liveExtras(p) {
+  const hours = p.openingHours ? openNow(p.openingHours, cityZoneOf(p.cityId)) : null
+  return {
+    cuisine: p.cuisine || undefined,
+    openNow: hours?.text ? `${hours.text} (by its listed hours)` : p.openingHours ? `listed hours: ${p.openingHours}` : 'hours not listed',
+    address: p.address || undefined,
+    rating: undefined,
+    cost: undefined,
+  }
+}
 
 const stayLine = (stops) => stops.map((s) => `${name(s.cityId)} ${s.nights}n`).join(' → ')
 
@@ -116,6 +132,10 @@ export function verifiedFacts(result) {
           dayChanges: o.preview.days?.map((d) => ({ day: d.number, before: d.before, after: d.after })),
         }))
         out.note = 'These are proposals. Nothing has changed; the traveller presses Apply on the one they want.'
+        break
+      case 'trains':
+        out.trains = b.journeys.map(trainFact)
+        out.trainsSource = 'The published rail timetable (Transitous), fetched just now. Only these trains exist for this answer.'
         break
       case 'build':
         out.tripToBuild = { days: b.days, route: stayLine(b.stops) }
@@ -209,7 +229,7 @@ export function liveFacts({ weatherByDay, weatherFailed, handle }) {
 }
 
 // Everything the AI gets for one answer.
-export function buildAIContext({ message, action, result, handle, memory = {}, today, timeOfDay = null, pageCityId = null, weatherByDay = null, weatherFailed = false, note = '', travel = null }) {
+export function buildAIContext({ message, action, result, handle, memory = {}, today, timeOfDay = null, pageCityId = null, weatherByDay = null, weatherFailed = false, note = '', travel = null, livePlaces = null }) {
   const focus = focusCities({ action, handle, today, pageCityId, memory, message })
   const tripIds = handle ? handle.plan.stops.map((s) => s.cityId) : []
   const shownCities = new Set((result?.blocks || []).filter((b) => b.type === 'cities').flatMap((b) => b.items.map((i) => i.cityId)))
@@ -223,7 +243,7 @@ export function buildAIContext({ message, action, result, handle, memory = {}, t
       .slice(0, 2)
       .flatMap((id) =>
         placesInCity(id)
-          .filter((p) => !shownPlaces.has(p.id))
+          .filter((p) => !shownPlaces.has(p.id) && p.source !== 'live')
           .sort((a, b) => (category ? (b.category === category) - (a.category === category) : 0) || (b.rating ?? 0) - (a.rating ?? 0))
           .slice(0, 12),
       )
@@ -238,11 +258,16 @@ export function buildAIContext({ message, action, result, handle, memory = {}, t
     verified: verifiedFacts(result),
     note: note || undefined,
     trip: tripFacts(handle, { today, action, message }),
-    live: liveFacts({ weatherByDay, weatherFailed, handle }),
+    live: {
+      ...liveFacts({ weatherByDay, weatherFailed, handle }),
+      // Real places fetched for this request. The only restaurants, cafés and bars the AI may name besides the guide's.
+      ...(livePlaces ? (livePlaces.error ? { places: 'Live places are unavailable right now. Name only places from the guide.' } : { places: livePlaces.places.filter((p) => !shownPlaces.has(p.id)).slice(0, 10).map((p) => placeFacts(p, { distance: p.distanceKm != null ? `${p.distanceKm.toFixed(1)} km from the centre` : undefined })) }) : {}),
+    },
     guide,
     coverage: `Eurowander's guide covers ${cities.length} cities. Others can be discussed from general knowledge, but have no cards or data.`,
     recent: {
       lastShown: (memory.lastList || []).slice(0, 8).map((id) => cityById[id]?.name || placeById[id]?.name).filter(Boolean),
+      trainsShown: memory.trainsShown?.length ? memory.trainsShown : undefined,
       exchanges: (memory.exchanges || []).slice(-3),
     },
   }
@@ -254,6 +279,7 @@ export function trimContext(ctx) {
   const size = () => JSON.stringify(ctx).length
   const steps = [
     () => ctx.guide.places.splice(8),
+    () => Array.isArray(ctx.live.places) && ctx.live.places.splice(6),
     () => ctx.recent.exchanges.splice(0, Math.max(0, ctx.recent.exchanges.length - 2)),
     () => ctx.guide.cities.splice(3),
     () => ctx.trip?.days?.splice(2),

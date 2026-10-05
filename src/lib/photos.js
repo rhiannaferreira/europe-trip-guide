@@ -31,6 +31,8 @@ export function photoSubject(kind, item) {
   if (kind === 'city') return { key: `city:${item.id}`, title: cityWikiTitles[item.id] || item.name, lat: item.lat, lng: item.lng, maxKm: 30, needCoords: false }
   const override = placeWikiTitles[item.id]
   if (override === null) return null
+  // Live places (cafés, restaurants...) only get a photo when OpenStreetMap links them to a Wikipedia article.
+  if (item.source === 'live' && !item.wiki && !override) return null
   const title = override || item.wiki || item.name
   const wide = item.category === 'outdoors'
   return { key: `place:${item.id}`, title, lat: item.lat, lng: item.lng, maxKm: wide ? 15 : 4, needCoords: !override && !item.wiki }

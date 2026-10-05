@@ -13,7 +13,8 @@
 import { cityById } from '../data/cities.js'
 import { countryByCode } from '../data/countries.js'
 import { placeById, places } from '../data/places.js'
-import { isTime } from '../lib/tripModel.js'
+import { isTime, journeyKey } from '../lib/tripModel.js'
+import { clock, dayIn } from '../services/live/time.js'
 import { tripLegs } from '../lib/trip.js'
 import { buildDays } from '../utils/tripCalculations.js'
 import { distanceKm } from '../utils/distance.js'
@@ -138,6 +139,23 @@ export const isOutdoor = (p) => Boolean(p && (p.category === 'outdoors' || OUTDO
 // for a day that isn't today (preview, history).
 //   { kind: 'place' | 'journey', id, place?, leg?, start, end, timeSource: 'set' | 'suggested' | 'train' | null,
 //     state: 'done' | 'skipped' | 'current' | 'earlier' | 'upcoming', part: 'before' | 'after' | null }
+// The real train the traveller picked for a travel day's hop, when it runs on that day. → journey | null
+export function pickedJourney(trip, day) {
+  if (!day?.leg) return null
+  const j = trip?.journeys?.[journeyKey(day.leg.from.id, day.cityId)]
+  if (!j) return null
+  const d = day.iso || (day.date instanceof Date ? `${day.date.getFullYear()}-${String(day.date.getMonth() + 1).padStart(2, '0')}-${String(day.date.getDate()).padStart(2, '0')}` : null)
+  const tz = j.origin?.tz || cityZone(day.leg.from.id).tz
+  return !d || dayIn(j.departure.scheduled, tz) === d ? j : null
+}
+
+// A picked train saved for a different date than its travel day (the trip's dates moved). → journey | null
+export function misdatedJourney(trip, day) {
+  if (!day?.leg) return null
+  const j = trip?.journeys?.[journeyKey(day.leg.from.id, day.cityId)]
+  return j && !pickedJourney(trip, day) ? j : null
+}
+
 export function daySchedule(trip, day, { nowMin = null } = {}) {
   const entry = trip?.itinerary?.[day.number] || { placeIds: [], note: '' }
   const ids = (entry.placeIds || []).filter((id) => placeById[id])
@@ -145,8 +163,14 @@ export function daySchedule(trip, day, { nowMin = null } = {}) {
   const done = new Set(entry.done || [])
   const skipped = new Set(entry.skipped || [])
   const leg = day.leg || null
-  const depart = leg ? toMinutes(entry.depart) : null
-  const arrive = depart != null ? depart + leg.minutes : null
+  // A picked train's timetable wins over the traveller's own departure time and the typical journey time.
+  const train = pickedJourney(trip, day)
+  const depart = train ? toMinutes(clock(train.departure.scheduled, train.origin.tz || cityZone(leg.from.id).tz)) : leg ? toMinutes(entry.depart) : null
+  let arrive = depart != null ? depart + leg.minutes : null
+  if (train) {
+    arrive = toMinutes(clock(train.arrival.scheduled, train.destination.tz || cityZone(day.cityId).tz))
+    if (arrive < depart) arrive += 1440
+  }
   const before = leg ? ids.filter((id) => placeById[id].cityId === leg.from.id) : []
   const after = ids.filter((id) => !before.includes(id))
 
@@ -192,7 +216,7 @@ export function daySchedule(trip, day, { nowMin = null } = {}) {
     else if (nowMin >= e.end) e.state = e.kind === 'journey' ? 'done' : 'earlier'
     else e.state = 'upcoming'
   }
-  return { entries, lunch, depart, arrive, leg, note: entry.note || '' }
+  return { entries, lunch, depart, arrive, leg, train, note: entry.note || '' }
 }
 
 export function dayProgress(schedule) {

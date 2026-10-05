@@ -6,9 +6,16 @@ import { dayProgress, daySchedule, daySummary, flagOf, freeTime, hm, inWords, ne
 import { dailyLine, fetchedAt } from './travelWeather.js'
 import { useDailyForecast } from './useTravel.js'
 import { track } from '../lib/analytics.js'
-import { addToDay, setDeparture } from './travelActions.js'
+import { addToDay, setDeparture, setJourney } from './travelActions.js'
 import Timeline from './Timeline.jsx'
 import { Directions, modeIcon, modeWord } from './ui.jsx'
+import { useState } from 'react'
+import { useJourneyStatus } from './useJourneyStatus.js'
+import JourneyCard from '../components/JourneyCard.jsx'
+import TrainSearchModal from '../components/TrainSearch.jsx'
+import { LiveLoading, RailAttribution, SourceLabel, useLiveEnabled } from '../components/LiveBits.jsx'
+import { hasRail, stationName } from '../services/live/trains.js'
+import { clock } from '../services/live/time.js'
 
 function WeatherCard({ env }) {
   const { weather, hourly, isToday, online, ask } = env
@@ -57,14 +64,89 @@ function WeatherCard({ env }) {
         </div>
       )}
       <p className="tm-source">
-        {weather.fresh ? 'Open-Meteo forecast' : `Saved forecast from ${fetchedAt(weather.at)}. It may have changed.`}
+        {weather.fresh ? `Open-Meteo forecast${weather.at ? `, updated ${fetchedAt(weather.at)}` : ''}` : `Saved forecast from ${fetchedAt(weather.at)}. It may have changed.`}
       </p>
     </section>
   )
 }
 
+// NEXT JOURNEY: the train the traveller picked, with live status on the day when the operator shares it.
+function JourneyNowCard({ env }) {
+  const { day, schedule, change, readOnly, ask, isToday, online } = env
+  const [picking, setPicking] = useState(false)
+  const saved = schedule.train
+  const live = useJourneyStatus(saved, { active: isToday, online })
+  const j = live.journey || saved
+  const from = day.leg.from
+  const to = cityById[day.cityId]
+  const station = { name: stationName(j.origin.name), lat: j.origin.lat, lng: j.origin.lng, type: 'station' }
+  return (
+    <section className="tm-card tm-travelday tm-journey" aria-labelledby="tm-travelday-title">
+      <p className="tm-eyebrow" id="tm-travelday-title">
+        {isToday ? 'Next journey' : 'Travel day'}
+      </p>
+      <p className="tm-route">
+        {from.name} {flagOf(from.id)} <span aria-hidden="true">→</span>
+        <span className="visually-hidden">to</span> {to.name} {flagOf(to.id)}
+      </p>
+      {(live.status === 'loading' || live.status === 'refreshing') && !live.journey && <LiveLoading text="Checking current service information…" />}
+      <JourneyCard journey={j} showStatus={Boolean(live.journey)} updatedAt={live.journey?.retrievedAt}>
+        {!live.journey && (
+          <p className="journey-meta">
+            <SourceLabel kind="scheduled" /> Departs {clock(saved.departure.scheduled, saved.origin.tz)} from the timetable.
+            {!isToday
+              ? ' Live status shows here on the day.'
+              : live.phase === 'before'
+                ? ' Live status shows here from about four hours before departure.'
+                : !online
+                  ? ' You’re offline, so live status can’t load.'
+                  : live.status === 'error'
+                    ? live.error?.code === 'not_found'
+                      ? ' This train isn’t in today’s live data, so check the operator’s app for changes.'
+                      : ' Live status is unavailable right now, so check the operator’s app for changes.'
+                    : ''}
+          </p>
+        )}
+        {live.journey && live.status === 'error' && <p className="journey-meta">Couldn’t refresh just now. Showing the last update.</p>}
+      </JourneyCard>
+      <div className="tm-actions">
+        {Number.isFinite(station.lat) && <Directions place={station} label="Directions to the station" className="btn tm-btn-sm" />}
+        {isToday && (
+          <button type="button" className="btn tm-btn-sm" onClick={() => ask('Do I have enough time before my train?', 'train')}>
+            Do I have time before my train?
+          </button>
+        )}
+        {!readOnly && online && (
+          <button type="button" className="btn tm-btn-sm" onClick={() => setPicking(true)}>
+            Change train
+          </button>
+        )}
+      </div>
+      <RailAttribution />
+      {picking && (
+        <TrainSearchModal
+          fromCityId={from.id}
+          toCityId={day.cityId}
+          date={day.iso}
+          time={clock(saved.departure.scheduled, saved.origin.tz)}
+          chosen={saved}
+          estimate={day.leg}
+          onChoose={(pick) => {
+            change((t) => setJourney(t, from.id, day.cityId, pick))
+            if (pick) setPicking(false)
+          }}
+          onClose={() => setPicking(false)}
+        />
+      )}
+    </section>
+  )
+}
+
 function TravelDayCard({ env }) {
-  const { day, schedule, change, readOnly, ask, isToday } = env
+  const { day, schedule, change, readOnly, ask, isToday, online } = env
+  const [picking, setPicking] = useState(false)
+  const railOn = useLiveEnabled('rail')
+  if (schedule.train) return <JourneyNowCard env={env} />
   const leg = day.leg
   const from = leg.from
   const to = cityById[day.cityId]
@@ -98,11 +180,34 @@ function TravelDayCard({ env }) {
         </label>
       )}
       {schedule.depart == null && <p className="tm-muted">Add the time on your ticket to see when you arrive and plan around it.</p>}
-      <p className="tm-source">Stations, platforms and delays aren’t in Eurowander. Check your ticket or the operator’s app for live times.</p>
+      {!readOnly && online && railOn && hasRail(from.id) && hasRail(day.cityId) ? (
+        <>
+          <p className="tm-source">Add your real train to see its platform and any delays here on the day.</p>
+          <button type="button" className="btn tm-btn-sm" onClick={() => setPicking(true)}>
+            🚆 Find my train
+          </button>
+        </>
+      ) : (
+        <p className="tm-source">Check your ticket or the operator’s app for platforms and live times.</p>
+      )}
       {isToday && schedule.depart != null && (
         <button type="button" className="btn tm-btn-sm" onClick={() => ask('Do I have enough time before my train?', 'train')}>
           Do I have time before my train?
         </button>
+      )}
+      {picking && (
+        <TrainSearchModal
+          fromCityId={from.id}
+          toCityId={day.cityId}
+          date={day.iso}
+          time={schedule.depart != null ? hm(schedule.depart) : '08:00'}
+          estimate={leg}
+          onChoose={(pick) => {
+            change((t) => setJourney(t, from.id, day.cityId, pick))
+            if (pick) setPicking(false)
+          }}
+          onClose={() => setPicking(false)}
+        />
       )}
     </section>
   )

@@ -8,6 +8,7 @@ import { cities, cityById } from '../data/cities.js'
 import { countries } from '../data/countries.js'
 import { places } from '../data/places.js'
 import { BUILDER_INTERESTS, PACES, builderInterestById } from '../planner/preferences.js'
+import { hasRail } from '../data/stations.js'
 
 export const DISCOVERY_ACTIONS = [
   'suggest_cities',
@@ -15,6 +16,8 @@ export const DISCOVERY_ACTIONS = [
   'city_info',
   'compare_cities',
   'trains_from',
+  // Real trains between two cities on a date, from the live timetable (fetched before answering).
+  'find_trains',
   'next_after',
   'alternatives_to',
   'route',
@@ -69,7 +72,7 @@ const num = (description) => ({ type: ['integer', 'null'], description })
 export const APP_ACTION_SCHEMA = {
   type: 'object',
   additionalProperties: false,
-  required: ['action', 'city', 'cities', 'country', 'countries', 'place', 'page', 'interests', 'category', 'hiddenGems', 'month', 'tripDays', 'startDate', 'pace', 'budget', 'currency', 'travellers', 'startCity', 'targetCity', 'day', 'nights', 'delta', 'amount', 'question', 'criterion', 'topic', 'keepCities', 'keepCountries', 'maxExtraTravelMinutes', 'reply'],
+  required: ['action', 'city', 'cities', 'country', 'countries', 'place', 'page', 'interests', 'category', 'hiddenGems', 'month', 'tripDays', 'startDate', 'pace', 'budget', 'currency', 'travellers', 'startCity', 'targetCity', 'day', 'nights', 'delta', 'amount', 'question', 'criterion', 'topic', 'keepCities', 'keepCountries', 'maxExtraTravelMinutes', 'time', 'transfers', 'reply'],
   properties: {
     action: { type: 'string', enum: APP_ACTIONS },
     city: str('The one city the request is about (or the new city to add / use as a replacement), or empty'),
@@ -100,6 +103,8 @@ export const APP_ACTION_SCHEMA = {
     keepCities: list('make_cheaper / reduce_travel: cities in the trip they said to keep'),
     keepCountries: list('make_cheaper / reduce_travel: countries they said to keep'),
     maxExtraTravelMinutes: num('make_cheaper / reduce_travel: the most extra travel time they will accept, in minutes (0 for none)'),
+    time: str('find_trains: HH:MM, 24-hour, they want to leave after (morning 08:00, afternoon 13:00, evening 17:00), or empty'),
+    transfers: num('find_trains: the most changes they accept (0 for direct only, 1 for "fewer changes"), or null'),
     reply: str('One short, friendly sentence saying what you understood; no facts, prices, times or recommendations'),
   },
 }
@@ -202,6 +207,25 @@ export function validateAppAction(raw, ctx = {}) {
       if (city && !ids.includes(city)) ids.unshift(city)
       a.cities = ids.slice(0, 4)
       if (a.cities.length < 2) return { ok: false, error: badCities.length ? `${badCities.join(', ')} isn’t in Eurowander yet.` : 'Which cities should I compare?' }
+      break
+    }
+    case 'find_trains': {
+      // Follow-ups ("later?", "fewer changes") keep the trains just shown.
+      const last = memory.lastTrains || null
+      const ids = cityList.length >= 2 ? cityList.slice(0, 2) : city && last && city !== last.from ? [last.from, city] : last ? [last.from, last.to] : cityList
+      if (ids.length < 2) return { ok: false, error: badCities.length ? `${badCities.join(', ')} isn’t in Eurowander yet.` : 'Trains from where to where?' }
+      const noRail = ids.find((id) => !hasRail(id))
+      if (noRail) return { ok: false, error: `${cityById[noRail].name} has no passenger trains, so there’s no timetable to search. Buses or ferries are the way there.` }
+      ;[a.from, a.to] = ids
+      a.cities = ids
+      const today = ctx.today || ''
+      // The date: what they said, else the trip's travel day for this hop, else the trains just shown, else today.
+      const hop = handle?.days?.find((d, i) => i > 0 && d.cityId === a.to && handle.days[i - 1].cityId === a.from && d.date)
+      a.date = isoDate(raw.startDate) ? raw.startDate : hop?.date || (last && last.from === a.from && last.to === a.to ? last.date : '') || today
+      if (today && a.date < today) return { ok: false, error: 'That date has already passed. Which day do you want trains for?' }
+      a.time = typeof raw.time === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(raw.time) ? raw.time : last && last.from === a.from && last.to === a.to ? last.time : '08:00'
+      a.transfers = int(raw.transfers, 0, 5)
+      a.hopDay = hop ? hop.number : null
       break
     }
     case 'route':
