@@ -56,8 +56,9 @@ export async function searchStations(q, near = null) {
   const seen = new Set()
   return data
     .map(normalizeStation)
+    // Keep the geocoder's own order: it ranks by how well the name matches (sorting by importance put
+    // Munich's "Hauptbahnhof Süd" above Berlin Hbf for "Berlin Hbf").
     .filter((s) => s && !seen.has(s.id) && seen.add(s.id))
-    .sort((a, b) => (b.importance ?? 0) - (a.importance ?? 0))
     .slice(0, 8)
 }
 
