@@ -182,3 +182,39 @@ test('events come from the curated list with approximate dates', async () => {
   assert.ok(r.events.length > 0)
   assert.ok(r.events.every((e) => e.dateConfidence === 'approximate' && e.start <= e.end))
 })
+
+test('copilot: train requests and follow-ups read as find_trains, checked against the trip and the rail map', async () => {
+  const { parseAppIntent } = await import('../../assistant/appIntents.js')
+  const { validateAppAction } = await import('../../assistant/appActions.js')
+  const { trainsAnswer, trainFact, livePlaceKind } = await import('../../assistant/liveData.js')
+  const today = '2026-10-05'
+  const a = parseAppIntent('What trains go from Paris to Amsterdam tomorrow morning?', { today })
+  assert.equal(a.action, 'find_trains')
+  assert.deepEqual([a.startDate, a.time], ['2026-10-06', '08:00'])
+  const checked = validateAppAction(a, { today, memory: {} })
+  assert.equal(checked.ok, true)
+  assert.deepEqual([checked.action.from, checked.action.to, checked.action.date], ['paris', 'amsterdam', '2026-10-06'])
+  assert.equal(validateAppAction({ ...a, cities: ['Split', 'Dubrovnik'] }, { today, memory: {} }).ok, false)
+  assert.equal(validateAppAction({ ...a, startDate: '2026-10-01' }, { today, memory: {} }).ok, false)
+
+  const ans = trainsAnswer(checked.action, { journeys: [eurostar()], from: eurostar().origin, to: eurostar().destination, retrievedAt: '2026-10-05T10:00:00Z' })
+  assert.equal(ans.blocks[0].type, 'trains')
+  assert.equal(ans.memory.lastTrains.lastDeparture, '09:02')
+  const later = parseAppIntent('Can I leave later?', { today, memory: ans.memory })
+  assert.deepEqual([later.action, later.time], ['find_trains', '09:02'])
+  const direct = parseAppIntent('Any direct ones?', { today, memory: ans.memory })
+  assert.equal(direct.transfers, 0)
+
+  // No live answer: an estimate, labelled, and never invented trains.
+  const down = trainsAnswer(checked.action, { error: { code: 'unavailable' } })
+  assert.match(down.text, /temporarily unavailable.*estimate/i)
+  assert.equal(down.blocks, undefined)
+  assert.deepEqual(down.sources, ['estimate'])
+
+  assert.equal(trainFact(eurostar()).status, 'SCHEDULED: timetable only, no live information')
+  assert.equal(trainFact(eurostar({ departure: { scheduled: '2026-06-17T08:01:00Z', expected: '2026-06-17T08:11:00Z' } })).status, 'REAL-TIME: 10 min late')
+
+  assert.equal(livePlaceKind({ action: 'places_near', category: 'food' }, 'find dinner nearby'), 'restaurant')
+  assert.equal(livePlaceKind({ action: 'suggest_places', category: 'museums' }, 'museums in Rome'), null)
+  assert.equal(livePlaceKind({ action: 'open_question' }, 'where can we get coffee'), 'cafe')
+})

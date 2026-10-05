@@ -14,6 +14,7 @@ import { buildAIContext, focusCities, isFactAction, needsAiAnswer } from './aiCo
 import Block, { Sources } from './blocks.jsx'
 import { requestBuild, requestFocus, requestTab, requestTool, takeAsk, useAssistantBridge } from './bridge.js'
 import { check, needsWeather, respond } from './copilot.js'
+import { fetchLivePlaces, fetchTrains, livePlaceKind, trainFact } from './liveData.js'
 import { deleteChat, newChatId, readChats, saveChat } from './history.js'
 import { whyLabels } from './appRun.js'
 import { dayName } from './tripRun.js'
@@ -367,9 +368,28 @@ export default function AssistantPanel({ route, open, onClose }) {
     }
     const placeCity = act && ['places_near', 'suggest_places', 'open_question', 'plan_day'].includes(act.action) ? focusCities({ action: act, handle: h, today, pageCityId, memory: mem, message: q })[0] : null
     if (placeCity) jobs.push(morePlaces(placeCity))
+    // Real trains for find_trains, and real restaurants, cafés or bars for food and drink questions.
+    let liveTrains = null
+    if (act?.action === 'find_trains') jobs.push(fetchTrains(act).then((r) => (liveTrains = r)))
+    let livePlaces = null
+    const liveKind = placeCity ? livePlaceKind(act, q) : null
+    if (liveKind) jobs.push(fetchLivePlaces(placeCity, liveKind).then((r) => (livePlaces = r)))
     await Promise.all(jobs)
+    if (liveTrains?.error) track('live_data_failed', { what: 'copilot_trains', code: liveTrains.error.code })
+    if (livePlaces?.error && livePlaces.error.code !== 'not_configured') track('live_data_failed', { what: 'copilot_places', code: livePlaces.error.code })
 
-    const result = respond(checked, { ...ctx, weatherByDay })
+    const result = respond(checked, { ...ctx, weatherByDay, liveTrains })
+    // Live places lead food and drink answers; when they can't load, the guide's picks are shown and labelled.
+    if (livePlaces?.places?.length && !result.now) {
+      const shown = new Set((result.blocks || []).filter((b) => b.type === 'places').flatMap((b) => b.items.map((i) => i.placeId)))
+      const items = livePlaces.places.filter((p) => !shown.has(p.id)).slice(0, 4).map((p) => ({ placeId: p.id, note: p.distanceKm != null ? `${p.distanceKm.toFixed(1)} km from the centre` : undefined }))
+      if (items.length) {
+        result.blocks = [{ type: 'places', items, live: true }, ...(result.blocks || [])]
+        result.sources = [...new Set(['live', ...(result.sources || [])])]
+      }
+    } else if (livePlaces?.error && liveKind) {
+      result.note = livePlaces.error.code === 'not_configured' ? result.note : 'Live places are temporarily unavailable, so these are EuroWander’s own suggestions.'
+    }
     if (weatherFailed) result.note = 'I couldn’t reach the weather service just now, so this uses seasonal information.'
     else if (note && (!checked.ok || checked.action.action !== 'open_question')) result.note = note
     const action = act ? act.action : 'invalid'
@@ -380,16 +400,20 @@ export default function AssistantPanel({ route, open, onClose }) {
     if (options) track('chat_trip_change_proposed', { action, options: options.options.length, trip: h.kind })
     const id = `${Date.now()}`
     memory.current = { ...mem, ...(result.memory || {}) }
+    // The trains just shown, so "which works best with my plans?" can be answered from them.
+    const trainsBlock = result.blocks?.find((b) => b.type === 'trains')
+    if (trainsBlock) memory.current.trainsShown = trainsBlock.journeys.map(trainFact)
     setEntries((l) => [...l, { id, q, via, action, reply: '', result, done: {}, ai: compose ? { status: 'streaming', text: '' } : null }].slice(-40))
     if (result.now) run(result.now, id)
 
     let shown = String(result.text || '')
     if (compose) {
-      const aiCtx = buildAIContext({ message: q, action: act, result, handle: h, memory: mem, today, timeOfDay: travelNow?.partOfDay || timeOfDay(), pageCityId, weatherByDay, weatherFailed, note: gap, travel: travelNow })
+      const aiCtx = buildAIContext({ message: q, action: act, result, handle: h, memory: mem, today, timeOfDay: travelNow?.partOfDay || timeOfDay(), pageCityId, weatherByDay, weatherFailed, note: gap, travel: travelNow, livePlaces })
       // Cards can only be drawn for places the AI was shown: those in the cities in question, and the answer's own.
       const placeIds = [
         ...focusCities({ action: act, handle: h, today, pageCityId, memory: mem, message: q }).flatMap((c) => placesInCity(c).map((p) => p.id)),
         ...(result.blocks || []).filter((b) => b.type === 'places').flatMap((b) => b.items.map((i) => i.placeId)),
+        ...(livePlaces?.places || []).map((p) => p.id),
       ]
       const r = await streamAnswer(q, aiCtx, { placeIds, onText: (t) => patch(id, (e) => ({ ...e, ai: { status: 'streaming', text: t } })) })
       if (r.answer) {

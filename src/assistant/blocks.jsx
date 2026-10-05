@@ -12,6 +12,15 @@ import { describe } from '../lib/weather.js'
 import { formatMoney } from '../utils/budgetCalculations.js'
 import DataBadge from '../builder/DataBadge.jsx'
 import { dayName } from './tripRun.js'
+import { useState } from 'react'
+import JourneyCard from '../components/JourneyCard.jsx'
+import { Freshness, PlacesAttribution, RailAttribution, SourceLabel } from '../components/LiveBits.jsx'
+import { openNow } from '../services/live/openingHours.js'
+import { cityZoneOf } from '../services/live/places.js'
+import { journeySnapshot } from '../services/live/trains.js'
+import { updateSavedTrip } from '../lib/tripStore.js'
+import { setJourney } from '../travel/travelActions.js'
+import { journeyKey } from '../lib/tripModel.js'
 
 const cityName = (id) => cityById[id]?.name || id
 const flag = (id) => countryByCode[cityById[id]?.country]?.flag || ''
@@ -58,7 +67,18 @@ function PlaceCard({ item, day, env }) {
             {flag(p.cityId)} {cityName(p.cityId)} · {interest?.label || p.category}
             {p.rating != null && <> · ⭐ {p.rating.toFixed(1)}</>}
             {p.costLevel != null && <> · {costLabel(p.costLevel)}</>}
+            {p.source === 'live' && (
+              <>
+                {' '}
+                <SourceLabel kind="live" />
+              </>
+            )}
           </span>
+          {p.source === 'live' && p.openingHours && openNow(p.openingHours, cityZoneOf(p.cityId)).text && (
+            <span className="cp-sub">
+              {openNow(p.openingHours, cityZoneOf(p.cityId)).text} <span className="live-hint">(listed hours)</span>
+            </span>
+          )}
         </div>
       </div>
       {item.note && <p className="cp-note">{item.note}</p>}
@@ -404,16 +424,47 @@ export function Sources({ sources = [], ai = false }) {
   )
 }
 
+// Real trains from the timetable. When the saved trip has this hop, a train can go straight into it.
+function TrainsBlock({ block, env }) {
+  const trip = env.handle?.kind === 'saved' ? env.handle.trip : null
+  const ids = trip ? trip.stops.map((s) => s.cityId) : []
+  const hop = ids.some((id, i) => i > 0 && ids[i - 1] === block.from && id === block.to)
+  const [picked, setPicked] = useState(trip?.journeys?.[journeyKey(block.from, block.to)]?.departure?.scheduled || null)
+  const choose = (j) => {
+    const same = picked === j.departure.scheduled
+    updateSavedTrip((t) => setJourney(t, block.from, block.to, same ? null : journeySnapshot(j)))
+    setPicked(same ? null : j.departure.scheduled)
+  }
+  return (
+    <div className="cp-trains">
+      <ul className="journey-list">
+        {block.journeys.map((j) => (
+          <li key={j.id || j.departure.scheduled}>
+            <JourneyCard journey={j} onChoose={hop ? choose : null} chosen={picked === j.departure.scheduled} chooseLabel="Add to my trip" />
+          </li>
+        ))}
+      </ul>
+      <Freshness at={block.retrievedAt} verb="Checked" />
+      <RailAttribution />
+    </div>
+  )
+}
+
 export default function Block({ block, env, id }) {
   switch (block.type) {
     case 'places':
       return (
-        <ul className="cp-cards">
-          {block.items.map((it) => (
-            <PlaceCard key={it.placeId} item={it} day={block.day} env={env} />
-          ))}
-        </ul>
+        <>
+          <ul className="cp-cards">
+            {block.items.map((it) => (
+              <PlaceCard key={it.placeId} item={it} day={block.day} env={env} />
+            ))}
+          </ul>
+          {block.live && <PlacesAttribution />}
+        </>
       )
+    case 'trains':
+      return <TrainsBlock block={block} env={env} />
     case 'cities':
       return (
         <ul className="cp-cards">

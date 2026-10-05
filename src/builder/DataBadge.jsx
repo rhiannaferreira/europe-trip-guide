@@ -2,6 +2,7 @@
 // never mistaken for live data.
 export const DATA_KINDS = {
   live: { label: 'Live', title: 'Fetched just now from a live source' },
+  timetable: { label: 'Timetable', title: 'From the published rail timetable; live changes show when the operator shares them' },
   estimate: { label: 'Estimate', title: 'Worked out from Eurowander’s sample data and simple rules; not a live price or timetable' },
   sample: { label: 'Eurowander data', title: 'Verified: from Eurowander’s own city, place and train data' },
   seasonal: { label: 'Seasonal', title: 'Typical for the time of year, from Eurowander’s city data' },

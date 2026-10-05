@@ -62,6 +62,7 @@ export function appContext({ route, handle, today, memory = {}, travel = null })
     trip: tripContext(handle, today),
     recent: {
       lastShown: (memory.lastList || []).slice(0, 8).map((id) => cityById[id]?.name || placeById[id]?.name).filter(Boolean),
+      trainsShown: memory.lastTrains ? { from: cityById[memory.lastTrains.from]?.name, to: cityById[memory.lastTrains.to]?.name, date: memory.lastTrains.date, leavingAfter: memory.lastTrains.time, lastDeparture: memory.lastTrains.lastDeparture, maxChanges: memory.lastTrains.transfers ?? undefined } : undefined,
       lastCity: memory.anchorCity ? name(memory.anchorCity) : null,
       pending: memory.draft ? { building: 'new trip', ...memory.draft } : null,
       exchanges: (memory.exchanges || []).slice(-3),
