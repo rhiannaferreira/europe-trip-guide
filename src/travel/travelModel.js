@@ -144,7 +144,7 @@ export function pickedJourney(trip, day) {
   if (!day?.leg) return null
   const j = trip?.journeys?.[journeyKey(day.leg.from.id, day.cityId)]
   if (!j) return null
-  const d = day.date instanceof Date ? `${day.date.getFullYear()}-${String(day.date.getMonth() + 1).padStart(2, '0')}-${String(day.date.getDate()).padStart(2, '0')}` : null
+  const d = day.iso || (day.date instanceof Date ? `${day.date.getFullYear()}-${String(day.date.getMonth() + 1).padStart(2, '0')}-${String(day.date.getDate()).padStart(2, '0')}` : null)
   const tz = j.origin?.tz || cityZone(day.leg.from.id).tz
   return !d || dayIn(j.departure.scheduled, tz) === d ? j : null
 }

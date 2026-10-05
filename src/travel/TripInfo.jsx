@@ -9,8 +9,11 @@ import { Link, navigate } from '../lib/router.jsx'
 import { requestTab } from '../assistant/bridge.js'
 import { track } from '../lib/analytics.js'
 import { addToDay } from './travelActions.js'
-import { clockIn, deviceZone, differsFromDevice, flagOf, hm, toMinutes, zoneAbbr } from './travelModel.js'
+import { clockIn, deviceZone, differsFromDevice, flagOf, hm, pickedJourney, toMinutes, zoneAbbr } from './travelModel.js'
 import { modeIcon } from './ui.jsx'
+import { SourceLabel } from '../components/LiveBits.jsx'
+import { stationName } from '../services/live/trains.js'
+import { clock } from '../services/live/time.js'
 
 const fmtDay = (d) => d.date.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
 
@@ -63,20 +66,29 @@ export function TripView({ env }) {
           <ul className="tm-plain">
             {legs.map((d) => {
               const dep = toMinutes(trip.itinerary?.[d.number]?.depart)
+              const train = pickedJourney(trip, d)
               return (
                 <li key={d.number}>
                   {modeIcon(d.leg.mode)} <strong>{d.leg.from.name} → {d.leg.to.name}</strong>, day {d.number} ({fmtDay(d)})
-                  <span className="tm-muted">
-                    {' '}
-                    · about {formatDuration(d.leg.minutes)}
-                    {d.leg.estimated ? ' (estimated)' : ''}
-                    {dep != null ? ` · departs ${hm(dep)} (your time)` : ' · departure time not set'}
-                  </span>
+                  {train ? (
+                    <span className="tm-muted">
+                      {' '}
+                      · {clock(train.departure.scheduled, train.origin.tz)} {stationName(train.origin.name)} → {clock(train.arrival.scheduled, train.destination.tz)} {stationName(train.destination.name)}
+                      {(train.legs || []).some((l) => l.service) && ` · ${train.legs.map((l) => l.service).filter(Boolean).join(', ')}`} <SourceLabel kind="scheduled" />
+                    </span>
+                  ) : (
+                    <span className="tm-muted">
+                      {' '}
+                      · about {formatDuration(d.leg.minutes)}
+                      {d.leg.estimated ? ' (estimated)' : ''}
+                      {dep != null ? ` · departs ${hm(dep)} (your time)` : ' · departure time not set'}
+                    </span>
+                  )}
                 </li>
               )
             })}
           </ul>
-          <p className="tm-source">Journey times are Eurowander’s typical times, not live timetables. Bookings will show here once Eurowander can store them.</p>
+          <p className="tm-source">Picked trains come from the published timetable. Other journey times are Eurowander’s typical times.</p>
         </section>
       )}
 

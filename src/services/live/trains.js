@@ -115,6 +115,17 @@ export function journeySnapshot(j, { savedAt = new Date().toISOString() } = {}) 
   }
 }
 
+// When live status is worth checking for a picked train: 'before' (more than four hours to departure),
+// 'live', or 'after' (an hour past arrival).
+export function statusWindow(journey, now = Date.now()) {
+  const dep = Date.parse(journey?.departure?.scheduled)
+  const arr = Date.parse(journey?.arrival?.scheduled)
+  if (!Number.isFinite(dep) || !Number.isFinite(arr)) return 'after'
+  if (now < dep - 4 * 3600000) return 'before'
+  if (now > arr + 3600000) return 'after'
+  return 'live'
+}
+
 export const defaultZone = (cityId) => cityZoneOf(cityId)
 
 export { hasRail }

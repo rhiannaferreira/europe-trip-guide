@@ -46,10 +46,26 @@ export function travelContext({ trip, status, day, nowMin, weather, online = tru
           from: day.leg.from.name,
           to: day.leg.to.name,
           mode: day.leg.mode,
-          duration: `about ${formatDuration(day.leg.minutes)} (${day.leg.estimated ? 'estimated from distance' : 'Eurowander sample time'})`,
-          departs: s.depart == null ? 'not set by the traveller' : hm(s.depart),
-          arrivesAbout: s.arrive == null ? undefined : hm(s.arrive),
-          liveStatus: 'not available: Eurowander has no live train data',
+          ...(s.train
+            ? {
+                train: {
+                  from: s.train.origin.name,
+                  to: s.train.destination.name,
+                  departs: hm(s.depart),
+                  arrives: hm(s.arrive),
+                  changes: s.train.transfers,
+                  operators: s.train.operators,
+                  trains: (s.train.legs || []).map((l) => l.service).filter(Boolean),
+                  source: 'SCHEDULED: the timetable for the train the traveller picked',
+                },
+                liveStatus: 'Shown on the Travel Mode card, not here. Never say the train is on time or delayed; point the traveller to the card or the operator.',
+              }
+            : {
+                duration: `about ${formatDuration(day.leg.minutes)} (${day.leg.estimated ? 'estimated from distance' : 'Eurowander sample time'})`,
+                departs: s.depart == null ? 'not set by the traveller' : hm(s.depart),
+                arrivesAbout: s.arrive == null ? undefined : hm(s.arrive),
+                liveStatus: 'not available: the traveller hasn’t picked a real train',
+              }),
         }
       : undefined,
     weather: weather
