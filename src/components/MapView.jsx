@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import L from 'leaflet'
-import { CircleMarker, GeoJSON, MapContainer, Pane, Popup, TileLayer, Tooltip, useMap } from 'react-leaflet'
+import { CircleMarker, GeoJSON, MapContainer, Marker, Pane, Popup, TileLayer, Tooltip, useMap, useMapEvents } from 'react-leaflet'
 import { placeById } from '../data/places.js'
 import { cityById } from '../data/cities.js'
 import { interestById } from '../data/interests.js'
@@ -11,15 +11,17 @@ import { formatDistance } from '../utils/distance.js'
 import DayRoute from './DayRoute.jsx'
 import MapTapPlaces from './MapTapPlaces.jsx'
 import { motion } from '../lib/motion.js'
+import LiveMapLayer, { LIVE_MIN_ZOOM } from './LiveMapLayer.jsx'
+import MapLegend from './MapLegend.jsx'
+import { interestColors, pinIcon } from './mapPins.js'
+import { useLiveEnabled } from './LiveBits.jsx'
 
 // Marker colours per interest (Leaflet needs real colours, not CSS variables).
-export const interestColors = {
-  food: '#d9623f',
-  outdoors: '#238a7e',
-  museums: '#6a4c93',
-  nightlife: '#2f5566',
-  history: '#9a6a2f',
-  shopping: '#c2417a',
+export { interestColors }
+
+function ZoomWatch({ onZoom }) {
+  const map = useMapEvents({ zoomend: () => onZoom(map.getZoom()) })
+  return null
 }
 
 // Leaflet drops a view change that arrives mid zoom animation, so hold it until the animation ends.
@@ -137,6 +139,19 @@ export default function MapView({ places, cities, fitCities, savedIds, routeCiti
   // Markers and lines draw on one canvas (much lighter than hundreds of SVG elements); the outlines
   // stay SVG so the CSS colours for light and dark mode apply to them.
   const outlineRenderer = useMemo(() => L.svg({ pane: 'outline' }), [])
+  const liveOn = useLiveEnabled('places') === true
+  const [zoom, setZoom] = useState(4)
+  // Interests hidden from the map with the key's toggles.
+  const [hidden, setHidden] = useState(() => new Set())
+  const toggleHidden = (id) =>
+    setHidden((h) => {
+      const next = new Set(h)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  const shownPlaces = hidden.size ? places.filter((p) => !hidden.has(p.category)) : places
+  const guideIds = useMemo(() => new Set(places.map((p) => p.id)), [places])
 
   return (
     <MapContainer center={[48.5, 8]} zoom={4} className="map" scrollWheelZoom preferCanvas>
@@ -162,30 +177,28 @@ export default function MapView({ places, cities, fitCities, savedIds, routeCiti
       <FitToTrip routeCities={routeCities} request={fitTripRequest} />
       <FlyToFocused place={focused} markerRefs={markerRefs} />
 
+      <ZoomWatch onZoom={setZoom} />
+      <MapLegend hidden={hidden} onToggle={toggleHidden} liveOn={liveOn} zoom={zoom} liveMinZoom={LIVE_MIN_ZOOM} />
       <MapTapPlaces savedIds={savedIds} onToggleSave={onToggleSave} />
+      {!dimmed && <LiveMapLayer on={liveOn} guideIds={guideIds} savedIds={savedIds} hidden={hidden} onToggleSave={onToggleSave} />}
       <RouteView routeCities={routeCities} legs={legs} />
       <DayRoute day={dayView?.day} places={dayView?.places || []} />
 
-      {places.map((p) => {
+      {shownPlaces.map((p) => {
         const saved = savedIds.has(p.id)
         const interest = interestById[p.category]
         return (
-          <CircleMarker
+          <Marker
             key={p.id}
             ref={(m) => {
               if (m) markerRefs.current[p.id] = m
               else delete markerRefs.current[p.id]
             }}
-            center={[p.lat, p.lng]}
-            radius={saved ? 9 : 7}
-            pathOptions={{
-              color: saved ? '#f4a261' : '#fff',
-              weight: saved ? 3 : 2,
-              fillColor: interestColors[p.category],
-              fillOpacity: dimmed ? 0.3 : 0.9,
-              opacity: dimmed ? 0.4 : 1,
-            }}
-            bubblingMouseEvents={false}
+            position={[p.lat, p.lng]}
+            icon={pinIcon(p, p.source === 'live' ? 'live' : 'guide', saved ? 'saved' : dimmed ? 'dim' : '')}
+            zIndexOffset={saved ? 600 : 400}
+            title={p.name}
+            alt={p.name}
             eventHandlers={{ click: () => onFocus(p.id) }}
           >
             <Popup>
@@ -204,7 +217,7 @@ export default function MapView({ places, cities, fitCities, savedIds, routeCiti
                 {focusedId === p.id && <PopupNearby place={p} onFocusPlace={onFocusPlace} />}
               </div>
             </Popup>
-          </CircleMarker>
+          </Marker>
         )
       })}
 

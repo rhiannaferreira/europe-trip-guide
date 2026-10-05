@@ -342,3 +342,15 @@ test('if the provider rejects the wide tap categories, the tap falls back to the
   assert.equal(r.json.data.places.length, 1)
   assert.equal(calls.length, 2)
 })
+
+test('the street-level map layer can ask for 40 places of sights or food, other searches stay at 20', async () => {
+  mockFetch(() => ok(geoResponse([geoFeature()])))
+  const r = await call('/api/live/places/search?lat=41.898&lng=12.476&radius=1000&kind=mapSights&limit=40')
+  assert.equal(r.status, 200)
+  const sent = new URL(calls[0].url)
+  assert.equal(sent.searchParams.get('limit'), '40')
+  assert.match(sent.searchParams.get('categories'), /tourism\.sights/)
+  await call('/api/live/places/search?lat=41.898&lng=12.476&radius=1000&kind=mapFood&limit=40')
+  assert.match(new URL(calls[1].url).searchParams.get('categories'), /catering\.restaurant/)
+  assert.equal((await call('/api/live/places/search?lat=41.9&lng=12.5&kind=restaurant&limit=40')).status, 400)
+})

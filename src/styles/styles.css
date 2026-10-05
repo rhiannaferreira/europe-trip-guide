@@ -1372,3 +1372,27 @@ a:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent); ou
 .map-tap-btn:hover { filter: brightness(0.96); }
 .map-tap-foot { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 0.7rem; color: var(--muted); border-top: 1px solid var(--border); padding-top: 8px; }
 .map-tap .src-label { align-self: auto; justify-self: start; }
+
+/* Map pins: EuroWander picks are filled discs, live places white with a coloured ring. */
+.pin-wrap { background: none; border: 0; }
+.pin { display: grid; place-items: center; width: 100%; height: 100%; border-radius: 50%; line-height: 1; box-shadow: 0 1px 4px rgb(0 0 0 / 0.35); transition: transform 0.12s ease; }
+.pin-guide { background: var(--pin); border: 2px solid #fff; font-size: 16px; }
+.pin-live { background: #fff; border: 2px solid var(--pin); font-size: 12px; }
+.pin-saved { border-color: #f4a261; border-width: 3px; box-shadow: 0 0 0 2px rgb(244 162 97 / 0.35), 0 1px 4px rgb(0 0 0 / 0.35); }
+.pin-dim { opacity: 0.4; }
+.pin-wrap:hover .pin, .pin-wrap:focus-visible .pin { transform: scale(1.15); }
+.pin-wrap:focus-visible { outline: none; }
+.pin-wrap:focus-visible .pin { outline: 3px solid var(--accent-fill); outline-offset: 2px; }
+.pin-sample { display: inline-block; width: 12px; height: 12px; vertical-align: -2px; margin: 0 2px 0 6px; box-shadow: none; --pin: #9a6a2f; }
+.pin-sample.pin-guide { border-width: 1px; }
+
+/* Map key */
+.map-legend-box { position: absolute; left: 10px; bottom: 24px; z-index: 800; max-width: min(300px, calc(100% - 20px)); background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); padding: 6px 10px 8px; font-size: 0.78rem; }
+.map-legend-head { background: none; border: 0; padding: 2px 0; font: inherit; font-weight: 700; color: inherit; cursor: pointer; }
+.map-legend-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.map-legend-chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px 2px 2px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font: inherit; cursor: pointer; }
+.map-legend-chip.off { opacity: 0.45; text-decoration: line-through; }
+.map-legend-dot { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--pin); font-size: 11px; }
+.map-legend-note { margin: 6px 0 0; color: var(--muted); }
+.map-legend-hint { margin: 6px 0 0; color: var(--muted); font-style: italic; }
+@media (max-width: 700px) { .map-legend-box { bottom: 70px; } }

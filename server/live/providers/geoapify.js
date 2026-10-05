@@ -29,6 +29,10 @@ export const KINDS = {
   park: ['leisure.park', 'beach'],
   shopping: ['commercial.shopping_mall', 'commercial.department_store', 'commercial.marketplace'],
   attractions: ['tourism.sights', 'tourism.attraction', 'entertainment.museum', 'leisure.park'],
+  // What fills the map when zoomed in to street level: sights in one request, food and drink in another,
+  // so neither crowds the other out.
+  mapSights: ['tourism.sights', 'tourism.attraction', 'entertainment.museum', 'entertainment.culture', 'leisure.park', 'commercial.marketplace'],
+  mapFood: ['catering.restaurant', 'catering.cafe', 'catering.ice_cream', 'catering.bar', 'catering.pub'],
   // Whatever is at a spot someone tapped on the map.
   // Wide on purpose: the map labels everything, so a tap should find hotels, churches and stations too.
   // anyBasic is the narrower list it falls back to if the provider ever rejects one of these.
