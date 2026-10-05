@@ -3,7 +3,7 @@ import { placeById } from './data/places.js'
 import { KEYS, backupOnce, readJSON, readText, writeJSON } from './lib/storage.js'
 import { persistTripPlaces } from './lib/extraPlaces.js'
 import { TRIP_CHANGED, withCity, withPlace } from './lib/tripStore.js'
-import { DEFAULT_TRIP_NAME, STATUSES, VERSION, dayExtras, dayHasContent, dayWithout, emptyTrip, migrate } from './lib/tripModel.js'
+import { DEFAULT_TRIP_NAME, STATUSES, VERSION, dayExtras, dayHasContent, cleanJourney, dayWithout, emptyTrip, journeyKey, migrate } from './lib/tripModel.js'
 
 // The trip's shape and migrations live in lib/tripModel.js; they're re-exported here for older imports.
 export { DEFAULT_TRIP_NAME, STATUSES, emptyTrip, isEmptyTrip, migrate } from './lib/tripModel.js'
@@ -161,6 +161,17 @@ export function useTrip() {
   const setTripNote = (text) => setTrip((t) => ({ ...t, notes: { ...t.notes, trip: text } }))
   const setCityNote = (cityId, text) => setTrip((t) => ({ ...t, notes: { ...t.notes, cities: { ...t.notes.cities, [cityId]: text } } }))
 
+  // ----- Picked trains -----
+  // A real train for the hop from one stop to the next (null to forget it).
+  const setJourney = (fromId, toId, journey) =>
+    setTrip((t) => {
+      const journeys = { ...(t.journeys || {}) }
+      const clean = journey && cleanJourney(journey)
+      if (clean) journeys[journeyKey(fromId, toId)] = clean
+      else delete journeys[journeyKey(fromId, toId)]
+      return { ...t, journeys }
+    })
+
   const clear = () => setTrip(emptyTrip())
 
   // Swap in a whole trip (from a shared link). The current one is kept under travel-app-trip-previous first.
@@ -183,6 +194,7 @@ export function useTrip() {
     statuses: trip.statuses,
     itinerary: trip.itinerary,
     notes: trip.notes,
+    journeys: trip.journeys || {},
     savedIds,
     addCity,
     removeCity,
@@ -202,6 +214,7 @@ export function useTrip() {
     setDayNote,
     setTripNote,
     setCityNote,
+    setJourney,
     clear,
     replace,
     load,

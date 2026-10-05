@@ -7,12 +7,18 @@ import { formatDay, travelDayAdvice } from '../utils/tripCalculations.js'
 import { optimizeDay } from '../utils/routeOptimizer.js'
 import { formatDistance } from '../utils/distance.js'
 import DayPicker from './DayPicker.jsx'
+import TrainSearchModal from './TrainSearch.jsx'
+import { SourceLabel } from './LiveBits.jsx'
+import { misdatedJourney, pickedJourney } from '../travel/travelModel.js'
+import { stationName } from '../services/live/trains.js'
+import { clock, durationText } from '../services/live/time.js'
 
 // One day of the itinerary: its date and city, the places on it (in visiting order), and a note.
 export const modeIcon = (mode) => ({ bus: '🚌', 'rail + ferry': '⛴️' })[mode] || '🚆'
 
 export default function ItineraryDay({ day, entry, days, unscheduled, trip, selected, onSelect, onFocusPlace }) {
   const [optimizeMsg, setOptimizeMsg] = useState('')
+  const [trains, setTrains] = useState(false)
   const city = cityById[day.cityId]
   const country = countryByCode[city.country]
   const placeIds = entry?.placeIds || []
@@ -23,6 +29,10 @@ export default function ItineraryDay({ day, entry, days, unscheduled, trip, sele
   const skipped = new Set(entry?.skipped || [])
   const fromCity = day.leg ? day.leg.from : null
   const advice = travelDayAdvice(day, placeIds.length)
+  // A real train picked for this hop (and one saved for another date, after the trip's dates moved).
+  const train = day.leg ? pickedJourney({ journeys: trip.journeys }, day) : null
+  const oldTrain = day.leg ? misdatedJourney({ journeys: trip.journeys }, day) : null
+  const dayIso = day.date ? `${day.date.getFullYear()}-${String(day.date.getMonth() + 1).padStart(2, '0')}-${String(day.date.getDate()).padStart(2, '0')}` : ''
 
   const optimize = () => {
     const result = optimizeDay(placeIds.map((id) => placeById[id]))
@@ -56,13 +66,54 @@ export default function ItineraryDay({ day, entry, days, unscheduled, trip, sele
         </button>
       </header>
 
-      {day.leg && (
-        <p className="day-leg">
+      {day.leg && train && (
+        <div className="day-leg">
+          🚆 {clock(train.departure.scheduled, train.origin.tz)} {stationName(train.origin.name)} → {clock(train.arrival.scheduled, train.destination.tz)} {stationName(train.destination.name)}{' '}
+          <SourceLabel kind="scheduled" />
+          <span className="leg-note">
+            {durationText(train.durationMin)} · {train.transfers === 0 ? 'direct' : `${train.transfers} change${train.transfers === 1 ? '' : 's'}`}
+            {train.operators?.length > 0 && ` · ${train.operators.join(', ')}`}. Live status shows in Travel Mode on the day.
+          </span>
+          <span className="journey-pick">
+            <button type="button" className="btn" onClick={() => setTrains(true)}>
+              Change train
+            </button>
+            <button type="button" className="btn" onClick={() => trip.setJourney(fromCity.id, city.id, null)}>
+              Remove
+            </button>
+          </span>
+        </div>
+      )}
+      {day.leg && !train && (
+        <div className="day-leg">
           {modeIcon(day.leg.mode)} {fromCity.name} → {city.name}: ~{formatDuration(day.leg.minutes)}{' '}
-          <span className="estimate">{day.leg.estimated ? 'rough estimate' : 'estimate'}</span>
+          <SourceLabel kind="estimate">{day.leg.estimated ? 'Rough estimate' : 'Estimate'}</SourceLabel>
           {entry?.depart && <span className="day-depart"> · departs {entry.depart}</span>}
           {day.leg.estimated && day.leg.note && <span className="leg-note">{day.leg.note}</span>}
-        </p>
+          {oldTrain && <span className="leg-note warn-text">Your saved train was for another date. Pick one for this day.</span>}
+          {dayIso && (
+            <span className="journey-pick">
+              <button type="button" className="btn" onClick={() => setTrains(true)}>
+                🚆 Find real trains
+              </button>
+            </span>
+          )}
+        </div>
+      )}
+      {trains && (
+        <TrainSearchModal
+          fromCityId={fromCity.id}
+          toCityId={city.id}
+          date={dayIso}
+          time={entry?.depart || '08:00'}
+          chosen={train}
+          estimate={day.leg}
+          onChoose={(j) => {
+            trip.setJourney(fromCity.id, city.id, j)
+            if (j) setTrains(false)
+          }}
+          onClose={() => setTrains(false)}
+        />
       )}
       {advice && <p className={`note ${advice.level === 'heavy' ? 'note-warn' : 'note-tip'} travel-advice`}>{advice.text}</p>}
 

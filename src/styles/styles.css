@@ -1334,3 +1334,15 @@ a:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent); ou
 .train-saved { margin-top: 6px; font-size: 0.85rem; }
 .tm-open { color: var(--good); font-weight: 700; font-size: 0.88rem; }
 .tm-closed { color: var(--warn); font-weight: 700; font-size: 0.88rem; }
+.train-time { display: grid; gap: 4px; align-content: end; }
+.train-time select, .train-time input { min-height: 40px; border: 1px solid var(--border-strong); border-radius: 8px; padding: 6px 10px; background: var(--surface); color: var(--text); font: inherit; }
+.station-field { display: grid; gap: 4px; font-size: 0.82rem; font-weight: 600; }
+.station-field input { min-height: 40px; border: 1px solid var(--border-strong); border-radius: 8px; padding: 6px 10px; background: var(--surface); color: var(--text); font: inherit; font-weight: 400; }
+.station-picked { font-weight: 400; }
+.journey-pick { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 6px; font-size: 0.85rem; }
+.journey-pick .btn { padding: 3px 10px; font-size: 0.82rem; }
+.tm-journey { display: grid; gap: 6px; }
+.tm-journey .journey { background: var(--surface-2); }
+@media (max-width: 520px) {
+  .train-search-row { grid-template-columns: 1fr; }
+}

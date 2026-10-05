@@ -9,6 +9,7 @@
 // nothing may call it "on time".
 import { cityById } from '../../data/cities.js'
 import { distanceKm } from '../../utils/distance.js'
+import { stationQuery, hasRail } from '../../data/stations.js'
 import { liveGet } from './http.js'
 import { cityZoneOf } from './places.js'
 import { delayMinutes, zonedIso } from './time.js'
@@ -22,11 +23,13 @@ export async function searchStations(q, near = null) {
   return r.data.stations || []
 }
 
-// The main station for a guide city: the most important rail stop near the centre.
-export async function mainStation(cityId) {
+// The main station for a guide city, toward another city (Paris and London have one per direction):
+// the first match for EuroWander's station name near the centre. null when the city has no trains.
+export async function mainStation(cityId, toward = null) {
   const city = cityById[cityId]
-  if (!city) return null
-  const list = await searchStations(city.name, city)
+  const q = city && stationQuery(cityId, toward)
+  if (!q) return null
+  const list = await searchStations(q, city)
   return list.find((s) => distanceKm(s, city) < 25) || null
 }
 
@@ -113,3 +116,5 @@ export function journeySnapshot(j, { savedAt = new Date().toISOString() } = {}) 
 }
 
 export const defaultZone = (cityId) => cityZoneOf(cityId)
+
+export { hasRail }
