@@ -165,7 +165,9 @@ export async function geocode(textQuery, near) {
     params.set('bias', `proximity:${near.lng},${near.lat}`)
     params.set('filter', `circle:${near.lng},${near.lat},40000`)
   }
-  const data = await getJSON(`${BASE}/v1/geocode/search?${params}`)
+  let data = await getJSON(`${BASE}/v1/geocode/search?${params}`)
+  // Search wants the name spelled right; autocomplete forgives typos ("Colessum"). Only asked on a miss.
+  if (!data?.results?.length) data = await getJSON(`${BASE}/v1/geocode/autocomplete?${params}`)
   const r = data?.results?.[0]
   if (!r || !Number.isFinite(r.lat) || !Number.isFinite(r.lon)) throw new ProviderError('not_found')
   return { name: str(r.name) || str(r.address_line1) || textQuery, address: str(r.formatted), lat: r.lat, lng: r.lon }

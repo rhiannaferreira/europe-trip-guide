@@ -218,3 +218,13 @@ test('copilot: train requests and follow-ups read as find_trains, checked agains
   assert.equal(livePlaceKind({ action: 'suggest_places', category: 'museums' }, 'museums in Rome'), null)
   assert.equal(livePlaceKind({ action: 'open_question' }, 'where can we get coffee'), 'cafe')
 })
+
+test('landmark search forgives typos in guide place names', async () => {
+  const { closestPlace } = await import('../../lib/search.js')
+  const { placesInCity } = await import('../../data/places.js')
+  const rome = placesInCity('rome')
+  assert.equal(closestPlace(rome, 'Vatcan Musems').name, 'Vatican Museums')
+  assert.equal(closestPlace(rome, 'borghese').name, 'Villa Borghese')
+  assert.equal(closestPlace(rome, 'Trastavere').name, 'Trastevere')
+  assert.equal(closestPlace(rome, 'zzzzqqq'), null)
+})

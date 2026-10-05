@@ -6,6 +6,7 @@ import { placesInCity } from '../data/places.js'
 import { registerPlaces } from '../lib/extraPlaces.js'
 import { track } from '../lib/analytics.js'
 import { CUISINES, PLACE_KINDS, geocodePlace, searchPlaces } from '../services/live/places.js'
+import { closestPlace } from '../lib/search.js'
 import DayPicker from './DayPicker.jsx'
 import PlaceCard from './PlaceCard.jsx'
 import { LiveLoading, LiveUnavailable, PlacesAttribution, SourceLabel } from './LiveBits.jsx'
@@ -77,7 +78,7 @@ export default function LivePlaces({ city, trip, days, onFocusPlace }) {
     e.preventDefault()
     if (landmark.trim().length < 3) return
     // Guide places first (no live call needed), then the live geocoder.
-    const known = placesInCity(city.id).find((p) => p.name.toLowerCase().includes(landmark.trim().toLowerCase()))
+    const known = closestPlace(placesInCity(city.id), landmark)
     if (known) return setAnchor({ kind: 'place', label: known.name, lat: known.lat, lng: known.lng })
     try {
       const pt = await geocodePlace(`${landmark.trim()}, ${city.name}`, city)

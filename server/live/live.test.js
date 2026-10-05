@@ -178,6 +178,13 @@ test('place details and geocoding', async () => {
   assert.deepEqual(g.json.data.point, { name: 'Pantheon', address: 'Pantheon, Rome', lat: 41.8986, lng: 12.4769 })
 })
 
+test('geocoding a misspelt landmark falls back to autocomplete, once', async () => {
+  mockFetch((url) => (url.includes('/geocode/autocomplete') ? ok({ results: [{ name: 'Colosseum', lat: 41.8902, lon: 12.4922 }] }) : ok({ results: [] })))
+  const g = await call('/api/live/places/geocode?q=Colessum&lat=41.9&lng=12.5')
+  assert.equal(g.json.data.point.name, 'Colosseum')
+  assert.deepEqual(calls.map((c) => new URL(c.url).pathname), ['/v1/geocode/search', '/v1/geocode/autocomplete'])
+})
+
 test('normalizePlace skips places without an OpenStreetMap id or a known kind', () => {
   assert.equal(normalizePlace(geoFeature({}, { osm_id: undefined })), null)
   assert.equal(normalizePlace(geoFeature({ categories: ['building'] })), null)
