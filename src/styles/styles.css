@@ -1332,3 +1332,5 @@ a:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent); ou
 .journey-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
 .journey-actions .btn { padding: 4px 10px; font-size: 0.85rem; }
 .train-saved { margin-top: 6px; font-size: 0.85rem; }
+.tm-open { color: var(--good); font-weight: 700; font-size: 0.88rem; }
+.tm-closed { color: var(--warn); font-weight: 700; font-size: 0.88rem; }
