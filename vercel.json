@@ -2,6 +2,10 @@
   "cleanUrls": true,
   "rewrites": [
     {
+      "source": "/api/live/:route*",
+      "destination": "/api/live?route=:route*"
+    },
+    {
       "source": "/((?!assets/|api/).*)",
       "destination": "/"
     }
@@ -29,6 +33,9 @@
   "functions": {
     "api/assistant.js": {
       "maxDuration": 60
+    },
+    "api/live.js": {
+      "maxDuration": 20
     }
   }
 }
