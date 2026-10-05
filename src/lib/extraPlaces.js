@@ -1,4 +1,7 @@
-// Places that come from OpenStreetMap while the app runs, on top of the built-in places in data/places.js.
+// Places that come from OpenStreetMap while the app runs, on top of the built-in places in data/places.js:
+// notable places from Overpass (source 'osm') and live search results (source 'live', from the live data
+// layer in services/live/). Both use the OpenStreetMap id, so the same place is never listed twice; a live
+// copy upgrades an Overpass one with its address, hours and contact details.
 //
 // Once registered, an extra place behaves like any other: it shows in lists and on the map, can be
 // saved, put on a day and shared. The extra places a trip uses are kept in localStorage
@@ -33,18 +36,38 @@ function clean(p) {
     wiki: str(p.wiki) || null,
     osmUrl: str(p.osmUrl) || null,
     website: /^https?:\/\//.test(p.website || '') ? str(p.website) : null,
-    source: 'osm',
+    source: p.source === 'live' ? 'live' : 'osm',
     rating: null,
     costLevel: null,
     image: null,
+    ...liveFields(p),
   }
+}
+
+// The snapshot a live place keeps (Geoapify's terms allow storing it): stable details, plus where it came
+// from and when, so dynamic details can be refreshed later. Only fields that exist.
+const LIVE_TEXT = ['provider', 'providerId', 'retrievedAt', 'address', 'cuisine', 'openingHours', 'phone', 'wheelchair']
+function liveFields(p) {
+  if (p.source !== 'live') return {}
+  const out = {}
+  for (const k of LIVE_TEXT) if (typeof p[k] === 'string' && p[k].trim()) out[k] = p[k].slice(0, 300)
+  return out
 }
 
 export function registerPlaces(list) {
   let added = 0
   for (const raw of Array.isArray(list) ? list : []) {
     const p = clean(raw)
-    if (!p || placeById[p.id]) continue
+    if (!p) continue
+    const existing = placeById[p.id]
+    if (existing) {
+      // A live copy refreshes an extra place (never a built-in one).
+      if (p.source === 'live' && extraIds.has(p.id)) {
+        Object.assign(existing, p, { latitude: p.lat, longitude: p.lng })
+        added++
+      }
+      continue
+    }
     const place = { ...p, latitude: p.lat, longitude: p.lng, estimatedCost: 0 }
     places.push(place)
     placeById[place.id] = place
@@ -73,6 +96,7 @@ const stored = (p) => ({
   wiki: p.wiki,
   osmUrl: p.osmUrl,
   website: p.website,
+  ...(p.source === 'live' ? { source: 'live', ...liveFields(p) } : {}),
 })
 
 // The extra places a trip uses, in the compact form that's stored and shared.

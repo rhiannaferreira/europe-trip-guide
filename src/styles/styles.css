@@ -1277,3 +1277,58 @@ a:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent); ou
 @media (prefers-reduced-motion: reduce) {
   .tm * { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
 }
+
+/* ----- Live data (services/live, components/LiveBits.jsx) ----- */
+.src-label { display: inline-flex; align-items: center; gap: 4px; font-size: 0.66rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--border); color: var(--muted); background: var(--surface-2); vertical-align: middle; white-space: nowrap; }
+.src-live { color: var(--good); border-color: color-mix(in srgb, var(--good) 45%, transparent); background: var(--good-soft); }
+.src-pick { color: var(--gem); border-color: color-mix(in srgb, var(--gem) 40%, transparent); background: var(--gem-soft); }
+.src-estimate { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 40%, transparent); background: var(--warn-soft); }
+.src-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.live-facts { font-size: 0.82rem; margin: 4px 0 2px; }
+.live-facts .open-now { color: var(--good); font-weight: 700; }
+.live-facts .closed-now { color: var(--warn); font-weight: 700; }
+.live-hint, .freshness { color: var(--muted); font-size: 0.75rem; }
+.live-address { font-size: 0.78rem; color: var(--muted); margin: 2px 0; }
+.live-attrib { font-size: 0.72rem; color: var(--muted); margin-top: 8px; }
+.live-attrib.small { margin-top: 4px; }
+.live-attrib a { color: var(--muted); }
+.live-loading { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 0.88rem; padding: 8px 0; }
+.live-unavailable { margin: 8px 0; }
+.live-panel { margin-top: 12px; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface-2); }
+.live-panel h3 { font-size: 1rem; margin: 0 0 4px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.live-panel .subhead { font-size: 0.82rem; color: var(--muted); margin: 0 0 8px; }
+.live-controls { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 8px; }
+.live-controls select, .live-controls input { min-height: 36px; border: 1px solid var(--border-strong); border-radius: 8px; padding: 4px 8px; background: var(--surface); color: var(--text); font: inherit; font-size: 0.86rem; }
+.live-results { display: grid; gap: 10px; }
+.live-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.live-actions .btn { padding: 4px 10px; font-size: 0.82rem; }
+.live-chip.active { background: var(--text); color: var(--panel); border-color: var(--text); }
+
+/* Train journeys */
+.train-search { display: grid; gap: 10px; }
+.train-search-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.train-search label { display: grid; gap: 4px; font-size: 0.82rem; font-weight: 600; }
+.train-search input, .train-search select { min-height: 40px; border: 1px solid var(--border-strong); border-radius: 8px; padding: 6px 10px; background: var(--surface); color: var(--text); font: inherit; }
+.station-field { position: relative; }
+.station-list { position: absolute; z-index: 30; left: 0; right: 0; top: 100%; margin: 2px 0 0; padding: 4px; list-style: none; background: var(--panel); border: 1px solid var(--border-strong); border-radius: 10px; box-shadow: var(--shadow); max-height: 260px; overflow: auto; }
+.station-list button { display: block; width: 100%; text-align: left; padding: 8px 10px; border: 0; background: none; color: var(--text); border-radius: 6px; font: inherit; }
+.station-list button:hover, .station-list button[aria-selected="true"] { background: var(--surface-2); }
+.station-list small { color: var(--muted); }
+.station-picked { font-size: 0.75rem; color: var(--muted); }
+.journey-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.journey { border: 1px solid var(--border-strong); border-radius: 12px; padding: 12px; background: var(--surface); }
+.journey.cancelled { border-color: var(--accent); }
+.journey-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.journey-times { font-family: var(--display); font-size: 1.25rem; font-weight: 700; }
+.journey-times s { color: var(--muted); font-weight: 500; font-size: 0.95rem; margin-right: 4px; }
+.journey-live { font-weight: 800; }
+.journey-live.late { color: var(--warn); }
+.journey-live.bad { color: var(--accent); }
+.journey-live.good { color: var(--good); }
+.journey-meta { font-size: 0.84rem; color: var(--muted); margin-top: 2px; }
+.journey-legs { margin: 8px 0 0; padding-left: 18px; font-size: 0.84rem; }
+.journey-legs li { margin: 2px 0; }
+.journey-alert { font-size: 0.82rem; background: var(--warn-soft); color: var(--text); border-radius: 8px; padding: 6px 8px; margin-top: 6px; }
+.journey-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.journey-actions .btn { padding: 4px 10px; font-size: 0.85rem; }
+.train-saved { margin-top: 6px; font-size: 0.85rem; }

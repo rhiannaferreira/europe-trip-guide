@@ -42,6 +42,7 @@ import ShareTrip, { SharedTripDialog } from './components/ShareTrip.jsx'
 import { usePlacesVersion } from './lib/extraPlaces.js'
 import { useOsmPlaces } from './lib/osmPlaces.js'
 import OsmStatus from './components/OsmStatus.jsx'
+import LivePlaces from './components/LivePlaces.jsx'
 import { CityWeather, TripWeather } from './components/Weather.jsx'
 import AccountPanel, { AccountButton, AccountNotice } from './components/Account.jsx'
 import { useCloudSync } from './useCloudSync.js'
@@ -334,6 +335,7 @@ export default function App({ route }) {
           <Filters activeInterests={activeInterests} onToggleInterest={toggleInterest} onClearInterests={() => setActiveInterests(new Set())} />
           <p className="list-count">{listTitle}</p>
           {selectedCity && <OsmStatus state={osm} city={selectedCity} />}
+          {selectedCity && <LivePlaces city={selectedCity} trip={trip} days={itineraryDays} onFocusPlace={focusPlace} />}
           <div className="place-list">
             {visiblePlaces.slice(0, shown).map((p) => (
               <PlaceCard

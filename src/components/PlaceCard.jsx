@@ -4,9 +4,15 @@ import { costLabel } from '../lib/format.js'
 import Thumb from './Thumb.jsx'
 import StatusPicker from './StatusPicker.jsx'
 import { statusInfo } from '../lib/statuses.js'
+import { placeSource } from '../services/live/models.js'
+import { Freshness, LivePlaceFacts, LivePlaceLinks, SourceLabel } from './LiveBits.jsx'
 
-export default function PlaceCard({ place, city, saved, status, focused, onToggleSave, onStatusChange, onFocus, children }) {
+// One card for every place: EuroWander's curated picks, OpenStreetMap additions and live search results.
+// A card shows only what the place actually has (live places have no ratings or price levels).
+export default function PlaceCard({ place, city, saved, status, focused, onToggleSave, onStatusChange, onFocus, distanceKm = null, actions = null, children }) {
   const interest = interestById[place.category]
+  const source = placeSource(place)
+  const live = source === 'live'
   return (
     <article className={`place-card${focused ? ' focused' : ''}${saved ? ' saved' : ''}`}>
       <Thumb id={place.id} image={place.image} emoji={interest.icon} alt={place.name} color={`var(--${place.category})`} className="place-thumb" kind="place" item={place} width={250} />
@@ -28,9 +34,18 @@ export default function PlaceCard({ place, city, saved, status, focused, onToggl
         </div>
         <h3>{place.name}</h3>
         <p className="place-city">
-          {countryByCode[city.country].flag} {city.name}
+          <SourceLabel kind={source} /> {countryByCode[city.country].flag} {city.name}
         </p>
         <p className="place-desc">{place.description}</p>
+        {live && (
+          <>
+            <LivePlaceFacts place={place} distanceKm={distanceKm} />
+            <LivePlaceLinks place={place} />
+            <p className="live-attrib small">
+              Data: Geoapify · © OpenStreetMap contributors · <Freshness at={place.retrievedAt} verb="Retrieved" className="" />
+            </p>
+          </>
+        )}
         {place.source === 'osm' && (
           <p className="place-source">
             <span className="source-tag">From OpenStreetMap</span>
@@ -53,6 +68,7 @@ export default function PlaceCard({ place, city, saved, status, focused, onToggl
             📍 Show on map
           </button>
         </div>
+        {actions}
         {saved && <StatusPicker place={place} status={status} onChange={onStatusChange} />}
         {focused && children}
       </div>
