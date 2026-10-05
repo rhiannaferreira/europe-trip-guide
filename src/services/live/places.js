@@ -103,6 +103,12 @@ export async function geocodePlace(q, near) {
   return r.data.point
 }
 
+// Landmarks and streets matching what's been typed so far, near a point. → [{ name, detail, lat, lng }]
+export async function suggestPlaces(q, near) {
+  const r = await liveGet('places/suggest', { q: q.trim(), lat: near ? Math.round(near.lat * 100) / 100 : undefined, lng: near ? Math.round(near.lng * 100) / 100 : undefined })
+  return r.data.suggestions || []
+}
+
 export async function livePlacesEnabled() {
   const h = await liveHealth()
   return Boolean(h?.places?.enabled)

@@ -7,7 +7,7 @@
 const WINDOW_MS = 60_000
 const hits = new Map() // `${bucket}:${ip}` -> [timestamps]
 
-export const RATE = { places: 40, trains: 30, status: 60 }
+export const RATE = { places: 40, suggest: 30, trains: 30, status: 60 }
 
 export function rateLimited(bucket, ip, max = RATE[bucket] || 30, now = Date.now()) {
   const key = `${bucket}:${ip}`

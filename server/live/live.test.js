@@ -178,6 +178,14 @@ test('place details and geocoding', async () => {
   assert.deepEqual(g.json.data.point, { name: 'Pantheon', address: 'Pantheon, Rome', lat: 41.8986, lng: 12.4769 })
 })
 
+test('landmark suggestions while typing: rate-limited, de-duplicated, never more than five', async () => {
+  mockFetch(() => ok({ results: [{ name: 'Colosseum', lat: 41.89, lon: 12.49, address_line2: 'Rome' }, { name: 'Colosseum', lat: 41.89, lon: 12.49 }, { name: 'Colosseo', lat: 41.891, lon: 12.491 }, { name: 'No coords' }] }))
+  const r = await call('/api/live/places/suggest?q=Colos&lat=41.9&lng=12.5')
+  assert.deepEqual(r.json.data.suggestions.map((x) => x.name), ['Colosseum', 'Colosseo'])
+  assert.equal(new URL(calls[0].url).pathname, '/v1/geocode/autocomplete')
+  assert.equal((await call('/api/live/places/suggest?q=Co&lat=41.9&lng=12.5')).status, 400)
+})
+
 test('geocoding a misspelt landmark falls back to autocomplete, once', async () => {
   mockFetch((url) => (url.includes('/geocode/autocomplete') ? ok({ results: [{ name: 'Colosseum', lat: 41.8902, lon: 12.4922 }] }) : ok({ results: [] })))
   const g = await call('/api/live/places/geocode?q=Colessum&lat=41.9&lng=12.5')

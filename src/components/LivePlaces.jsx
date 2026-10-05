@@ -5,8 +5,8 @@ import { useEffect, useRef, useState } from 'react'
 import { placesInCity } from '../data/places.js'
 import { registerPlaces } from '../lib/extraPlaces.js'
 import { track } from '../lib/analytics.js'
-import { CUISINES, PLACE_KINDS, geocodePlace, searchPlaces } from '../services/live/places.js'
-import { closestPlace } from '../lib/search.js'
+import { CUISINES, PLACE_KINDS, searchPlaces } from '../services/live/places.js'
+import LandmarkSearch from './LandmarkSearch.jsx'
 import DayPicker from './DayPicker.jsx'
 import PlaceCard from './PlaceCard.jsx'
 import { LiveLoading, LiveUnavailable, PlacesAttribution, SourceLabel } from './LiveBits.jsx'
@@ -32,7 +32,6 @@ export default function LivePlaces({ city, trip, days, onFocusPlace }) {
   const [cuisine, setCuisine] = useState('')
   const [veg, setVeg] = useState(false)
   const [anchor, setAnchor] = useState({ kind: 'city', label: `${city.name} centre`, lat: city.lat, lng: city.lng })
-  const [landmark, setLandmark] = useState('')
   const [state, setState] = useState({ status: 'idle' })
   const [locMsg, setLocMsg] = useState('')
   const [attempt, setAttempt] = useState(0)
@@ -72,19 +71,6 @@ export default function LivePlaces({ city, trip, days, onFocusPlace }) {
       setLocMsg('')
     } catch (e) {
       setLocMsg(e.code === 'denied' ? 'Location is blocked for this site, so results are near the place you choose instead.' : 'Your location isn’t available right now.')
-    }
-  }
-  const findLandmark = async (e) => {
-    e.preventDefault()
-    if (landmark.trim().length < 3) return
-    // Guide places first (no live call needed), then the live geocoder.
-    const known = closestPlace(placesInCity(city.id), landmark)
-    if (known) return setAnchor({ kind: 'place', label: known.name, lat: known.lat, lng: known.lng })
-    try {
-      const pt = await geocodePlace(`${landmark.trim()}, ${city.name}`, city)
-      setAnchor({ kind: 'place', label: pt.name, lat: pt.lat, lng: pt.lng })
-    } catch (error) {
-      setLocMsg(error.code === 'not_found' ? `Couldn’t find “${landmark.trim()}” in ${city.name}.` : 'Couldn’t look that place up right now.')
     }
   }
   const save = (p) => {
@@ -161,12 +147,7 @@ export default function LivePlaces({ city, trip, days, onFocusPlace }) {
           {(anchor.kind === 'place' || anchor.kind === 'you') && <option value={anchor.kind}>Near {anchor.label}</option>}
         </select>
       </div>
-      <form className="live-controls" onSubmit={findLandmark}>
-        <input type="search" placeholder={`Near a landmark, e.g. ${placesInCity(city.id)[0]?.name || 'the station'}`} value={landmark} onChange={(e) => setLandmark(e.target.value)} aria-label="Search near a landmark" maxLength={80} />
-        <button type="submit" className="btn">
-          Search near it
-        </button>
-      </form>
+      <LandmarkSearch city={city} onPick={(pt) => setAnchor({ kind: 'place', ...pt })} onMessage={setLocMsg} />
       {locMsg && <p className="live-hint">{locMsg}</p>}
       <p className="live-hint">
         Showing {PLACE_KINDS[kind].label.toLowerCase()} near <strong>{anchor.label}</strong>.

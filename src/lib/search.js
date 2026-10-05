@@ -125,21 +125,27 @@ function closeMatches(q, limit) {
   }
 }
 
-// The place in a list whose name best matches `query`: contains it first, then within a typo or two
-// ("Colessum" → Colosseum). Null when nothing is close.
-export function closestPlace(list, query) {
+// Places in a list whose names match `query`, best first: names containing it, then names within a typo or
+// two ("Colessum" → Colosseum). [] when nothing is close.
+export function closePlaces(list, query, n = 3) {
   const q = normalize(String(query || '').trim())
-  if (q.length < 3) return null
-  const hit = list.find((p) => normalize(p.name).includes(q))
-  if (hit) return hit
+  if (q.length < 3) return []
   const max = q.length <= 4 ? 1 : 2
-  const near = (name) => {
-    const n = normalize(name)
-    return Math.min(distance(q, n, max), distance(q, n.slice(0, q.length), max), ...n.split(/\s+/).map((w) => distance(q, w, max)))
+  const score = (p) => {
+    const name = normalize(p.name)
+    if (name.startsWith(q)) return -2
+    if (name.includes(q)) return -1
+    return Math.min(distance(q, name, max), distance(q, name.slice(0, q.length), max), ...name.split(/\s+/).map((w) => distance(q, w, max)))
   }
-  const best = list.map((p) => [p, near(p.name)]).filter(([, d]) => d <= max).sort((a, b) => a[1] - b[1])[0]
-  return best ? best[0] : null
+  return list
+    .map((p) => [p, score(p)])
+    .filter(([, d]) => d <= max)
+    .sort((a, b) => a[1] - b[1])
+    .slice(0, n)
+    .map(([p]) => p)
 }
+
+export const closestPlace = (list, query) => closePlaces(list, query, 1)[0] || null
 
 // Split text into [{ text, hit }] parts, marking where the query's words appear (ignoring accents and case).
 export function highlight(text, query) {

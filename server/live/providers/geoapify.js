@@ -158,6 +158,22 @@ export async function placeDetails(placeId) {
   return place
 }
 
+// Suggestions while someone types a landmark or street ("Colos" → Colosseum, Colosseo station...), near a point.
+export async function suggest(textQuery, near) {
+  const params = new URLSearchParams({ text: textQuery, limit: '6', lang: 'en', format: 'json', apiKey: key() })
+  if (near) {
+    params.set('bias', `proximity:${near.lng},${near.lat}`)
+    params.set('filter', `circle:${near.lng},${near.lat},40000`)
+  }
+  const data = await getJSON(`${BASE}/v1/geocode/autocomplete?${params}`)
+  const seen = new Set()
+  return (data?.results || [])
+    .filter((r) => Number.isFinite(r.lat) && Number.isFinite(r.lon))
+    .map((r) => ({ name: str(r.name) || str(r.address_line1) || textQuery, detail: str(r.address_line2) || str(r.formatted), lat: r.lat, lng: r.lon }))
+    .filter((r) => !seen.has(r.name.toLowerCase()) && seen.add(r.name.toLowerCase()))
+    .slice(0, 5)
+}
+
 // Where a named landmark or address is ("the Pantheon", "my hotel's street"), near a point.
 export async function geocode(textQuery, near) {
   const params = new URLSearchParams({ text: textQuery, limit: '1', lang: 'en', format: 'json', apiKey: key() })

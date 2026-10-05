@@ -74,6 +74,18 @@ export const ROUTES = {
       return { data: { point: value }, ttl: 24 * 3600, cached }
     },
   },
+  'places/suggest': {
+    bucket: 'suggest',
+    provider: PROVIDERS.places,
+    async run(q) {
+      needPlaces()
+      const t = text(q.q, { min: 3, max: 80 })
+      const near = q.lat != null ? coords(q.lat, q.lng, { decimals: 2 }) : null
+      const key = `pq|${t.toLowerCase()}|${near ? `${near.lat},${near.lng}` : ''}`
+      const { value, cached } = await guarded(PROVIDERS.places, key, 24 * HOUR, () => places.suggest(t, near))
+      return { data: { suggestions: value }, ttl: 24 * 3600, cached }
+    },
+  },
   'trains/stations': {
     bucket: 'trains',
     provider: PROVIDERS.rail,

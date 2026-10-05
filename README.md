@@ -48,7 +48,7 @@ UI → src/services/live (places, trains, events, weather) → /api/live/* → s
 - **Events**: `searchEvents()` returns EuroWander's curated list with approximate dates, ready for a live provider later.
 - **Weather**: Open-Meteo, as above.
 
-Routes (GET only): `/api/live/places/search`, `places/details`, `places/geocode`, `trains/stations`, `trains/journeys`, `trains/status`, `health`. Every input is checked (coordinates inside Europe, ids, dates within 180 days, text lengths); there's no way to pass a URL through. Errors come back as short codes (`rate_limited`, `unavailable`...), never the provider's own message.
+Routes (GET only): `/api/live/places/search`, `places/details`, `places/geocode`, `places/suggest` (landmark suggestions while typing, 30 a minute), `trains/stations`, `trains/journeys`, `trains/status`, `health`. Every input is checked (coordinates inside Europe, ids, dates within 180 days, text lengths); there's no way to pass a URL through. Errors come back as short codes (`rate_limited`, `unavailable`...), never the provider's own message.
 
 **Limits**: per visitor, 40 place and 30 train searches a minute (60 status checks). Per provider, a daily cap (Geoapify 2,500 of its free 3,000 credits; Transitous 3,000), shared across instances when `supabase/live.sql` is run and `SUPABASE_SERVICE_ROLE_KEY` is set. Results are cached on the server and at Vercel's edge (places 1 to 24 hours, stations a week, journeys 2 to 30 minutes, status 1 minute), and in the browser for a minute. Searches only run when someone asks (debounced, 3+ letters for stations); nothing searches in the background.
 
