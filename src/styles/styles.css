@@ -1360,6 +1360,7 @@ a:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent); ou
 .map-tap-item:first-child { padding-top: 2px; }
 .map-tap-item + .map-tap-item { border-top: 1px solid var(--border); padding-top: 10px; }
 .map-tap-thumb { width: 64px; height: 64px; border-radius: 10px; font-size: 1.6rem; grid-row: span 2; overflow: hidden; }
+.map-tap-spot { background: linear-gradient(135deg, var(--muted), color-mix(in srgb, var(--muted) 55%, #fff)); }
 .map-tap-main { display: grid; gap: 1px; min-width: 0; }
 .map-tap-main strong { font-size: 0.98rem; line-height: 1.2; }
 .map-tap-type { font-size: 0.8rem; color: var(--muted); }

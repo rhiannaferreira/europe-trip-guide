@@ -30,7 +30,10 @@ export const KINDS = {
   shopping: ['commercial.shopping_mall', 'commercial.department_store', 'commercial.marketplace'],
   attractions: ['tourism.sights', 'tourism.attraction', 'entertainment.museum', 'leisure.park'],
   // Whatever is at a spot someone tapped on the map.
-  any: ['catering', 'tourism.sights', 'tourism.attraction', 'entertainment.museum', 'entertainment.culture', 'leisure.park', 'commercial'],
+  // Wide on purpose: the map labels everything, so a tap should find hotels, churches and stations too.
+  // anyBasic is the narrower list it falls back to if the provider ever rejects one of these.
+  anyBasic: ['catering', 'tourism.sights', 'tourism.attraction', 'entertainment.museum', 'entertainment.culture', 'leisure.park', 'commercial'],
+  any: ['catering', 'commercial', 'tourism', 'entertainment', 'leisure', 'religion', 'heritage', 'building.historic', 'accommodation', 'public_transport', 'healthcare', 'education', 'service', 'office.government', 'natural'],
 }
 export const KIND_IDS = Object.keys(KINDS)
 
@@ -64,14 +67,48 @@ const TYPE_RULES = [
   [/^natural/, 'outdoors', 'nature'],
   [/^commercial\.(shopping_mall|department_store)/, 'shopping', 'shopping centre'],
   [/^commercial/, 'shopping', 'shop'],
+  [/^religion/, 'history', 'church'],
+  [/^(heritage|building\.historic)/, 'history', 'historic site'],
+  [/^entertainment\.culture/, 'museums', null],
+  [/^entertainment\.(cinema|activity_park|escape_game|bowling_alley)/, 'nightlife', null],
+  [/^leisure\.(garden|picnic|playground)/, 'outdoors', null],
 ]
 
-function classify(categories = []) {
+// Things on the map that aren't one of the app's interests (so can't go on a trip board), but that a
+// tap should still name, with directions: hotels, stations, pharmacies, offices.
+const OTHER_RULES = [
+  [/^accommodation\.(hotel|guest_house|hostel|apartment|motel)/, null],
+  [/^accommodation/, 'accommodation'],
+  [/^public_transport\.(train|subway|tram|bus|ferry)/, 'station'],
+  [/^public_transport/, 'stop'],
+  [/^healthcare\.pharmacy/, 'pharmacy'],
+  [/^healthcare\.hospital/, 'hospital'],
+  [/^healthcare/, 'clinic'],
+  [/^education\.(university|college|library)/, null],
+  [/^education/, 'school'],
+  [/^office\.government/, 'government building'],
+  [/^service\.financial\.(bank|atm)/, null],
+  [/^service\.(post|police|tourist_information)/, null],
+  [/^service/, 'service'],
+  [/^tourism\.information/, 'tourist information'],
+  [/^tourism/, 'tourist spot'],
+  [/^entertainment/, 'entertainment'],
+  [/^leisure/, 'leisure'],
+]
+
+const lastPart = (c) => c.split('.').pop().replace(/_/g, ' ').replace('ruines', 'ruins').replace('guest house', 'guesthouse')
+
+function classify(categories = [], { other = false } = {}) {
   // Most specific first.
   const sorted = [...categories].sort((a, b) => b.split('.').length - a.split('.').length)
   for (const [re, category, type] of TYPE_RULES) {
     const hit = sorted.find((c) => re.test(c))
-    if (hit) return { category, type: type || hit.split('.').pop().replace(/_/g, ' ').replace('ruines', 'ruins') }
+    if (hit) return { category, type: type || lastPart(hit) }
+  }
+  if (!other) return null
+  for (const [re, type] of OTHER_RULES) {
+    const hit = sorted.find((c) => re.test(c))
+    if (hit) return { category: null, type: type || lastPart(hit) }
   }
   return null
 }
@@ -80,14 +117,15 @@ const str = (v, max = 200) => (typeof v === 'string' && v.trim() ? v.trim().slic
 const url = (v) => (typeof v === 'string' && /^https?:\/\/[^\s]+$/i.test(v.trim()) ? v.trim().slice(0, 300) : null)
 
 // One Geoapify feature → a normalized live place, or null when it lacks what the app needs.
-export function normalizePlace(feature, retrievedAt = new Date().toISOString()) {
+// other: also keep places outside the app's interests (they come back with no category).
+export function normalizePlace(feature, retrievedAt = new Date().toISOString(), { other = false } = {}) {
   const p = feature?.properties
   if (!p) return null
   const raw = p.datasource?.raw || {}
   const name = str(p.name) || str(p.name_international?.en) || str(raw.name)
   const lat = typeof p.lat === 'number' ? p.lat : feature.geometry?.coordinates?.[1]
   const lng = typeof p.lon === 'number' ? p.lon : feature.geometry?.coordinates?.[0]
-  const kind = classify(p.categories)
+  const kind = classify(p.categories, { other })
   if (!name || !Number.isFinite(lat) || !Number.isFinite(lng) || !kind || !p.place_id) return null
   // The OpenStreetMap id is the stable identity (same as the Overpass places the app already has);
   // Geoapify's place_id is kept to refresh details.
@@ -147,7 +185,7 @@ export async function searchPlaces({ lat, lng, radius = 1000, kind = 'food', cui
   const data = await getJSON(`${BASE}/v2/places?${params}`)
   if (!Array.isArray(data?.features)) throw new ProviderError('bad_response')
   const at = new Date().toISOString()
-  let list = data.features.map((f) => normalizePlace(f, at)).filter(Boolean)
+  let list = data.features.map((f) => normalizePlace(f, at, { other: kind === 'any' || kind === 'anyBasic' })).filter(Boolean)
   if (cuisine && !knownCuisine) list = list.filter((p) => (p.cuisine || '').toLowerCase().split(/[;,]/).map((s) => s.trim()).includes(cuisine))
   const seen = new Set()
   return list.filter((p) => !seen.has(p.id) && seen.add(p.id)).slice(0, limit)
@@ -192,4 +230,18 @@ export async function geocode(textQuery, near) {
   const r = data?.results?.[0]
   if (!r || !Number.isFinite(r.lat) || !Number.isFinite(r.lon)) throw new ProviderError('not_found')
   return { name: str(r.name) || str(r.address_line1) || textQuery, address: str(r.formatted), lat: r.lat, lng: r.lon }
+}
+
+// The nearest address or named feature at a point (a square, a street, a building), for a map tap that
+// found no listed place. → { name, address, lat, lng } or null
+export async function reverse({ lat, lng }) {
+  const params = new URLSearchParams({ lat: String(lat), lon: String(lng), limit: '1', lang: 'en', format: 'json', apiKey: key() })
+  const data = await getJSON(`${BASE}/v1/geocode/reverse?${params}`)
+  const r = data?.results?.[0]
+  if (!r || !Number.isFinite(r.lat) || !Number.isFinite(r.lon)) return null
+  // Further than a short walk from the tap, it isn't what was tapped.
+  if (Number.isFinite(r.distance) && r.distance > 150) return null
+  const name = str(r.name, 120) || str(r.address_line1, 120)
+  if (!name) return null
+  return { name, address: str(r.address_line2) || str(r.formatted), lat: r.lat, lng: r.lon }
 }

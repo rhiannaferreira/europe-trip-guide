@@ -106,14 +106,19 @@ export async function geocodePlace(q, near) {
 }
 
 // The listed places at a spot tapped on the map, nearest first, as app places (only near the guide's cities).
+// → { places, spot }: places nearest first (ones outside the app's interests have no category and
+// can't be saved); spot is the square, street or building there when no place is listed, else null.
 export async function placesAt(lat, lng) {
   const r = await liveGet('places/at', { lat: Math.round(lat * 10000) / 10000, lng: Math.round(lng * 10000) / 10000 })
   const here = { lat, lng }
-  return (r.data.places || [])
+  const places = (r.data.places || [])
     .map((p) => toAppPlace(p))
     .filter(Boolean)
     .map((p) => ({ ...p, distanceKm: distanceKm(here, p) }))
     .sort((a, b) => a.distanceKm - b.distanceKm)
+  const s = r.data.spot
+  const spot = s && typeof s.name === 'string' && Number.isFinite(s.lat) && Number.isFinite(s.lng) ? { name: s.name, address: typeof s.address === 'string' ? s.address : '', lat: s.lat, lng: s.lng } : null
+  return { places, spot }
 }
 
 // Landmarks and streets matching what's been typed so far, near a point. → [{ name, detail, lat, lng }]

@@ -183,10 +183,37 @@ test('what is at a tapped map point: a small circle, any kind, four at most', as
   const r = await call('/api/live/places/at?lat=41.89861&lng=12.47687')
   assert.equal(r.status, 200)
   const sent = new URL(calls[0].url)
-  assert.equal(sent.searchParams.get('filter'), 'circle:12.4769,41.8986,60')
-  assert.match(sent.searchParams.get('categories'), /^catering,/)
-  assert.ok(r.json.data.places.length >= 1 && r.json.data.places.length <= 4)
+  assert.equal(sent.searchParams.get('filter'), 'circle:12.4769,41.8986,90')
+  assert.match(sent.searchParams.get('categories'), /^catering,.*religion.*accommodation/)
+  assert.ok(r.json.data.places.length >= 1 && r.json.data.places.length <= 5)
+  assert.equal(r.json.data.spot, null)
+  assert.equal(calls.length, 1, 'no reverse lookup when places were found')
   assert.equal((await call('/api/live/places/at?lat=10&lng=12.5')).status, 400)
+})
+
+test('a map tap also names hotels and stations, without an interest so they cannot be saved', async () => {
+  mockFetch(() => ok(geoResponse([geoFeature({ name: 'Hotel Raphael', place_id: 'h1', datasource: { raw: { osm_type: 'w', osm_id: 31 } }, categories: ['accommodation', 'accommodation.hotel'] }), geoFeature({ name: 'Nameless office', place_id: 'x1', datasource: { raw: { osm_type: 'n', osm_id: 32 } }, categories: ['office.company'] })])))
+  const r = await call('/api/live/places/at?lat=41.8999&lng=12.4740')
+  const [hotel, ...rest] = r.json.data.places
+  assert.equal(hotel.name, 'Hotel Raphael')
+  assert.equal(hotel.type, 'hotel')
+  assert.equal(hotel.category, undefined)
+  assert.equal(rest.length, 0, 'categories with no rule are still dropped')
+  // Ordinary searches stay to the app's interests.
+  mockFetch(() => ok(geoResponse([geoFeature({ name: 'Hotel Raphael', place_id: 'h1', datasource: { raw: { osm_type: 'w', osm_id: 31 } }, categories: ['accommodation.hotel', 'catering.restaurant'] })])))
+  const s = await call('/api/live/places/search?lat=41.9&lng=12.5&kind=restaurant')
+  assert.equal(s.json.data.places[0].category, 'food')
+})
+
+test('an empty map tap names the street or square instead, from one reverse lookup', async () => {
+  mockFetch((url) => (url.includes('/v2/places') ? ok(geoResponse([])) : ok({ results: [{ name: 'Piazza Navona', address_line2: '00186 Rome, Italy', lat: 41.8992, lon: 12.4731, distance: 12 }] })))
+  const r = await call('/api/live/places/at?lat=41.8990&lng=12.4730')
+  assert.deepEqual(r.json.data.places, [])
+  assert.deepEqual(r.json.data.spot, { name: 'Piazza Navona', address: '00186 Rome, Italy', lat: 41.8992, lng: 12.4731 })
+  assert.ok(calls.some((c) => c.url.includes('/v1/geocode/reverse')))
+  mockFetch((url) => (url.includes('/v2/places') ? ok(geoResponse([])) : ok({ results: [{ name: 'Far away', lat: 41.9, lon: 12.48, distance: 900 }] })))
+  const far = await call('/api/live/places/at?lat=41.8991&lng=12.4732')
+  assert.equal(far.json.data.spot, null)
 })
 
 test('landmark suggestions while typing: rate-limited, de-duplicated, never more than five', async () => {
@@ -306,4 +333,12 @@ test('coordinates are rounded and bounded to Europe; dates are bounded', () => {
   assert.equal(when('2026-10-06T08:30:00+02:00', { now }), '2026-10-06T08:30:00+02:00')
   assert.throws(() => when('2026-10-01T08:30', { now }))
   assert.throws(() => when('2027-10-01T08:30', { now }))
+})
+
+test('if the provider rejects the wide tap categories, the tap falls back to the basic ones', async () => {
+  mockFetch((url) => (url.includes('accommodation') ? { ok: false, status: 400, json: async () => ({}) } : ok(geoResponse([geoFeature()]))))
+  const r = await call('/api/live/places/at?lat=41.8971&lng=12.4721')
+  assert.equal(r.status, 200)
+  assert.equal(r.json.data.places.length, 1)
+  assert.equal(calls.length, 2)
 })

@@ -81,9 +81,15 @@ export const ROUTES = {
       needPlaces()
       // A tapped map point (not the traveller's location): about 10 m is enough to find what's there.
       const at = coords(q.lat, q.lng, { decimals: 4 })
-      const key = `pa|${at.lat},${at.lng}`
-      const { value, cached } = await guarded(PROVIDERS.places, key, 24 * HOUR, () => places.searchPlaces({ ...at, radius: 60, kind: 'any', limit: 8 }))
-      return { data: { places: value.slice(0, 4), at }, ttl: 6 * 3600, cached }
+      const key = `pa2|${at.lat},${at.lng}`
+      const { value, cached } = await guarded(PROVIDERS.places, key, 24 * HOUR, async () => {
+        const near = { ...at, radius: 90, limit: 12 }
+        const found = await places.searchPlaces({ ...near, kind: 'any' }).catch((e) => (e.status === 400 ? places.searchPlaces({ ...near, kind: 'anyBasic' }) : Promise.reject(e)))
+        // Nothing listed: name the square, street or building instead (one extra request, only then).
+        const spot = found.length ? null : await places.reverse(at).catch(() => null)
+        return { places: found.slice(0, 5), spot }
+      })
+      return { data: { places: value.places, spot: value.spot, at }, ttl: 6 * 3600, cached }
     },
   },
   'places/suggest': {
