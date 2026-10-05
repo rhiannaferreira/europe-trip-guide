@@ -21,6 +21,7 @@ export const KINDS = {
   quick: ['catering.fast_food', 'commercial.food_and_drink.bakery'],
   cafe: ['catering.cafe'],
   bakery: ['commercial.food_and_drink.bakery'],
+  dessert: ['catering.ice_cream', 'commercial.food_and_drink.ice_cream', 'commercial.food_and_drink.confectionery'],
   bar: ['catering.bar', 'catering.pub', 'catering.biergarten'],
   nightlife: ['catering.bar', 'catering.pub', 'catering.biergarten', 'adult.nightclub'],
   museum: ['entertainment.museum', 'entertainment.culture.gallery'],
@@ -38,6 +39,8 @@ export const DIETS = ['vegetarian', 'vegan']
 
 // Geoapify category → the app's interest (category) and place type.
 const TYPE_RULES = [
+  [/^(catering|commercial\.food_and_drink)\.ice_cream/, 'food', 'ice cream'],
+  [/^commercial\.food_and_drink\.confectionery/, 'food', 'sweet shop'],
   [/^catering\.restaurant/, 'food', 'restaurant'],
   [/^catering\.fast_food/, 'food', 'fast food'],
   [/^catering\.cafe/, 'food', 'cafe'],

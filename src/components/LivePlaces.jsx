@@ -11,7 +11,7 @@ import DayPicker from './DayPicker.jsx'
 import PlaceCard from './PlaceCard.jsx'
 import { LiveLoading, LiveUnavailable, PlacesAttribution, SourceLabel } from './LiveBits.jsx'
 
-const KINDS = ['restaurant', 'cafe', 'bar', 'museum', 'sights', 'park', 'shopping']
+const KINDS = ['restaurant', 'cafe', 'dessert', 'bar', 'museum', 'sights', 'park', 'shopping']
 const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1)
 
 // The browser's location, once, only when asked. Rounded to ~100 m and never stored or sent to analytics.

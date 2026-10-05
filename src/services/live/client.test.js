@@ -173,6 +173,7 @@ test('live places become app places with only the fields the provider sent', () 
   assert.equal(p.source, 'live')
   for (const k of ['rating', 'price', 'photo', 'openingHours', 'website']) assert.equal(k in p, false)
   assert.equal(placeSource(p), 'live')
+  assert.equal(toAppPlace({ id: 'osm-n3', name: 'Giolitti', lat: 41.9, lng: 12.48, category: 'food', type: 'ice cream' }).description, 'Gelateria')
   assert.equal(toAppPlace({ id: 'osm-n2', name: 'Nowhere', lat: 60, lng: 30 }), null)
 })
 
@@ -217,6 +218,7 @@ test('copilot: train requests and follow-ups read as find_trains, checked agains
   assert.equal(livePlaceKind({ action: 'places_near', category: 'food' }, 'find dinner nearby'), 'restaurant')
   assert.equal(livePlaceKind({ action: 'suggest_places', category: 'museums' }, 'museums in Rome'), null)
   assert.equal(livePlaceKind({ action: 'open_question' }, 'where can we get coffee'), 'cafe')
+  assert.equal(livePlaceKind({ action: 'open_question' }, 'best gelato near the Pantheon?'), 'dessert')
 })
 
 test('landmark search forgives typos in guide place names', async () => {

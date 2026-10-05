@@ -106,7 +106,7 @@ export function trainFact(j) {
 
 // ----- Places -----
 
-const FOOD = /\b(restaurants?|eat|eating|dinner|lunch|brunch|breakfast|food|hungry|pizza|tapas|sushi|vegan|vegetarian|trattoria|bistro|cafes?|coffee|bars?|drinks?|pubs?|wine)\b/i
+const FOOD = /\b(restaurants?|eat|eating|dinner|lunch|brunch|breakfast|food|hungry|pizza|tapas|sushi|vegan|vegetarian|trattoria|bistro|cafes?|coffee|bars?|drinks?|pubs?|wine|gelato|ice ?cream|desserts?)\b/i
 
 // Which kind of live place a request is after, or null when live places don't fit it.
 export function livePlaceKind(action, message = '') {
@@ -114,6 +114,7 @@ export function livePlaceKind(action, message = '') {
   const asks = ['places_near', 'suggest_places', 'open_question', 'plan_day'].includes(action.action)
   if (!asks) return null
   const t = String(message)
+  if (/\b(gelato|gelaterias?|ice ?creams?|desserts?|sweets?|pastr(y|ies)|cakes?)\b/i.test(t)) return 'dessert'
   if (/\b(cafes?|coffee|breakfast)\b/i.test(t)) return 'cafe'
   if (/\b(bars?|drinks?|pubs?|wine|cocktails?)\b/i.test(t) || action.category === 'nightlife') return 'bar'
   if (action.category === 'food' || FOOD.test(t)) return 'restaurant'

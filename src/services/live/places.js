@@ -14,6 +14,7 @@ export const PLACE_KINDS = {
   food: { label: 'Food', icon: '🍽️', loading: 'Searching nearby restaurants…' },
   restaurant: { label: 'Restaurants', icon: '🍝', loading: 'Searching nearby restaurants…' },
   cafe: { label: 'Coffee', icon: '☕', loading: 'Finding cafés nearby…' },
+  dessert: { label: 'Dessert', icon: '🍨', loading: 'Finding gelato and sweets nearby…' },
   quick: { label: 'Quick bites', icon: '🥪', loading: 'Finding quick bites nearby…' },
   bar: { label: 'Bars', icon: '🍷', loading: 'Finding bars nearby…' },
   nightlife: { label: 'Nightlife', icon: '🌙', loading: 'Finding bars and clubs…' },
@@ -57,7 +58,8 @@ export function toAppPlace(p, { cityId = null } = {}) {
     name: p.name,
     lat: p.lat,
     lng: p.lng,
-    description: [TYPE_LABEL(p.type), cuisine].filter(Boolean).join(' · '),
+    // An ice-cream shop in Italy is a gelateria.
+    description: [p.type === 'ice cream' && city.country === 'IT' ? 'Gelateria' : TYPE_LABEL(p.type), cuisine].filter(Boolean).join(' · '),
     source: 'live',
     provider: p.provider,
     providerId: p.providerId,

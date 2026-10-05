@@ -197,6 +197,7 @@ test('normalizePlace skips places without an OpenStreetMap id or a known kind', 
   assert.equal(normalizePlace(geoFeature({}, { osm_id: undefined })), null)
   assert.equal(normalizePlace(geoFeature({ categories: ['building'] })), null)
   assert.equal(normalizePlace(geoFeature({ categories: ['catering.cafe'] })).type, 'cafe')
+  assert.equal(normalizePlace(geoFeature({ categories: ['catering', 'catering.ice_cream'] })).type, 'ice cream')
 })
 
 // ----- Rail -----
