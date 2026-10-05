@@ -52,8 +52,11 @@ function MapLabel() {
 }
 
 // Fits the map to whatever places are visible, or to the chosen cities when there are no places.
-function FitToView({ places, cities }) {
+// Live places picked up from the map itself (tapped, or saved from a pin) never move it: the map is
+// already where they are, and refitting would yank someone who is zoomed in back out.
+function FitToView({ places: all, cities }) {
   const map = useMap()
+  const places = all.filter((p) => p.source !== 'live')
   const points = places.length > 0 ? places : cities
   const key = points.map((p) => p.id).join(',')
   useEffect(() => {

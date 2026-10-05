@@ -46,6 +46,8 @@ export function MapPlaceItem({ place: p, saved, onToggleSave, source }) {
             type="button"
             className={`map-tap-btn primary${saved ? ' saved' : ''}`}
             onClick={() => {
+              // Pins on the map aren't in the app's places until someone saves one.
+              registerPlaces([p])
               onToggleSave(p.id)
               if (!saved) track('live_place_saved', { kind: source })
             }}
@@ -90,7 +92,6 @@ export default function MapTapPlaces({ savedIds, onToggleSave }) {
       setTap({ ...at, status: 'loading' })
       placesAt(at.lat, at.lng).then(
         ({ places, spot }) => {
-          registerPlaces(places)
           setTap((t) => (t && t.lat === at.lat ? { ...at, status: 'ready', places, spot } : t))
           track('live_places_searched', { kind: 'map_tap', anchor: 'map', results: places.length })
         },

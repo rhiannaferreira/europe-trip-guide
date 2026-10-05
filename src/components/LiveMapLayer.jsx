@@ -8,7 +8,6 @@
 // few hundred places) while panning.
 import { useEffect, useRef, useState } from 'react'
 import { Marker, Popup, Tooltip, useMap, useMapEvents } from 'react-leaflet'
-import { registerPlaces } from '../lib/extraPlacesCore.js'
 import { searchPlaces } from '../services/live/places.js'
 import { track } from '../lib/analytics.js'
 import { pinIcon } from './mapPins.js'
@@ -45,7 +44,6 @@ export default function LiveMapLayer({ on, guideIds, savedIds, hidden, onToggleS
       const places = rs.flatMap((r) => (r.status === 'fulfilled' ? r.value.places : []))
       if (rs.every((r) => r.status === 'rejected')) asked.current.delete(key)
       if (!places.length) return
-      registerPlaces(places)
       setFound((prev) => {
         const next = new Map(prev)
         for (const p of places) {
