@@ -1353,3 +1353,8 @@ a:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent); ou
 .landmark-field input[type="search"] { flex: 1 1 200px; }
 .landmark-field .station-list { top: calc(100% - 4px); }
 .landmark-more { padding: 6px 10px; list-style: none; }
+.map-tap { display: grid; gap: 10px; min-width: 200px; max-width: 260px; }
+.map-tap-item { display: grid; gap: 3px; }
+.map-tap-item + .map-tap-item { border-top: 1px solid var(--border); padding-top: 8px; }
+.map-tap-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.map-tap-actions a.popup-btn { text-decoration: none; }

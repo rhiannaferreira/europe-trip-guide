@@ -5,6 +5,7 @@
 //   GET /api/live/places/search?lat&lng&radius&kind&cuisine&diet&name&limit
 //   GET /api/live/places/details?id                          → fresh details for a saved live place
 //   GET /api/live/places/geocode?q&lat&lng                   → where a named landmark is
+//   GET /api/live/places/at?lat&lng                          → what's at a tapped map point
 //   GET /api/live/places/suggest?q&lat&lng                   → landmark suggestions while typing
 //   GET /api/live/trains/stations?q&lat&lng                  → station autocomplete
 //   GET /api/live/trains/journeys?from&to&time&arriveBy&maxTransfers&window&cursor

@@ -74,6 +74,18 @@ export const ROUTES = {
       return { data: { point: value }, ttl: 24 * 3600, cached }
     },
   },
+  'places/at': {
+    bucket: 'places',
+    provider: PROVIDERS.places,
+    async run(q) {
+      needPlaces()
+      // A tapped map point (not the traveller's location): about 10 m is enough to find what's there.
+      const at = coords(q.lat, q.lng, { decimals: 4 })
+      const key = `pa|${at.lat},${at.lng}`
+      const { value, cached } = await guarded(PROVIDERS.places, key, 24 * HOUR, () => places.searchPlaces({ ...at, radius: 60, kind: 'any', limit: 8 }))
+      return { data: { places: value.slice(0, 4), at }, ttl: 6 * 3600, cached }
+    },
+  },
   'places/suggest': {
     bucket: 'suggest',
     provider: PROVIDERS.places,

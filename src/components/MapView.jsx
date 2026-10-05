@@ -9,6 +9,7 @@ import RouteView from './RouteView.jsx'
 import { nearbyPlaces } from '../utils/nearby.js'
 import { formatDistance } from '../utils/distance.js'
 import DayRoute from './DayRoute.jsx'
+import MapTapPlaces from './MapTapPlaces.jsx'
 import { motion } from '../lib/motion.js'
 
 // Marker colours per interest (Leaflet needs real colours, not CSS variables).
@@ -43,7 +44,7 @@ function MapLabel() {
   useEffect(() => {
     const el = map.getContainer()
     el.setAttribute('role', 'application')
-    el.setAttribute('aria-label', 'Map of Europe. Arrow keys move the map, plus and minus zoom. Pick places from the Places list to show them here.')
+    el.setAttribute('aria-label', 'Map of Europe. Arrow keys move the map, plus and minus zoom. Pick places from the Places list to show them here. Zoomed in, tap the map to see what’s there.')
   }, [map])
   return null
 }
@@ -161,6 +162,7 @@ export default function MapView({ places, cities, fitCities, savedIds, routeCiti
       <FitToTrip routeCities={routeCities} request={fitTripRequest} />
       <FlyToFocused place={focused} markerRefs={markerRefs} />
 
+      <MapTapPlaces savedIds={savedIds} onToggleSave={onToggleSave} />
       <RouteView routeCities={routeCities} legs={legs} />
       <DayRoute day={dayView?.day} places={dayView?.places || []} />
 
@@ -183,6 +185,7 @@ export default function MapView({ places, cities, fitCities, savedIds, routeCiti
               fillOpacity: dimmed ? 0.3 : 0.9,
               opacity: dimmed ? 0.4 : 1,
             }}
+            bubblingMouseEvents={false}
             eventHandlers={{ click: () => onFocus(p.id) }}
           >
             <Popup>
@@ -220,6 +223,7 @@ export default function MapView({ places, cities, fitCities, savedIds, routeCiti
               fillOpacity: 1,
               weight: 2,
             }}
+            bubblingMouseEvents={false}
             eventHandlers={{ click: () => onSelectCity(c.id) }}
           >
             <Tooltip key={inTrip ? `stop-${stop}` : 'city'} direction="top" offset={[0, -8]} permanent={inTrip}>

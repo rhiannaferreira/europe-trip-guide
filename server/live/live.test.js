@@ -178,6 +178,17 @@ test('place details and geocoding', async () => {
   assert.deepEqual(g.json.data.point, { name: 'Pantheon', address: 'Pantheon, Rome', lat: 41.8986, lng: 12.4769 })
 })
 
+test('what is at a tapped map point: a small circle, any kind, four at most', async () => {
+  mockFetch(() => ok(geoResponse([geoFeature(), geoFeature({ name: 'Gelateria', place_id: 'g2', datasource: { raw: { osm_type: 'n', osm_id: 22 } }, categories: ['catering.ice_cream'] })])))
+  const r = await call('/api/live/places/at?lat=41.89861&lng=12.47687')
+  assert.equal(r.status, 200)
+  const sent = new URL(calls[0].url)
+  assert.equal(sent.searchParams.get('filter'), 'circle:12.4769,41.8986,60')
+  assert.match(sent.searchParams.get('categories'), /^catering,/)
+  assert.ok(r.json.data.places.length >= 1 && r.json.data.places.length <= 4)
+  assert.equal((await call('/api/live/places/at?lat=10&lng=12.5')).status, 400)
+})
+
 test('landmark suggestions while typing: rate-limited, de-duplicated, never more than five', async () => {
   mockFetch(() => ok({ results: [{ name: 'Colosseum', lat: 41.89, lon: 12.49, address_line2: 'Rome' }, { name: 'Colosseum', lat: 41.89, lon: 12.49 }, { name: 'Colosseo', lat: 41.891, lon: 12.491 }, { name: 'No coords' }] }))
   const r = await call('/api/live/places/suggest?q=Colos&lat=41.9&lng=12.5')

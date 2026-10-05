@@ -29,6 +29,8 @@ export const KINDS = {
   park: ['leisure.park', 'beach'],
   shopping: ['commercial.shopping_mall', 'commercial.department_store', 'commercial.marketplace'],
   attractions: ['tourism.sights', 'tourism.attraction', 'entertainment.museum', 'leisure.park'],
+  // Whatever is at a spot someone tapped on the map.
+  any: ['catering', 'tourism.sights', 'tourism.attraction', 'entertainment.museum', 'entertainment.culture', 'leisure.park', 'commercial'],
 }
 export const KIND_IDS = Object.keys(KINDS)
 
