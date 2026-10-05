@@ -13,8 +13,8 @@ const MAIN = {
   berlin: 'Berlin Hbf', leipzig: 'Leipzig Hbf', munich: 'München Hbf', cologne: 'Köln Hbf',
   amsterdam: 'Amsterdam Centraal', utrecht: 'Utrecht Centraal', brussels: 'Bruxelles-Midi', bruges: 'Brugge', ghent: 'Gent-Sint-Pieters',
   zurich: 'Zürich HB', lucerne: 'Luzern', vienna: 'Wien Hbf', graz: 'Graz Hbf', salzburg: 'Salzburg Hbf', prague: 'Praha hlavní nádraží', brno: 'Brno hlavní nádraží',
-  athens: 'Athina', thessaloniki: 'Thessaloniki', dubrovnik: null, sibenik: 'Šibenik', split: 'Split',
-  york: 'York', edinburgh: 'Edinburgh Waverley', dublin: 'Dublin Heuston', galway: 'Galway Ceannt',
+  athens: 'Athens', thessaloniki: 'Thessaloniki', dubrovnik: null, sibenik: 'Šibenik', split: 'Split',
+  york: 'York', edinburgh: 'Edinburgh', dublin: 'Dublin Heuston', galway: 'Galway Ceannt',
 }
 
 // Bearing in degrees from a to b (0 = north, 90 = east).

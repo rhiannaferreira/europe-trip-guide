@@ -29,8 +29,10 @@ export async function mainStation(cityId, toward = null) {
   const city = cityById[cityId]
   const q = city && stationQuery(cityId, toward)
   if (!q) return null
-  const list = await searchStations(q, city)
-  return list.find((s) => distanceKm(s, city) < 25) || null
+  const near = (await searchStations(q, city)).filter((s) => distanceKm(s, city) < 25)
+  // The station named exactly as asked beats a stop that only shares part of the name ("Gare de Lyon" metro).
+  const fold = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
+  return near.find((s) => fold(s.name) === fold(q)) || near[0] || null
 }
 
 // searchJourneys({ from, to: station objects, date 'YYYY-MM-DD', time 'HH:MM', arriveBy, maxTransfers, windowMin, cursor })
