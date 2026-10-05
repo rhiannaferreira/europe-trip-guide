@@ -7,7 +7,7 @@ import { interestColors } from './mapPins.js'
 
 export default function MapLegend({ hidden, onToggle, liveOn, zoom, liveMinZoom }) {
   const [open, setOpen] = useState(() => typeof window === 'undefined' || !window.matchMedia?.('(max-width: 700px)').matches)
-  const hint = liveOn && zoom >= 11 && zoom < liveMinZoom
+  const hint = liveOn && zoom >= 10 && zoom < liveMinZoom
   // Clicks and scrolls on the key shouldn't reach the map underneath (Leaflet listens on the DOM).
   const box = useRef(null)
   useEffect(() => {
@@ -46,7 +46,7 @@ export default function MapLegend({ hidden, onToggle, liveOn, zoom, liveMinZoom 
           </p>
         </>
       )}
-      {hint && <p className="map-legend-hint">Zoom in to see every restaurant, café and sight on the map.</p>}
+      {hint && <p className="map-legend-hint">Zoom in on a city to see its sights on the map, and closer still for restaurants and cafés.</p>}
     </div>
   )
 }

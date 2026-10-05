@@ -343,7 +343,7 @@ test('if the provider rejects the wide tap categories, the tap falls back to the
   assert.equal(calls.length, 2)
 })
 
-test('the street-level map layer can ask for 40 places of sights or food, other searches stay at 20', async () => {
+test('the map layer can ask for up to 60 places of sights or food, other searches stay at 20', async () => {
   mockFetch(() => ok(geoResponse([geoFeature()])))
   const r = await call('/api/live/places/search?lat=41.898&lng=12.476&radius=1000&kind=mapSights&limit=40')
   assert.equal(r.status, 200)
