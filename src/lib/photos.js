@@ -31,8 +31,13 @@ export function photoSubject(kind, item) {
   if (kind === 'city') return { key: `city:${item.id}`, title: cityWikiTitles[item.id] || item.name, lat: item.lat, lng: item.lng, maxKm: 30, needCoords: false }
   const override = placeWikiTitles[item.id]
   if (override === null) return null
-  // Live places (cafés, restaurants...) only get a photo when OpenStreetMap links them to a Wikipedia article.
-  if (item.source === 'live' && !item.wiki && !override) return null
+  // Live places: one OpenStreetMap links to a Wikipedia article uses it. Sights, museums and parks without a
+  // link are looked up by name, kept only when the article sits within half a kilometre. Restaurants, bars
+  // and shops never are: a namesake's photo would be wrong.
+  if (item.source === 'live' && !item.wiki && !override) {
+    if (!['history', 'museums', 'outdoors'].includes(item.category)) return null
+    return { key: `place:${item.id}`, title: item.name, lat: item.lat, lng: item.lng, maxKm: 0.5, needCoords: true }
+  }
   const title = override || item.wiki || item.name
   const wide = item.category === 'outdoors'
   return { key: `place:${item.id}`, title, lat: item.lat, lng: item.lng, maxKm: wide ? 15 : 4, needCoords: !override && !item.wiki }
