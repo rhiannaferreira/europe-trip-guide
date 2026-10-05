@@ -13,7 +13,7 @@ import { useState } from 'react'
 import { useJourneyStatus } from './useJourneyStatus.js'
 import JourneyCard from '../components/JourneyCard.jsx'
 import TrainSearchModal from '../components/TrainSearch.jsx'
-import { LiveLoading, RailAttribution, SourceLabel } from '../components/LiveBits.jsx'
+import { LiveLoading, RailAttribution, SourceLabel, useLiveEnabled } from '../components/LiveBits.jsx'
 import { hasRail, stationName } from '../services/live/trains.js'
 import { clock } from '../services/live/time.js'
 
@@ -64,7 +64,7 @@ function WeatherCard({ env }) {
         </div>
       )}
       <p className="tm-source">
-        {weather.fresh ? 'Open-Meteo forecast' : `Saved forecast from ${fetchedAt(weather.at)}. It may have changed.`}
+        {weather.fresh ? `Open-Meteo forecast${weather.at ? `, updated ${fetchedAt(weather.at)}` : ''}` : `Saved forecast from ${fetchedAt(weather.at)}. It may have changed.`}
       </p>
     </section>
   )
@@ -145,6 +145,7 @@ function JourneyNowCard({ env }) {
 function TravelDayCard({ env }) {
   const { day, schedule, change, readOnly, ask, isToday, online } = env
   const [picking, setPicking] = useState(false)
+  const railOn = useLiveEnabled('rail')
   if (schedule.train) return <JourneyNowCard env={env} />
   const leg = day.leg
   const from = leg.from
@@ -179,7 +180,7 @@ function TravelDayCard({ env }) {
         </label>
       )}
       {schedule.depart == null && <p className="tm-muted">Add the time on your ticket to see when you arrive and plan around it.</p>}
-      {!readOnly && online && hasRail(from.id) && hasRail(day.cityId) ? (
+      {!readOnly && online && railOn && hasRail(from.id) && hasRail(day.cityId) ? (
         <>
           <p className="tm-source">Add your real train to see its platform and any delays here on the day.</p>
           <button type="button" className="btn tm-btn-sm" onClick={() => setPicking(true)}>

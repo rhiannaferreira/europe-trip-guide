@@ -4,8 +4,22 @@ import { SOURCES } from '../services/live/models.js'
 import { openNow } from '../services/live/openingHours.js'
 import { cityZoneOf } from '../services/live/places.js'
 import { agoText } from '../services/live/time.js'
-import { LIVE_ERROR_TEXT } from '../services/live/http.js'
+import { LIVE_ERROR_TEXT, liveHealth } from '../services/live/http.js'
 import { formatDistance } from '../utils/distance.js'
+
+// Whether a live service ('places' or 'rail') is switched on for this site: null while checking, then
+// true or false. Buttons that need it stay hidden until it says yes. One check per page load.
+export function useLiveEnabled(kind) {
+  const [on, setOn] = useState(null)
+  useEffect(() => {
+    let live = true
+    liveHealth().then((h) => live && setOn(Boolean(h?.[kind]?.enabled)))
+    return () => {
+      live = false
+    }
+  }, [kind])
+  return on
+}
 
 // LIVE / EUROWANDER PICK / SCHEDULED / REAL-TIME / ESTIMATE, small and quiet.
 export function SourceLabel({ kind, className = '', children }) {

@@ -35,6 +35,39 @@ The build (`npm run build`) also writes a static HTML page for every city and co
 
 When a source can't be reached, the app says so in a line with a Try again button and carries on with the built-in data.
 
+## Live places and trains (`api/live.js`)
+
+One server function sits between the app and the live providers, so keys never reach the browser and the app never sees a provider's own data shapes:
+
+```
+UI → src/services/live (places, trains, events, weather) → /api/live/* → server/live (validation, cache, limits) → providers
+```
+
+- **Places**: Geoapify Places (OpenStreetMap data). Explore's "Find live places", Travel Mode's Nearby and the copilot's food and drink answers. Cards show only what the listing has (type, cuisine, listed opening hours, address, website, phone): there are no ratings, prices or photos. Labelled **Live**, with "Powered by Geoapify" and "© OpenStreetMap contributors". Saving keeps a small copy in the trip, which Geoapify's terms allow.
+- **Trains**: Transitous (MOTIS), the community journey planner for European public transport. Station search keeps the provider's station id; journeys give stations, times on each station's clock, changes, operators, train numbers, platforms and, when the operator publishes them, real-time delays and cancellations. A train with no live data is labelled **Scheduled** and is never called "on time". No prices (Transitous has none); a booking link only when the timetable carries one. Picked trains are saved per hop in the trip (`journeys`), never in share links, and Travel Mode checks their status every two minutes from four hours before departure.
+- **Events**: `searchEvents()` returns EuroWander's curated list with approximate dates, ready for a live provider later.
+- **Weather**: Open-Meteo, as above.
+
+Routes (GET only): `/api/live/places/search`, `places/details`, `places/geocode`, `trains/stations`, `trains/journeys`, `trains/status`, `health`. Every input is checked (coordinates inside Europe, ids, dates within 180 days, text lengths); there's no way to pass a URL through. Errors come back as short codes (`rate_limited`, `unavailable`...), never the provider's own message.
+
+**Limits**: per visitor, 40 place and 30 train searches a minute (60 status checks). Per provider, a daily cap (Geoapify 2,500 of its free 3,000 credits; Transitous 3,000), shared across instances when `supabase/live.sql` is run and `SUPABASE_SERVICE_ROLE_KEY` is set. Results are cached on the server and at Vercel's edge (places 1 to 24 hours, stations a week, journeys 2 to 30 minutes, status 1 minute), and in the browser for a minute. Searches only run when someone asks (debounced, 3+ letters for stations); nothing searches in the background.
+
+**Privacy**: a shared location is rounded to about 100 m, used for that search and never stored or sent to analytics. Logs (one JSON line per call, in Vercel's function logs) carry the route, provider, latency, cache hit and error code, with coordinates rounded to about 1 km, and never keys.
+
+**Setup** (Vercel → Settings → Environment Variables, server-only, never `VITE_`):
+
+| Variable | What it does |
+| --- | --- |
+| `GEOAPIFY_API_KEY` | Turns on live places. Free plan, no card, at myprojects.geoapify.com. |
+| `LIVE_TRAINS` | Trains are on for previews. Production needs `on` (set it once Transitous has agreed to routine use); `off` turns them off anywhere. |
+| `TRANSITOUS_CONTACT` | An email or URL Transitous can reach you at, sent in the User-Agent. |
+| `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | Optional shared daily caps (run `supabase/live.sql` first). |
+| `LIVE_DAILY_CAP_GEOAPIFY`, `LIVE_DAILY_CAP_TRANSITOUS` | Optional caps per day. |
+
+**Watching usage**: Geoapify's dashboard shows credits per day. Vercel's function logs show every live call (filter `"live"`); `cap_reached` and `rate_limited` lines mean a limit was hit. With Supabase, `select * from live_usage order by day desc` gives calls per provider per day.
+
+To change a provider, write a new adapter in `server/live/providers/` that returns the same shapes and import it in `server/live/services.js` in place of the old one; nothing in the app changes.
+
 ## Features
 
 - **Explore**: country chips, city cards and a city page (description, cost, popular interests, coordinates).
@@ -244,4 +277,4 @@ Supabase's built-in email sender is limited to a few emails an hour; for more, a
 
 ## Deploying
 
-The app is a static site, so any static host works. On Vercel: import this repo at vercel.com/new, keep the detected Vite preset (build `npm run build`, output `dist`), and deploy. Every push to `main` redeploys. `vercel.json` handles the clean city/country addresses and sends other paths to the app, except `/api/`, which Vercel runs as functions. Optional environment variables: `ANTHROPIC_API_KEY` and `ASSISTANT_MODEL` (assistant), `VITE_VERCEL_ANALYTICS=1` (analytics), and the Supabase pair above.
+The app is a static site, so any static host works. On Vercel: import this repo at vercel.com/new, keep the detected Vite preset (build `npm run build`, output `dist`), and deploy. Every push to `main` redeploys. `vercel.json` handles the clean city/country addresses and sends other paths to the app, except `/api/`, which Vercel runs as functions. Optional environment variables: `ANTHROPIC_API_KEY` and `ASSISTANT_MODEL` (assistant), `VITE_VERCEL_ANALYTICS=1` (analytics), the Supabase pair above, and the live data variables (see "Live places and trains").

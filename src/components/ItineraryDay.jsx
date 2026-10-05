@@ -8,7 +8,7 @@ import { optimizeDay } from '../utils/routeOptimizer.js'
 import { formatDistance } from '../utils/distance.js'
 import DayPicker from './DayPicker.jsx'
 import TrainSearchModal from './TrainSearch.jsx'
-import { SourceLabel } from './LiveBits.jsx'
+import { SourceLabel, useLiveEnabled } from './LiveBits.jsx'
 import { misdatedJourney, pickedJourney } from '../travel/travelModel.js'
 import { stationName } from '../services/live/trains.js'
 import { clock, durationText } from '../services/live/time.js'
@@ -19,6 +19,7 @@ export const modeIcon = (mode) => ({ bus: '🚌', 'rail + ferry': '⛴️' })[mo
 export default function ItineraryDay({ day, entry, days, unscheduled, trip, selected, onSelect, onFocusPlace }) {
   const [optimizeMsg, setOptimizeMsg] = useState('')
   const [trains, setTrains] = useState(false)
+  const railOn = useLiveEnabled('rail')
   const city = cityById[day.cityId]
   const country = countryByCode[city.country]
   const placeIds = entry?.placeIds || []
@@ -91,7 +92,7 @@ export default function ItineraryDay({ day, entry, days, unscheduled, trip, sele
           {entry?.depart && <span className="day-depart"> · departs {entry.depart}</span>}
           {day.leg.estimated && day.leg.note && <span className="leg-note">{day.leg.note}</span>}
           {oldTrain && <span className="leg-note warn-text">Your saved train was for another date. Pick one for this day.</span>}
-          {dayIso && (
+          {dayIso && railOn && (
             <span className="journey-pick">
               <button type="button" className="btn" onClick={() => setTrains(true)}>
                 🚆 Find real trains

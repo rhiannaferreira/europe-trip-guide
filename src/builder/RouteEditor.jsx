@@ -8,6 +8,7 @@ import { modeIcon, sourceLabel } from '../planner/transport.js'
 import DataBadge from './DataBadge.jsx'
 import TrainSearchModal from '../components/TrainSearch.jsx'
 import { hasRail } from '../services/live/trains.js'
+import { useLiveEnabled } from '../components/LiveBits.jsx'
 
 const ROLE = { start: 'Your start', end: 'Your end', must: 'Your pick', user: 'You added' }
 const byName = [...cities].sort((a, b) => a.name.localeCompare(b.name))
@@ -22,9 +23,10 @@ function legDate(plan, i) {
 
 function Leg({ leg, limit, date = '' }) {
   const [trains, setTrains] = useState(false)
+  const railOn = useLiveEnabled('rail')
   if (!leg) return null
   // Real timetables only once the trip has dates, and only when asked: nothing is searched in the background.
-  const canSearch = date && leg.mode !== 'flight' && hasRail(leg.from.id) && hasRail(leg.to.id)
+  const canSearch = railOn && date && leg.mode !== 'flight' && hasRail(leg.from.id) && hasRail(leg.to.id)
   const over = limit && leg.minutes > limit
   return (
     <li className={`plan-leg${over ? ' over' : ''}`}>
