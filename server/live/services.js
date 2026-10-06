@@ -46,8 +46,8 @@ export const ROUTES = {
       const cuisine = q.cuisine ? text(q.cuisine, { min: 3, max: 30 }).toLowerCase().replace(/[^a-z_]/g, '') || null : null
       const diet = oneOf(q.diet, places.DIETS, null)
       const name = text(q.name, { required: false, min: 2, max: 60 })
-      // The map layer asks for more at once (Geoapify charges one extra credit per 20).
-      const limit = intIn(q.limit, 1, kind.startsWith('map') ? 60 : 20, 20)
+      // The map asks for up to 60 at once (Geoapify charges one extra credit per 20).
+      const limit = intIn(q.limit, 1, 60, 20)
       const key = `ps|${at.lat},${at.lng}|${radius}|${kind}|${cuisine || ''}|${diet || ''}|${name.toLowerCase()}|${limit}`
       const { value, cached } = await guarded(PROVIDERS.places, key, 6 * HOUR, () => places.searchPlaces({ ...at, radius, kind, cuisine, diet, name, limit }))
       return { data: { places: value, center: at, radius, kind }, ttl: 3600, cached }

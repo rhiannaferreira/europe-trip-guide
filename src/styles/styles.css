@@ -1380,6 +1380,9 @@ a:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent); ou
 .pin-live { background: #fff; border: 2px solid var(--pin); font-size: 12px; }
 .pin-saved { border-color: #f4a261; border-width: 3px; box-shadow: 0 0 0 2px rgb(244 162 97 / 0.35), 0 1px 4px rgb(0 0 0 / 0.35); }
 .pin-dim { opacity: 0.4; }
+.pin-top { border-color: #e9b949; border-width: 3px; font-size: 15px; box-shadow: 0 0 0 2px rgb(233 185 73 / 0.35), 0 1px 5px rgb(0 0 0 / 0.4); }
+.map-tap-fame { font-size: 0.78rem; color: var(--muted); }
+.map-tap-fame.top { color: var(--text); font-weight: 600; }
 .pin-wrap:hover .pin, .pin-wrap:focus-visible .pin { transform: scale(1.15); }
 .pin-wrap:focus-visible { outline: none; }
 .pin-wrap:focus-visible .pin { outline: 3px solid var(--accent-fill); outline-offset: 2px; }
@@ -1391,8 +1394,9 @@ a:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent); ou
 .map-legend-head { background: none; border: 0; padding: 2px 0; font: inherit; font-weight: 700; color: inherit; cursor: pointer; }
 .map-legend-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
 .map-legend-chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px 2px 2px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font: inherit; cursor: pointer; }
-.map-legend-chip.off { opacity: 0.45; text-decoration: line-through; }
-.map-legend-dot { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--pin); font-size: 11px; }
+.map-legend-chip { padding: 3px 9px; }
+.map-legend-chip.on { background: var(--accent-fill); border-color: var(--accent-fill); color: #fff; }
+.map-legend-best { display: flex; align-items: center; gap: 6px; margin-top: 8px; font-weight: 600; cursor: pointer; }
 .map-legend-note { margin: 6px 0 0; color: var(--muted); }
 .map-legend-hint { margin: 6px 0 0; color: var(--muted); font-style: italic; }
 @media (max-width: 700px) { .map-legend-box { bottom: 70px; } }

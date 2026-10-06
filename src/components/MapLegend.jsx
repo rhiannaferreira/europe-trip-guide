@@ -1,11 +1,11 @@
-// The map's key: what each colour and icon means, which ones are EuroWander's picks and which are live
-// places, and a toggle per interest to hide its pins. Collapsed by default on small screens.
+// The map's key and filter: tap a kind to show only that (restaurants, museums...), tap more to add them,
+// "All" to go back. "Best known only" keeps EuroWander's picks and places famous enough to have Wikipedia
+// articles in many languages. Collapsed by default on small screens.
 import { useEffect, useRef, useState } from 'react'
 import L from 'leaflet'
-import { interests } from '../data/interests.js'
-import { interestColors } from './mapPins.js'
+import { PIN_KINDS } from '../lib/pinKinds.js'
 
-export default function MapLegend({ hidden, onToggle, liveOn, zoom, liveMinZoom }) {
+export default function MapLegend({ kinds, onKinds, bestOnly, onBestOnly, liveOn, zoom, liveMinZoom }) {
   const [open, setOpen] = useState(() => typeof window === 'undefined' || !window.matchMedia?.('(max-width: 700px)').matches)
   const hint = liveOn && zoom >= 10 && zoom < liveMinZoom
   // Clicks and scrolls on the key shouldn't reach the map underneath (Leaflet listens on the DOM).
@@ -15,38 +15,50 @@ export default function MapLegend({ hidden, onToggle, liveOn, zoom, liveMinZoom 
     L.DomEvent.disableClickPropagation(box.current)
     L.DomEvent.disableScrollPropagation(box.current)
   }, [])
+  const all = kinds.size === 0
+  const toggle = (id) => {
+    const next = new Set(kinds)
+    if (next.has(id)) next.delete(id)
+    else next.add(id)
+    onKinds(next)
+  }
   return (
     <div className="map-legend-box" ref={box}>
       <button type="button" className="map-legend-head" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
-        🗺️ Map key {open ? '▾' : '▸'}
+        🗺️ Show on map{all ? '' : ` (${kinds.size})`} {open ? '▾' : '▸'}
       </button>
       {open && (
         <>
-          <div className="map-legend-chips" role="group" aria-label="Show or hide places by interest">
-            {interests.map((i) => {
-              const off = hidden.has(i.id)
+          <div className="map-legend-chips" role="group" aria-label="Show only these kinds of places">
+            <button type="button" className={`map-legend-chip all${all ? ' on' : ''}`} aria-pressed={all} onClick={() => onKinds(new Set())}>
+              All
+            </button>
+            {PIN_KINDS.map((k) => {
+              const on = kinds.has(k.id)
               return (
-                <button key={i.id} type="button" className={`map-legend-chip${off ? ' off' : ''}`} aria-pressed={!off} onClick={() => onToggle(i.id)} style={{ '--pin': interestColors[i.id] }}>
-                  <span className="map-legend-dot" aria-hidden="true">
-                    {i.icon}
-                  </span>
-                  {i.label}
+                <button key={k.id} type="button" className={`map-legend-chip${on ? ' on' : ''}`} aria-pressed={on} onClick={() => toggle(k.id)}>
+                  <span aria-hidden="true">{k.icon}</span> {k.label}
                 </button>
               )
             })}
           </div>
+          {liveOn && (
+            <label className="map-legend-best">
+              <input type="checkbox" checked={bestOnly} onChange={(e) => onBestOnly(e.target.checked)} /> ⭐ Best known only
+            </label>
+          )}
           <p className="map-legend-note">
             <span className="pin pin-guide pin-sample" aria-hidden="true" /> EuroWander pick
             {liveOn && (
               <>
                 {' '}
-                <span className="pin pin-live pin-sample" aria-hidden="true" /> Live place
+                <span className="pin pin-live pin-sample" aria-hidden="true" /> Live place <span className="pin pin-live pin-top pin-sample" aria-hidden="true" /> Well known
               </>
             )}
           </p>
         </>
       )}
-      {hint && <p className="map-legend-hint">Zoom in on a city to see its sights on the map, and closer still for restaurants and cafés.</p>}
+      {hint && <p className="map-legend-hint">Zoom in on a city to see its places on the map.</p>}
     </div>
   )
 }

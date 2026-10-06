@@ -46,7 +46,7 @@ function clean(p) {
 
 // The snapshot a live place keeps (Geoapify's terms allow storing it): stable details, plus where it came
 // from and when, so dynamic details can be refreshed later. Only fields that exist.
-const LIVE_TEXT = ['provider', 'providerId', 'retrievedAt', 'address', 'cuisine', 'openingHours', 'phone', 'wheelchair']
+const LIVE_TEXT = ['provider', 'providerId', 'retrievedAt', 'address', 'cuisine', 'openingHours', 'phone', 'wheelchair', 'wikidata']
 function liveFields(p) {
   if (p.source !== 'live') return {}
   const out = {}

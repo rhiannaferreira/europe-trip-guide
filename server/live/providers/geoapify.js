@@ -157,6 +157,8 @@ export function normalizePlace(feature, retrievedAt = new Date().toISOString(), 
     phone: str(p.contact?.phone || raw.phone || raw['contact:phone'], 40),
     wheelchair: str(raw.wheelchair, 10) || (p.facilities?.wheelchair === true ? 'yes' : null),
     wiki: wikipedia && wikipedia.startsWith('en:') ? wikipedia.slice(3) : null,
+    // The Wikidata item, used to tell how well known a place is (how many Wikipedias have an article).
+    wikidata: [raw.wikidata, p.wiki_and_media?.wikidata].find((v) => typeof v === 'string' && /^Q\d{1,12}$/.test(v)) || null,
     osmUrl: `https://www.openstreetmap.org/${osmKind}/${Math.abs(Number(osmId))}`,
     retrievedAt,
   }

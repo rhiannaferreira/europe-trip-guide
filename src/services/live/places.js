@@ -65,7 +65,7 @@ export function toAppPlace(p, { cityId = null } = {}) {
     providerId: p.providerId,
     retrievedAt: p.retrievedAt,
   }
-  for (const k of ['address', 'cuisine', 'openingHours', 'website', 'phone', 'wheelchair', 'wiki', 'osmUrl']) if (p[k]) out[k] = p[k]
+  for (const k of ['address', 'cuisine', 'openingHours', 'website', 'phone', 'wheelchair', 'wiki', 'wikidata', 'osmUrl']) if (p[k]) out[k] = p[k]
   return out
 }
 

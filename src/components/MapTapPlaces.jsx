@@ -9,6 +9,7 @@ import { LivePlaceFacts, SourceLabel, useLiveEnabled } from './LiveBits.jsx'
 import Thumb from './Thumb.jsx'
 import { interestById } from '../data/interests.js'
 import { placeIcon } from '../lib/placeIcons.js'
+import { WELL_KNOWN, useFame } from '../lib/fame.js'
 
 
 // One entry per thing: "Giordano Bruno" and "Giordano Bruno monument" a few metres apart are the same statue.
@@ -28,7 +29,7 @@ const MIN_ZOOM = 16
 const directions = (p) => `https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}&travelmode=walking`
 
 // One live place in a map popup: photo or icon, name, what it is, hours, and Save / Directions / Website.
-export function MapPlaceItem({ place: p, saved, onToggleSave, source }) {
+export function MapPlaceItem({ place: p, saved, onToggleSave, source, fame = 0 }) {
   const interest = interestById[p.category]
   // Hotels, stations and the like can't go on a trip board; they get directions only.
   const canSave = Boolean(interest)
@@ -38,6 +39,7 @@ export function MapPlaceItem({ place: p, saved, onToggleSave, source }) {
       <div className="map-tap-main">
         <strong>{p.name}</strong>
         <span className="map-tap-type">{p.description || interest?.label || 'Place'}</span>
+        {fame > 0 && <FameLine languages={fame} />}
         <LivePlaceFacts place={p} compact />
       </div>
       <div className="map-tap-actions">
@@ -68,6 +70,15 @@ export function MapPlaceItem({ place: p, saved, onToggleSave, source }) {
   )
 }
 
+// How well known a place is, said as what it is: Wikipedia coverage, not a review score.
+export function FameLine({ languages }) {
+  return (
+    <span className={`map-tap-fame${languages >= WELL_KNOWN ? ' top' : ''}`}>
+      {languages >= WELL_KNOWN ? '⭐ Well known · ' : ''}on Wikipedia in {languages} language{languages === 1 ? '' : 's'}
+    </span>
+  )
+}
+
 export function LiveFoot() {
   return (
     <small className="map-tap-foot">
@@ -79,6 +90,7 @@ export function LiveFoot() {
 export default function MapTapPlaces({ savedIds, onToggleSave }) {
   const on = useLiveEnabled('places')
   const [tap, setTap] = useState(null) // { lat, lng, status, places, spot }
+  const fame = useFame(tap?.places || [])
   const map = useMapEvents({
     click(e) {
       if (!on) return
@@ -124,7 +136,7 @@ export default function MapTapPlaces({ savedIds, onToggleSave }) {
         )}
         {tap.status === 'ready' && tap.places.length === 0 && !tap.spot && <span>Nothing listed right here. Try tapping closer to a name or icon.</span>}
         {tap.status === 'ready' &&
-          tidy(tap.places).map((p) => <MapPlaceItem key={p.id} place={p} saved={savedIds.has(p.id)} onToggleSave={onToggleSave} source="map_tap" />)}
+          tidy(tap.places).map((p) => <MapPlaceItem key={p.id} place={p} saved={savedIds.has(p.id)} onToggleSave={onToggleSave} source="map_tap" fame={fame(p)} />)}
         {tap.status === 'ready' && (tap.places.length > 0 || tap.spot) && <LiveFoot />}
       </div>
     </Popup>

@@ -230,3 +230,34 @@ test('landmark search forgives typos in guide place names', async () => {
   assert.equal(closestPlace(rome, 'Trastavere').name, 'Trastevere')
   assert.equal(closestPlace(rome, 'zzzzqqq'), null)
 })
+
+test('map key filter: each kind of place falls under one filter', async () => {
+  const { pinKind } = await import('../../lib/pinKinds.js')
+  assert.equal(pinKind({ type: 'ice cream', category: 'food' }), 'dessert')
+  assert.equal(pinKind({ type: 'restaurant', category: 'food' }), 'restaurant')
+  assert.equal(pinKind({ type: 'gallery', category: 'museums' }), 'museum')
+  assert.equal(pinKind({ type: 'church', category: 'history' }), 'sights')
+  assert.equal(pinKind({ type: 'pub', category: 'nightlife' }), 'bar')
+  assert.equal(pinKind({ type: 'hotel' }), null)
+})
+
+test('how well known a place is: counts Wikipedias only, batched, cached', async () => {
+  const { loadFame, knownFame } = await import('../../lib/fameCore.js')
+  const real = globalThis.fetch
+  const urls = []
+  globalThis.fetch = async (url) => {
+    urls.push(String(url))
+    return { ok: true, json: async () => ({ entities: { Q186579: { sitelinks: { enwiki: {}, itwiki: {}, frwiki: {}, commonswiki: {}, enwikivoyage: {} } }, Q999: { sitelinks: {} } } }) }
+  }
+  try {
+    await loadFame(['Q186579', 'Q999', 'not-an-id'])
+    assert.equal(knownFame('Q186579'), 3)
+    assert.equal(knownFame('Q999'), 0)
+    assert.equal(urls.length, 1)
+    assert.match(urls[0], /ids=Q186579%7CQ999/)
+    await loadFame(['Q186579'])
+    assert.equal(urls.length, 1, 'cached')
+  } finally {
+    globalThis.fetch = real
+  }
+})

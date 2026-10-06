@@ -15,14 +15,14 @@ export const interestColors = {
 
 const cache = new Map()
 
-// variant: 'guide' | 'live'; state: '' | 'saved' | 'dim'
+// variant: 'guide' | 'live'; state: '' | 'saved' | 'dim' | 'top' (a well-known live place: bigger, gold ring)
 export function pinIcon(place, variant, state = '') {
   const emoji = placeIcon(place)
   const color = interestColors[place.category] || '#5e6b77'
   const key = `${variant}|${state}|${color}|${emoji}`
   let icon = cache.get(key)
   if (!icon) {
-    const size = variant === 'guide' ? 32 : 24
+    const size = variant === 'guide' ? 32 : state === 'top' ? 30 : 24
     icon = L.divIcon({
       className: 'pin-wrap',
       html: `<span class="pin pin-${variant}${state ? ` pin-${state}` : ''}" style="--pin:${color}" aria-hidden="true">${emoji}</span>`,

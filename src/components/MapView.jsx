@@ -15,6 +15,7 @@ import LiveMapLayer, { LIVE_MIN_ZOOM } from './LiveMapLayer.jsx'
 import MapLegend from './MapLegend.jsx'
 import { interestColors, pinIcon } from './mapPins.js'
 import { useLiveEnabled } from './LiveBits.jsx'
+import { pinKind } from '../lib/pinKinds.js'
 
 // Marker colours per interest (Leaflet needs real colours, not CSS variables).
 export { interestColors }
@@ -144,16 +145,11 @@ export default function MapView({ places, cities, fitCities, savedIds, routeCiti
   const outlineRenderer = useMemo(() => L.svg({ pane: 'outline' }), [])
   const liveOn = useLiveEnabled('places') === true
   const [zoom, setZoom] = useState(4)
-  // Interests hidden from the map with the key's toggles.
-  const [hidden, setHidden] = useState(() => new Set())
-  const toggleHidden = (id) =>
-    setHidden((h) => {
-      const next = new Set(h)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  const shownPlaces = hidden.size ? places.filter((p) => !hidden.has(p.category)) : places
+  // The map key's filter: which kinds of places to show (empty = all), and whether only the best known.
+  const [kinds, setKinds] = useState(() => new Set())
+  const [bestOnly, setBestOnly] = useState(false)
+  // EuroWander's own picks are hand-chosen, so "best known only" keeps them.
+  const shownPlaces = kinds.size ? places.filter((p) => kinds.has(pinKind(p))) : places
   const guideIds = useMemo(() => new Set(places.map((p) => p.id)), [places])
 
   return (
@@ -181,9 +177,9 @@ export default function MapView({ places, cities, fitCities, savedIds, routeCiti
       <FlyToFocused place={focused} markerRefs={markerRefs} />
 
       <ZoomWatch onZoom={setZoom} />
-      <MapLegend hidden={hidden} onToggle={toggleHidden} liveOn={liveOn} zoom={zoom} liveMinZoom={LIVE_MIN_ZOOM} />
+      <MapLegend kinds={kinds} onKinds={setKinds} bestOnly={bestOnly} onBestOnly={setBestOnly} liveOn={liveOn} zoom={zoom} liveMinZoom={LIVE_MIN_ZOOM} />
       <MapTapPlaces savedIds={savedIds} onToggleSave={onToggleSave} />
-      {!dimmed && <LiveMapLayer on={liveOn} guideIds={guideIds} savedIds={savedIds} hidden={hidden} onToggleSave={onToggleSave} />}
+      {!dimmed && <LiveMapLayer on={liveOn} guideIds={guideIds} savedIds={savedIds} kinds={kinds} bestOnly={bestOnly} onToggleSave={onToggleSave} />}
       <RouteView routeCities={routeCities} legs={legs} />
       <DayRoute day={dayView?.day} places={dayView?.places || []} />
 
