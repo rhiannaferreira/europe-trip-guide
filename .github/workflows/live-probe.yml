@@ -7,7 +7,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Fetch Terra docs
+        run: |
+          mkdir -p out
+          curl -sSL https://docs.terra.tripadvisor.com/llms.txt -o out/llms.txt || true
+          wc -c out/llms.txt
+          cat out/llms.txt
+          grep -oE 'https://docs\.terra\.tripadvisor\.com[^ )>"]+' out/llms.txt | sort -u > out/urls.txt
+          wc -l out/urls.txt
+          i=0
+          while read u; do
+            case "$u" in *.md) mu="$u";; *) mu="$u.md";; esac
+            i=$((i+1)); curl -sSL "$mu" -o "out/page_$i.md" || true
+            echo "===== $mu ($(wc -c < out/page_$i.md) bytes)"
+          done < out/urls.txt
+      - uses: actions/upload-artifact@v4
         with:
-          node-version: 22
-      - run: node scripts/live-probe.mjs
+          name: terra-docs
+          path: out/
