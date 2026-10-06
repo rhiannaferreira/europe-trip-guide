@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import L from 'leaflet'
+import 'leaflet/dist/leaflet.css'
 import { CircleMarker, GeoJSON, MapContainer, Marker, Pane, Popup, TileLayer, Tooltip, useMap, useMapEvents } from 'react-leaflet'
 import { placeById } from '../data/places.js'
 import { cityById } from '../data/cities.js'

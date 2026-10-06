@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
-import 'leaflet/dist/leaflet.css'
+import { Suspense, lazy, useEffect, useMemo, useState } from 'react'
 import { cities, cityById, citiesInCountry } from './data/cities.js'
 import { countryByCode } from './data/countries.js'
 import { placeById, places } from './data/places.js'
@@ -10,7 +9,7 @@ import SearchBar from './components/SearchBar.jsx'
 import CityExplorer from './components/CityExplorer.jsx'
 import Filters from './components/Filters.jsx'
 import PlaceCard from './components/PlaceCard.jsx'
-import MapView from './components/MapView.jsx'
+import { mapLibreOn } from './map/config.js'
 import TripBoard from './components/TripBoard.jsx'
 import TripSummary from './components/TripSummary.jsx'
 import CountryTips from './components/CountryTips.jsx'
@@ -50,6 +49,11 @@ import { takeFocus, takeTab, takeTool, useAssistantBridge } from './assistant/br
 import TravelEntry from './travel/TravelEntry.jsx'
 
 const PAGE = 24
+
+// The map loads after the page (it's the heaviest part), as MapLibre or, while both exist, the old
+// Leaflet map (?map=leaflet). The lists, trip and itinerary never wait for it.
+const USE_MAPLIBRE = mapLibreOn()
+const MapView = lazy(() => (USE_MAPLIBRE ? import('./map/ExploreMap.jsx') : import('./components/MapView.jsx')))
 
 // Skip links move focus without changing the URL (the # would clash with routes in the preview build).
 const skipTo = (id) => (e) => {
@@ -370,21 +374,25 @@ export default function App({ route }) {
       </aside>
 
       <main className="map-panel" aria-label="Map">
-        <MapView
-          places={visiblePlaces}
-          cities={cities}
-          fitCities={fitCities}
-          savedIds={trip.savedIds}
-          routeCities={trip.cityIds.map((id) => cityById[id])}
-          legs={legs}
-          focusedId={focusedId}
-          fitTripRequest={fitTripRequest}
-          dayView={dayView}
-          onFocus={setFocusedId}
-          onFocusPlace={focusPlace}
-          onToggleSave={trip.togglePlace}
-          onSelectCity={selectCity}
-        />
+        <Suspense fallback={<div className="map map-loading" aria-hidden="true" />}>
+          <MapView
+            places={visiblePlaces}
+            cities={cities}
+            fitCities={fitCities}
+            savedIds={trip.savedIds}
+            routeCities={trip.cityIds.map((id) => cityById[id])}
+            legs={legs}
+            focusedId={focusedId}
+            fitTripRequest={fitTripRequest}
+            dayView={dayView}
+            onFocus={setFocusedId}
+            onFocusPlace={focusPlace}
+            onToggleSave={trip.togglePlace}
+            onSelectCity={selectCity}
+            journeys={trip.journeys}
+            currentCityId={cityId || null}
+          />
+        </Suspense>
         {dayView && (
           <div className="day-banner" role="status">
             <span>

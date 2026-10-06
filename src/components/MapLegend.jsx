@@ -2,18 +2,22 @@
 // "All" to go back. "Best known only" keeps EuroWander's picks and places famous enough to have Wikipedia
 // articles in many languages. Collapsed by default on small screens.
 import { useEffect, useRef, useState } from 'react'
-import L from 'leaflet'
 import { PIN_KINDS } from '../lib/pinKinds.js'
 
 export default function MapLegend({ kinds, onKinds, bestOnly, onBestOnly, liveOn, zoom, liveMinZoom }) {
   const [open, setOpen] = useState(() => typeof window === 'undefined' || !window.matchMedia?.('(max-width: 700px)').matches)
   const hint = liveOn && zoom >= 10 && zoom < liveMinZoom
-  // Clicks and scrolls on the key shouldn't reach the map underneath (Leaflet listens on the DOM).
+  // Clicks, drags and scrolls on the key shouldn't reach the map underneath (maps listen on the DOM).
   const box = useRef(null)
   useEffect(() => {
-    if (!box.current) return
-    L.DomEvent.disableClickPropagation(box.current)
-    L.DomEvent.disableScrollPropagation(box.current)
+    const el = box.current
+    if (!el) return undefined
+    // Clicks still bubble (React handles them at the root); Leaflet skips them by this flag instead.
+    el._leaflet_disable_click = true
+    const stop = (e) => e.stopPropagation()
+    const types = ['dblclick', 'mousedown', 'touchstart', 'pointerdown', 'wheel', 'contextmenu']
+    types.forEach((t) => el.addEventListener(t, stop))
+    return () => types.forEach((t) => el.removeEventListener(t, stop))
   }, [])
   const all = kinds.size === 0
   const toggle = (id) => {

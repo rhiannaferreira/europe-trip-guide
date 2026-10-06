@@ -17,9 +17,10 @@ import { useHourlyWeather, useLocation, useNow, useSavedTrip } from './useTravel
 import TodayView from './TodayView.jsx'
 import { ActivitySheet, NearbySheet, SkipSheet } from './Sheets.jsx'
 import { MoreView, TripView } from './TripInfo.jsx'
+import { mapLibreOn } from '../map/config.js'
 
-// Leaflet only downloads when the Map tab is opened.
-const TravelMap = lazy(() => import('./TravelMap.jsx'))
+// The map only downloads when the Map tab is opened.
+const TravelMap = lazy(() => (mapLibreOn() ? import('../map/TravelDayMap.jsx') : import('./TravelMap.jsx')))
 
 const NAV = [
   { id: 'today', label: 'Today', icon: '☀️' },
