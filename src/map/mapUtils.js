@@ -41,7 +41,7 @@ export function frame(map, points, { padding = 50, maxZoom = 14, single = 12, mi
 }
 
 // Padding that never exceeds the map's own size (fitBounds throws away the move otherwise on tiny maps).
-export function fitPadding(map, padding) {
+export function fitPadding(map, pad) {
   const c = map.getContainer?.()
   const w = c?.clientWidth || 400
   const h = c?.clientHeight || 300
