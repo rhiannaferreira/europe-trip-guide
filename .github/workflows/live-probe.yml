@@ -2,6 +2,8 @@ name: live-probe
 on:
   push:
     branches: [live-data-checks]
+permissions:
+  contents: write
 jobs:
   probe:
     runs-on: ubuntu-latest
@@ -21,7 +23,7 @@ jobs:
             i=$((i+1)); curl -sSL "$mu" -o "out/page_$i.md" || true
             echo "===== $mu ($(wc -c < out/page_$i.md) bytes)"
           done < out/urls.txt
-      - uses: actions/upload-artifact@v4
-        with:
-          name: terra-docs
-          path: out/
+      - name: Save to branch terra-docs
+        run: |
+          git config user.name probe && git config user.email probe@example.invalid
+          git checkout --orphan terra-docs && git rm -rfq . && mv out terra && git add terra && git commit -qm docs && git push -f origin terra-docs
