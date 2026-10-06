@@ -17,7 +17,7 @@ import { dayData } from './mapRoutes.js'
 const BOLD = ['Noto Sans Bold']
 const REGULAR = ['Noto Sans Regular']
 
-function Layers({ stops, nextId, saved, focusPlace, onDay, position, stations, frameKey, points }) {
+function Layers({ stops, nextId, saved, focusPlace, onDay, position, stations, frameKey, points, single }) {
   const { map } = useEWMap()
   const states = Object.fromEntries(stops.map((e) => [e.id, e.id === nextId ? 'next' : e.state]))
   const { stops: stopData, line } = useMemo(
@@ -143,7 +143,7 @@ function Layers({ stops, nextId, saved, focusPlace, onDay, position, stations, f
 
   useEffect(() => {
     if (focusPlace) map.flyTo(calm({ center: [focusPlace.lng, focusPlace.lat], zoom: 16 }))
-    else frame(map, points, { padding: 44, maxZoom: 16, single: 15 })
+    else frame(map, points, { padding: 44, maxZoom: 16, single })
   }, [frameKey]) // eslint-disable-line react-hooks/exhaustive-deps
   return null
 }
@@ -154,12 +154,12 @@ export default function TravelDayMap({ env, focusId, position }) {
   const n = nowMin != null ? nextUp(schedule, nowMin) : null
   const nextId = n?.entry?.kind === 'place' ? n.entry.id : stops.find((e) => e.state === 'upcoming')?.id
   const onDay = useMemo(() => new Set(stops.map((e) => e.id)), [stops.map((e) => e.id).join()]) // eslint-disable-line react-hooks/exhaustive-deps
-  // Saved places in this city, within about 1 km of one of today's stops.
+  // Saved places in this city, within about 1 km of one of today's stops (all of them on a free day).
   const saved = useMemo(
     () =>
       Object.keys(trip.statuses || {})
         .map((id) => placeById[id])
-        .filter((p) => p && p.cityId === day.cityId && !onDay.has(p.id) && stops.some((e) => distanceKm(e.place, p) <= 1)),
+        .filter((p) => p && p.cityId === day.cityId && !onDay.has(p.id) && (!stops.length || stops.some((e) => distanceKm(e.place, p) <= 1))),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [trip.statuses, day.cityId, onDay],
   )
@@ -171,7 +171,9 @@ export default function TravelDayMap({ env, focusId, position }) {
   )
   const focusPlace = focusId ? placeById[focusId] : null
   const points = [...stops.map((e) => e.place), ...(position ? [position] : [])]
-  if (!points.length) points.push(...(stations.length ? stations : [city]))
+  // A free day frames the saved places (or the station, or the city) at neighbourhood zoom.
+  const freeDay = !points.length
+  if (freeDay) points.push(...(saved.length ? saved : stations.length ? stations : [city]))
   const frameKey = `${points.map((p) => `${p.lat},${p.lng}`).join(';')}|${focusId || ''}`
   const next = stops.find((e) => e.id === nextId)
   const first = points[0]
@@ -186,7 +188,7 @@ export default function TravelDayMap({ env, focusId, position }) {
         zoom={14}
         label="Map of today’s stops. Every stop is also in the list below the map."
       >
-        <Layers stops={stops} nextId={nextId} saved={saved} focusPlace={focusPlace} onDay={onDay} position={position} stations={stations} frameKey={frameKey} points={points} />
+        <Layers stops={stops} nextId={nextId} saved={saved} focusPlace={focusPlace} onDay={onDay} position={position} stations={stations} frameKey={frameKey} points={points} single={freeDay ? 13 : 15} />
       </EuroWanderMap>
       <div className="tm-map-under">
         {next && (
@@ -208,7 +210,7 @@ export default function TravelDayMap({ env, focusId, position }) {
           ))}
         </ol>
         {stations.length > 0 && <p className="tm-muted">🚉 {stationName(stations[0].name)}: your train’s station today.</p>}
-        {saved.length > 0 && <p className="tm-muted">♥ Hearts: places you saved near today’s stops.</p>}
+        {saved.length > 0 && <p className="tm-muted">♥ Hearts: places you saved {stops.length ? 'near today’s stops' : `in ${city.name}`}.</p>}
         {position && <p className="tm-muted">🔵 Blue dot: you (read once from your location, not tracked).</p>}
         {!stops.length && <p className="tm-muted">Nothing planned today, so the map shows {city.name}.</p>}
       </div>

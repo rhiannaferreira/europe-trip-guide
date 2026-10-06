@@ -8,13 +8,18 @@
 //     available at all, shows a short notice instead (every list, card and itinerary still works).
 //   - Controls: zoom, optional "fit" button, optional "my location" (asks only when pressed), attribution.
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
-import maplibregl from 'maplibre-gl'
+import * as maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
+// MapLibre 6 loads its worker from a separate file next to its own script; once bundled that file has
+// to be shipped as an asset and pointed at explicitly.
+import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url'
 import { buildStyle, fallbackStyle, paintChanges } from './styles/euroWanderStyle.js'
 import light from './styles/euroWanderLight.js'
 import dark from './styles/euroWanderDark.js'
 import { installIcons } from './mapMarkers.js'
 import { baseMap } from './config.js'
+
+maplibregl.setWorkerUrl(workerUrl)
 
 const MapContext = createContext(null)
 // { map, palette, theme, styleKey } for the components inside a <EuroWanderMap>. styleKey changes when the
@@ -170,7 +175,12 @@ export default function EuroWanderMap({
     }
     const onError = (e) => {
       const fromBase = e?.sourceId === 'basemap' || /tiles|glyphs|basemap|Failed to fetch/i.test(String(e?.error?.message || ''))
-      if (!fromBase || ok) return
+      if (!fromBase) {
+        // Our own layers or data: never fatal, but worth seeing while developing.
+        console.warn('EuroWander map:', e?.error?.message || e)
+        return
+      }
+      if (ok) return
       errors += 1
       if (errors >= 3) goOffline()
     }

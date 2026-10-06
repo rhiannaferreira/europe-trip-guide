@@ -81,7 +81,7 @@ function Layers({ stops, legs, over, onPick, picked }) {
   useLayerEvents(['plan-train', 'plan-bus', 'plan-ferry', 'plan-flight'], { click: (f) => onPick(f.properties.i) })
   const key = stops.map((c) => c.id).join(',')
   useEffect(() => {
-    frame(map, stops, { padding: 36, maxZoom: 8, single: 7 })
+    frame(map, stops, { padding: { top: 56, bottom: 56, left: 64, right: 130 }, maxZoom: 8, single: 7 })
   }, [key]) // eslint-disable-line react-hooks/exhaustive-deps
   return null
 }

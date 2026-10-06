@@ -234,7 +234,11 @@ function CityLayer({ cities, routeCities, currentId, onSelectCity }) {
         type: 'circle',
         // At street level the city's dot fades back so its places lead.
         paint: {
-          'circle-radius': ['case', inTrip, z(3, 8.5, 8, 11), ['==', ['get', 'selected'], true], z(3, 6, 8, 8), ['==', ['get', 'major'], true], z(3, 3.6, 8, 6), z(3, 3, 8, 5)],
+          // MapLibre allows one zoom curve per expression, so the size cases sit inside it.
+          'circle-radius': z(
+            3, ['case', inTrip, 8.5, ['==', ['get', 'selected'], true], 6, ['==', ['get', 'major'], true], 3.6, 3],
+            8, ['case', inTrip, 11, ['==', ['get', 'selected'], true], 8, ['==', ['get', 'major'], true], 6, 5],
+          ),
           'circle-color': ['case', inTrip, P.accent, ['==', ['get', 'selected'], true], P.accent, P.card],
           'circle-stroke-color': ['case', inTrip, P.routeCase, ['==', ['get', 'selected'], true], P.routeCase, ['==', ['get', 'gem'], true], P.gem, P.accent],
           'circle-stroke-width': ['case', inTrip, 2.5, 2],

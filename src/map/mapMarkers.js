@@ -1,7 +1,7 @@
 // EuroWander's marker images, drawn once on a canvas and handed to MapLibre as icons. MapLibre's own text
 // can't draw emoji, and DOM markers get slow in the hundreds, so pins are images on a symbol layer.
 //
-// Icons are named by how they look, and drawn the first time a layer asks for one (`styleimagemissing`):
+// Icons are named by how they look, and drawn the first time a layer asks for one (the missing-image resolver):
 //   pin|<theme>|<variant>|<state>|<ring colour>|<emoji>   variant guide|live, state ''|saved|top
 //   heart|<colour>                                         the ♥ badge on saved places
 //   dot|<fill>|<ring>|<size>                               plain round marker (cities, stations)
@@ -122,8 +122,7 @@ export function drawIcon(id) {
 
 // Draws icons on demand for one map. Returns a function that stops listening.
 export function installIcons(map) {
-  const onMissing = (e) => {
-    const id = e.id
+  const resolve = (id) => {
     if (map.hasImage(id)) return
     let c
     try {
@@ -135,6 +134,7 @@ export function installIcons(map) {
     const ctx = c.getContext('2d')
     map.addImage(id, ctx.getImageData(0, 0, c.width, c.height), { pixelRatio: RATIO })
   }
-  map.on('styleimagemissing', onMissing)
-  return () => map.off('styleimagemissing', onMissing)
+  // MapLibre 6 asks a resolver before drawing; the `styleimagemissing` event comes too late to fill in.
+  map.setMissingStyleImageResolver(resolve)
+  return () => map.setMissingStyleImageResolver(null)
 }
