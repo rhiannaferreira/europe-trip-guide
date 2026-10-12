@@ -68,6 +68,14 @@ Routes (GET only): `/api/live/places/search`, `places/details`, `places/geocode`
 
 To change a provider, write a new adapter in `server/live/providers/` that returns the same shapes and import it in `server/live/services.js` in place of the old one; nothing in the app changes.
 
+### Traveler ratings (Tripadvisor Terra, optional)
+
+Geoapify finds places; Tripadvisor only adds a traveler rating to a place card someone opens (`ratings/place`). Nothing else calls it, so the map stays cheap.
+
+- **Matching:** a nearby catalog search (3 results at most) is scored on name similarity and distance (`server/live/match.js`). Only a high-confidence match, confirmed again by the fresh details, shows a rating; otherwise the card says no rating is available.
+- **Terra terms:** nothing is cached except the matched Tripadvisor location ID, so ratings are fetched fresh (`no-store`). Ratings never reach the Copilot. `/api/` is disallowed in robots.txt. The rating sits in its own box with Tripadvisor's rating image, review count and links (More on Tripadvisor, See all photos, Write a review).
+- **Setup:** `TRIPADVISOR_API_KEY` (server-side Secret). `LIVE_DAILY_CAP_TRIPADVISOR` caps calls a day (default 30). Without a key, ratings stay off.
+
 ## Features
 
 - **Explore**: country chips, city cards and a city page (description, cost, popular interests, coordinates).

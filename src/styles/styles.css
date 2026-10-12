@@ -1452,3 +1452,21 @@ a:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent); ou
 @media (max-width: 700px) {
   .ew-card { left: 8px; right: 8px; bottom: 12px; padding: 10px 12px; }
 }
+
+/* Tripadvisor traveler rating: its own box, set apart from EuroWander's and OpenStreetMap's content.
+   Bubbles in Tripadvisor's green (#00B747; Trip Green #00EB5B in dark mode), on white (black in dark). */
+.ta-box { --ta-green: #00b747; --ta-bg: #fff; margin: 8px 0; padding: 8px 10px; border: 1px solid var(--border); border-radius: 10px; background: var(--ta-bg); color: #002b11; font-size: 0.82rem; }
+:root[data-theme="dark"] .ta-box { --ta-green: #00eb5b; --ta-bg: #000; color: #e6e8ea; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .ta-box { --ta-green: #00eb5b; --ta-bg: #000; color: #e6e8ea; } }
+.ta-box a { color: inherit; text-decoration: underline; }
+.ta-loading, .ta-none { color: var(--muted); background: transparent; }
+.ta-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ta-score { font-size: 0.95rem; }
+.ta-rating-img { display: block; height: 20px; width: auto; }
+.ta-bubbles { display: inline-flex; gap: 2px; }
+.ta-bubble { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--ta-green); background: transparent; box-sizing: border-box; }
+.ta-bubble.full { background: var(--ta-green); }
+.ta-bubble.half { background: linear-gradient(90deg, var(--ta-green) 50%, transparent 50%); }
+.ta-line { margin: 4px 0 0; }
+.ta-credit { font-weight: 600; }
+.ta-links { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 6px 0 0; }

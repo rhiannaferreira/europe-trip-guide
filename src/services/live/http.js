@@ -34,18 +34,19 @@ export function liveUrl(route, params = {}) {
 }
 
 // → { data, meta } or throws LiveError.
-export async function liveGet(route, params = {}, { timeout = 15000, fresh = false } = {}) {
+// noStore: never keep the answer, not even for a minute (content whose terms forbid caching).
+export async function liveGet(route, params = {}, { timeout = 15000, fresh = false, noStore = false } = {}) {
   if (typeof navigator !== 'undefined' && navigator.onLine === false) throw new LiveError('offline')
   const url = liveUrl(route, params)
   const hit = memory.get(url)
-  if (!fresh && hit && Date.now() - hit.at < MEMORY_MS) return hit.body
+  if (!fresh && !noStore && hit && Date.now() - hit.at < MEMORY_MS) return hit.body
   if (inflight.has(url)) return inflight.get(url)
   const p = (async () => {
     const controller = new AbortController()
     const timer = setTimeout(() => controller.abort(), timeout)
     let res
     try {
-      res = await fetch(url, { signal: controller.signal, headers: { accept: 'application/json' }, cache: fresh ? 'no-cache' : 'default' })
+      res = await fetch(url, { signal: controller.signal, headers: { accept: 'application/json' }, cache: noStore ? 'no-store' : fresh ? 'no-cache' : 'default' })
     } catch (e) {
       throw new LiveError(e?.name === 'AbortError' ? 'timeout' : 'unavailable')
     } finally {
@@ -60,8 +61,10 @@ export async function liveGet(route, params = {}, { timeout = 15000, fresh = fal
     if (!body || typeof body !== 'object') throw new LiveError(res.status === 404 ? 'not_configured' : 'unavailable')
     if (!body.ok) throw new LiveError(body.error?.code || 'unavailable', body.error?.message)
     const out = { data: body.data, meta: body.meta || {} }
-    memory.set(url, { at: Date.now(), body: out })
-    if (memory.size > 200) memory.delete(memory.keys().next().value)
+    if (!noStore) {
+      memory.set(url, { at: Date.now(), body: out })
+      if (memory.size > 200) memory.delete(memory.keys().next().value)
+    }
     return out
   })().finally(() => inflight.delete(url))
   inflight.set(url, p)

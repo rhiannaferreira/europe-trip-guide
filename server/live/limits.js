@@ -7,7 +7,7 @@
 const WINDOW_MS = 60_000
 const hits = new Map() // `${bucket}:${ip}` -> [timestamps]
 
-export const RATE = { places: 40, suggest: 30, trains: 30, status: 60 }
+export const RATE = { places: 40, suggest: 30, trains: 30, status: 60, ratings: 20 }
 
 export function rateLimited(bucket, ip, max = RATE[bucket] || 30, now = Date.now()) {
   const key = `${bucket}:${ip}`
@@ -24,8 +24,9 @@ export const resetLimits = () => {
 }
 
 // Daily caps, overridable per provider (LIVE_DAILY_CAP_GEOAPIFY=2500 ...). Geoapify's free plan is
-// 3,000 credits a day, so the default stops short of it.
-const DEFAULT_CAPS = { geoapify: 2500, transitous: 3000 }
+// 3,000 credits a day, so the default stops short of it. Tripadvisor is pay per result after a one-time
+// 1,000 free, so its default is small: 30 calls a day (at most ~60 billable results, under $1 a day).
+const DEFAULT_CAPS = { geoapify: 2500, transitous: 3000, tripadvisor: 30 }
 export const dailyCap = (provider) => {
   const v = Number(process.env[`LIVE_DAILY_CAP_${provider.toUpperCase()}`])
   return Number.isInteger(v) && v >= 0 ? v : DEFAULT_CAPS[provider] ?? 1000

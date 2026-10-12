@@ -10,6 +10,7 @@
 //   GET /api/live/trains/stations?q&lat&lng                  → station autocomplete
 //   GET /api/live/trains/journeys?from&to&time&arriveBy&maxTransfers&window&cursor
 //   GET /api/live/trains/status?id&from&to&dep&trips         → latest times for one journey
+//   GET /api/live/ratings/place?name&lat&lng&cat&ta           → Tripadvisor traveler rating for one opened place (never cached)
 //
 // Every answer is { ok: true, data, meta: { provider, retrievedAt, cached, attribution } } or
 // { ok: false, error: { code, message } }. Keys stay here (GEOAPIFY_API_KEY etc., never VITE_), inputs

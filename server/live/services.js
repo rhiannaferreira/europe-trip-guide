@@ -5,15 +5,22 @@
 // writing a new adapter with the same functions and changing these two lines.
 import * as places from './providers/geoapify.js'
 import * as rail from './providers/transitous.js'
+import * as ratings from './providers/tripadvisor.js'
+import { bestMatch, confirm } from './match.js'
 import { createCache } from './cache.js'
 import { ProviderError } from './http.js'
 import { underDailyCap } from './limits.js'
 import { BadInput, bool, coords, intIn, oneOf, opaqueId, providerId, text, when } from './validate.js'
 
-export const PROVIDERS = { places: { id: 'geoapify', mod: places }, rail: { id: 'transitous', mod: rail } }
+export const PROVIDERS = { places: { id: 'geoapify', mod: places }, rail: { id: 'transitous', mod: rail }, ratings: { id: 'tripadvisor', mod: ratings } }
 
 const cache = createCache({ max: 800 })
-export const clearCache = () => cache.clear()
+// Our place → Tripadvisor location ID (the only Tripadvisor data its terms let us keep), or no match.
+const taMatches = createCache({ max: 2000 })
+export const clearCache = () => {
+  cache.clear()
+  taMatches.clear()
+}
 
 const MIN = 60_000
 const HOUR = 60 * MIN
@@ -161,11 +168,61 @@ export const ROUTES = {
 }
 
 // What's switched on, for the browser to decide what to offer. No secrets, just booleans.
+async function capped(provider, fetcher) {
+  if (!(await underDailyCap(provider.id))) throw new ProviderError('cap_reached')
+  return fetcher()
+}
+
+ROUTES['ratings/place'] = {
+  bucket: 'ratings',
+  provider: PROVIDERS.ratings,
+  // Tripadvisor traveler rating for one place someone has opened. Never cached (their terms), so the
+  // answer is no-store; only the matched location ID is remembered, to skip the search next time.
+  async run(q) {
+    if (!ratings.configured()) throw new ProviderError('not_configured')
+    const name = text(q.name, { min: 2, max: 120 })
+    const at = coords(q.lat, q.lng, { decimals: 5 })
+    const kind = oneOf(q.cat, Object.keys(ratings.CATEGORY), null)
+    const known = q.ta ? intIn(q.ta, 1, 2_000_000_000, null) : null
+    const place = { name, ...at }
+    const key = `ta|${name.toLowerCase()}|${at.lat.toFixed(4)},${at.lng.toFixed(4)}`
+
+    // 1. Which Tripadvisor listing is it? (the browser's remembered ID, ours, or a small nearby search)
+    let match = known ? { matched: true, level: 'high', providerId: known, reason: 'remembered match' } : taMatches.get(key)
+    let searched = false
+    if (!match) {
+      const candidates = await capped(PROVIDERS.ratings, () => ratings.nearbyCandidates({ ...at, category: kind ? ratings.CATEGORY[kind] : null }))
+      match = bestMatch(place, candidates)
+      searched = true
+      taMatches.set(key, match, 30 * 24 * HOUR)
+    }
+    if (!match.matched) return { data: { status: 'no_match', confidence: match.confidence, reason: match.reason }, ttl: 0, cached: !searched }
+
+    // 2. Its rating, fresh, and only if the details still describe our place.
+    let details
+    try {
+      details = await capped(PROVIDERS.ratings, () => ratings.locationRating(match.providerId))
+    } catch (e) {
+      // Found in the catalog but not available to this account (Terra allowlist), or gone.
+      if (e?.code === 'not_found') return { data: { status: 'not_available' }, ttl: 0, cached: false }
+      throw e
+    }
+    if (!confirm(place, details, match.level)) {
+      taMatches.set(key, { matched: false, level: 'low', confidence: match.confidence, reason: 'details did not confirm the match' }, 30 * 24 * HOUR)
+      return { data: { status: 'no_match', confidence: match.confidence, reason: 'details did not confirm the match' }, ttl: 0, cached: false }
+    }
+    if (details.rating == null) return { data: { status: 'no_rating', providerId: details.id, url: details.url }, ttl: 0, cached: false }
+    const { names, lat, lng, ...shown } = details
+    return { data: { status: 'rated', confidence: match.confidence, match: match.level, rating: shown }, ttl: 0, cached: false }
+  },
+}
+
 export function health() {
   return {
     places: { provider: PROVIDERS.places.id, enabled: places.configured(), attribution: places.ATTRIBUTION },
     rail: { provider: PROVIDERS.rail.id, enabled: rail.configured(), attribution: rail.ATTRIBUTION },
     events: { provider: 'eurowander', enabled: true },
     weather: { provider: 'open-meteo', enabled: true },
+    ratings: { provider: PROVIDERS.ratings.id, enabled: ratings.configured() },
   }
 }

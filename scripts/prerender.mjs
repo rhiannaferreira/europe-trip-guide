@@ -146,7 +146,8 @@ write(
     .join('\n')}\n</urlset>\n`,
 )
 // Shared trip links carry private notes and are never worth indexing.
-write('robots.txt', `User-agent: *\nAllow: /\nDisallow: /trip\n\nSitemap: ${SITE_URL}/sitemap.xml\n`)
+// /api/ stays out of search engines: Tripadvisor ratings load from there and must not be indexed.
+write('robots.txt', `User-agent: *\nAllow: /\nDisallow: /trip\nDisallow: /api/\n\nSitemap: ${SITE_URL}/sitemap.xml\n`)
 
 console.log(`prerender: ${cities.length} city pages, ${countries.length} country pages, sitemap with ${urls.length} URLs`)
 

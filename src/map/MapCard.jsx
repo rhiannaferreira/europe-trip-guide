@@ -13,6 +13,7 @@ import { stationName } from '../services/live/trains.js'
 import { MapPlaceItem, LiveFoot, directions, tidy } from './MapPlaceItem.jsx'
 import { SourceLabel } from '../components/LiveBits.jsx'
 import { placeIcon } from '../lib/placeIcons.js'
+import TravelerRating from '../components/TravelerRating.jsx'
 
 export function CardShell({ title, onClose, children, className = '' }) {
   const ref = useRef(null)
@@ -46,10 +47,11 @@ export function PlaceCardBody({ place: p, saved, onToggleSave, onFocusPlace }) {
         </span>
         <div>
           <h3 className="ew-card-title">{p.name}</h3>
-          <p className="ew-card-meta">{[city?.name, interest?.label, p.rating != null && `★ ${p.rating.toFixed(1)}`, costLabel(p.costLevel)].filter(Boolean).join(' · ')}</p>
+          <p className="ew-card-meta">{[city?.name, interest?.label, costLabel(p.costLevel)].filter(Boolean).join(' · ')}</p>
         </div>
       </div>
       {p.description && <p className="ew-card-text">{p.description}</p>}
+      <TravelerRating place={p} />
       <div className="ew-card-actions">
         <button type="button" className={`map-tap-btn primary${saved ? ' saved' : ''}`} onClick={() => onToggleSave(p.id)} aria-pressed={saved}>
           {saved ? '♥ Saved' : '♡ Save'}
@@ -79,6 +81,7 @@ export function LiveCardBody({ place, saved, onToggleSave, fame }) {
   return (
     <div className="map-tap">
       <MapPlaceItem place={place} saved={saved} onToggleSave={onToggleSave} source="map_layer" fame={fame} />
+      <TravelerRating place={place} />
       <LiveFoot />
     </div>
   )
