@@ -4,6 +4,7 @@ import { placeById } from '../data/places.js'
 import { formatDuration } from '../lib/format.js'
 import { formatDay, travelDayAdvice } from '../utils/tripCalculations.js'
 import { modeIcon } from './ItineraryDay.jsx'
+import FlightOption from './FlightOption.jsx'
 
 const flagOf = (city) => countryByCode[city.country].flag
 
@@ -32,6 +33,7 @@ function UndatedTimeline({ stops, legs }) {
                 {i > 0 && legs[i - 1] && (
                   <div className="tl-travel-row">
                     {legs[i - 1].from.name} → {city.name} <LegLine leg={legs[i - 1]} />
+                    <FlightOption leg={legs[i - 1]} />
                   </div>
                 )}
                 <div className="tl-city">

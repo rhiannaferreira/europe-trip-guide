@@ -7,6 +7,7 @@ import { addStop, anotherOption, changeNights, moveStop, regenerateFrom, removeS
 import { modeIcon, sourceLabel } from '../planner/transport.js'
 import DataBadge from './DataBadge.jsx'
 import TrainSearchModal from '../components/TrainSearch.jsx'
+import FlightOption from '../components/FlightOption.jsx'
 import { hasRail } from '../services/live/trains.js'
 import { useLiveEnabled } from '../components/LiveBits.jsx'
 
@@ -37,6 +38,7 @@ function Leg({ leg, limit, date = '' }) {
         {leg.isReturn && ` back to ${leg.to.name}`}
         {leg.note && <small className="leg-note">{leg.note}</small>}
         {over && <small className="leg-note warn-text">Longer than your {formatDuration(limit)} limit</small>}
+        <FlightOption leg={leg} date={date} />
       </span>
       <DataBadge kind="estimate" title={`${sourceLabel(leg.source)}. Not a live timetable.`} />
       {canSearch && (

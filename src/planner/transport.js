@@ -54,7 +54,7 @@ export function legBetween(fromId, toId, { transport = 'train' } = {}) {
       km: g.km,
       minutes: fly,
       mode: 'flight',
-      note: 'Rough door-to-door estimate including airports. No flight data in Eurowander.',
+      note: 'Rough door-to-door estimate including airports. Not a live schedule or fare.',
       estimated: true,
       source: 'flight-estimate',
       groundMinutes: g.minutes,

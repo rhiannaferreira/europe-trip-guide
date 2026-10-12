@@ -36,6 +36,8 @@ export const EVENTS = [
   'live_trains_searched',
   'live_train_saved',
   'live_data_failed',
+  // Flights: only which cities, never a date or anything typed.
+  'flight_search',
 ]
 const allowed = new Set(EVENTS)
 

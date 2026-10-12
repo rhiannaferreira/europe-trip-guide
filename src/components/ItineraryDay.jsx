@@ -8,6 +8,7 @@ import { optimizeDay } from '../utils/routeOptimizer.js'
 import { formatDistance } from '../utils/distance.js'
 import DayPicker from './DayPicker.jsx'
 import TrainSearchModal from './TrainSearch.jsx'
+import FlightOption from './FlightOption.jsx'
 import { SourceLabel, useLiveEnabled } from './LiveBits.jsx'
 import { misdatedJourney, pickedJourney } from '../travel/travelModel.js'
 import { stationName } from '../services/live/trains.js'
@@ -99,6 +100,7 @@ export default function ItineraryDay({ day, entry, days, unscheduled, trip, sele
               </button>
             </span>
           )}
+          <FlightOption leg={day.leg} date={dayIso} />
         </div>
       )}
       {trains && (
