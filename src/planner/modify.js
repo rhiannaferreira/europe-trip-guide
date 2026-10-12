@@ -241,6 +241,52 @@ export function moreInterest(plan, interest) {
   return done(withPref, `No nearby swap adds much ${def.label.toLowerCase()}, so the cities stay. Day plans will now include more of it.`)
 }
 
+// A different trip length ("make it 7 days"): the same route with nights scaled to fit, in proportion to
+// the stays it had. When there are too few nights for every stop (fewer than 2 per stop, allowing one
+// 1-night stop), the stops that add least are dropped first, never the first stop or one the traveller
+// chose. `keepAll` keeps every city instead (down to 1 night each) when that's possible.
+export function fitToDays(plan, days, { keepAll = false } = {}) {
+  const target = Math.max(1, Math.min(45, Math.round(days)))
+  const current = planTotals(plan).days
+  if (target === current) return same(plan, `The trip is already ${target} days.`)
+  const nights = target - 1
+  let stops = plan.stops.map((s) => ({ ...s }))
+  const dropped = []
+  const enough = (n) => (keepAll ? nights >= n : nights >= 2 * n - 1)
+  while (stops.length > 1 && !enough(stops.length)) {
+    const savings = Object.fromEntries(removalSavings(withStops(plan, stops)).map((x) => [x.index, x.savedMinutes]))
+    const candidates = stops
+      .map((s, index) => ({ s, index, value: scoreCity(cityById[s.cityId], plan.prefs).score - (savings[index] || 0) / 75 + s.nights * 0.3 }))
+      .filter(({ s, index }) => index > 0 && !locked(s))
+    if (!candidates.length) break
+    const drop = candidates.sort((a, b) => a.value - b.value)[0]
+    dropped.push(drop.s.cityId)
+    stops = stops.filter((_, i) => i !== drop.index)
+  }
+  if (keepAll && nights < stops.length - 1) return same(plan, `${target} days is too short for every city on this route.`)
+  // Largest remainder: each stop keeps its share of the nights, at least 1 where there are nights to give.
+  const before = stops.reduce((n, s) => n + s.nights, 0) || stops.length
+  const share = stops.map((s) => ((s.nights || 1) / before) * nights)
+  const floor = Math.min(1, Math.floor(nights / stops.length))
+  const out = share.map((x) => Math.max(floor, Math.floor(x)))
+  let left = nights - out.reduce((a, b) => a + b, 0)
+  const order = share.map((x, i) => ({ i, r: x - Math.floor(x) })).sort((a, b) => b.r - a.r || a.i - b.i)
+  for (let k = 0; left > 0; k++, left--) out[order[k % order.length].i]++
+  for (let k = order.length - 1; left < 0 && k >= -order.length * 30; k--) {
+    const i = order[((k % order.length) + order.length) % order.length].i
+    if (out[i] > 1) {
+      out[i]--
+      left++
+    }
+  }
+  stops = stops.map((s, i) => ({ ...s, nights: out[i] }))
+  const next = withStops(plan, stops)
+  const route = stops.map((s) => `${name(s.cityId)} ${s.nights}`).join(', ')
+  const names = dropped.map(name)
+  const lost = names.length ? ` Dropped ${names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}` : names[0]} to keep at least two nights in most places.` : ''
+  return done(next, `Now ${target} days (nights: ${route}).${lost}`)
+}
+
 // Re-plan every stop from `index` on, keeping the ones before it (and a chosen end city).
 export function regenerateFrom(plan, index) {
   if (index <= 0) {
@@ -313,6 +359,8 @@ export function applyChange(plan, change) {
       return moveStop(plan, change.index, change.delta)
     case 'regenerate_from':
       return regenerateFrom(plan, change.index)
+    case 'set_length':
+      return fitToDays(plan, change.days, { keepAll: change.keepAll })
     default:
       return same(plan, 'Nothing to change.')
   }

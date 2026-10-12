@@ -12,6 +12,7 @@ import { Link, cityPath, countryPath } from '../lib/router.jsx'
 import { setPageMeta } from '../lib/meta.js'
 import Thumb from '../components/Thumb.jsx'
 import InstallButton from '../components/InstallButton.jsx'
+import TemplateCards from '../templates/TemplateCards.jsx'
 
 // Start downloading the planner while people read, so "Start exploring" opens instantly.
 const preloadPlanner = () => import('../App.jsx')
@@ -86,6 +87,7 @@ export default function Landing() {
         <nav aria-label="Main">
           <Link to="/explore">Explore</Link>
           <Link to="/build">Build a trip</Link>
+          <Link to="/trip-ideas">Trip ideas</Link>
           <Link to="/trip">{saved ? `My trip (${saved.count})` : 'My trip'}</Link>
           <InstallButton className="link-btn install-link" />
         </nav>
@@ -100,19 +102,32 @@ export default function Landing() {
             <p className="hero-sub">
               Find places worth seeing, swap the crowded favourites for hidden gems, and stitch cities in different countries into one trip, planned day by day.
             </p>
-            <div className="hero-actions">
-              <Link to="/build" className="btn btn-primary btn-lg" onMouseEnter={preloadBuilder} onFocus={preloadBuilder}>
-                Build my Europe trip
+            <div className="start-options" role="group" aria-label="Two ways to begin">
+              <Link to="/build" className="start-option start-option-build" onMouseEnter={preloadBuilder} onFocus={preloadBuilder}>
+                <span className="start-option-icon" aria-hidden="true">
+                  ✨
+                </span>
+                <strong>Build my trip</strong>
+                <span>Tell Eurowander where you want to go.</span>
               </Link>
-              <Link to="/explore" className="btn btn-lg" onMouseEnter={preloadPlanner} onFocus={preloadPlanner}>
+              <a href="#trip-ideas" className="start-option">
+                <span className="start-option-icon" aria-hidden="true">
+                  🗺️
+                </span>
+                <strong>Start with a trip</strong>
+                <span>Explore ready-made itineraries and customize them.</span>
+              </a>
+            </div>
+            <div className="hero-actions hero-actions-small">
+              <Link to="/explore" className="btn" onMouseEnter={preloadPlanner} onFocus={preloadPlanner}>
                 Start exploring
               </Link>
               {saved ? (
-                <Link to="/trip" className="btn btn-lg">
+                <Link to="/trip" className="btn">
                   Continue {saved.name} ({saved.count} {saved.count === 1 ? 'city' : 'cities'})
                 </Link>
               ) : (
-                <a href="#sample-route" className="btn btn-lg">
+                <a href="#sample-route" className="btn">
                   See a sample route
                 </a>
               )}
@@ -136,6 +151,8 @@ export default function Landing() {
             })}
           </div>
         </section>
+
+        <TemplateCards />
 
         <section className="pillars" aria-labelledby="pillars-title">
           <h2 id="pillars-title">What makes Eurowander different</h2>

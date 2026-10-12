@@ -74,6 +74,7 @@ Discovery (no trip needed):
 
 Changes and questions about the open trip (only when trip is not null; targetCity is a city already in the trip):
 - add_city (city, or leave empty for ideas), remove_city (targetCity), replace_city (targetCity, city if they named the replacement, hiddenGems for quieter, criterion cheapest for cheaper), change_nights (targetCity with nights or delta).
+- set_length: the whole open trip at a new length, keeping its route ("make this 7 days", "shorten it to a week" → tripDays 7). Never build_trip for this when a trip is open.
 - optimize_route, make_relaxed ("too rushed, slow it down"), reduce_travel (less train time), make_cheaper (amount if they gave one), more_gems, more_interest (interests).
 - plan_day, lighten_day ("less busy"), optimize_day: one day (day).
 - move_place_to_day: place and day. move_category_to_day: category and day. rain_plan: move outdoor plans off rainy days (day if named).

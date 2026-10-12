@@ -36,6 +36,15 @@ export const EVENTS = [
   'live_trains_searched',
   'live_train_saved',
   'live_data_failed',
+  // Ready-made trips (templates). Only the template's id, where it was opened from and small flags; never
+  // the traveller's own copy of the trip.
+  'trip_template_viewed',
+  'trip_template_opened',
+  'trip_template_customize_clicked',
+  'trip_template_saved',
+  'trip_template_shared',
+  'trip_template_ai_customize',
+  'template_filter_used',
 ]
 const allowed = new Set(EVENTS)
 

@@ -12,6 +12,10 @@ import { interestById } from '../src/data/interests.js'
 import { SITE_URL, SITE_NAME, DEFAULT_DESCRIPTION } from '../src/lib/meta.js'
 import { cityMeta, countryMeta } from '../src/lib/pageMeta.js'
 import { connectionsFrom } from '../src/utils/cityInfo.js'
+import { tripTemplates, templateDayCount, templatePath } from '../src/data/tripTemplates.js'
+import { CITY_DAYS, TEMPLATE_DETAILS } from '../src/data/templateDays.js'
+import { IDEAS_META, templateMeta } from '../src/templates/templateMeta.js'
+import { tripLegs } from '../src/lib/trip.js'
 import { formatDuration } from '../src/lib/format.js'
 
 const dist = path.resolve('dist')
@@ -45,7 +49,7 @@ const crumbs = (items) => ({
   itemListElement: items.map(([name, p], i) => ({ '@type': 'ListItem', position: i + 1, name, item: SITE_URL + p })),
 })
 
-const nav = `<nav class="prerender-nav"><a href="/">Eurowander</a> · <a href="/explore">Explore</a> · <a href="/build">Build a trip</a> · <a href="/trip">My trip</a></nav>`
+const nav = `<nav class="prerender-nav"><a href="/">Eurowander</a> · <a href="/explore">Explore</a> · <a href="/build">Build a trip</a> · <a href="/trip-ideas">Trip ideas</a> · <a href="/trip">My trip</a></nav>`
 
 for (const city of cities) {
   const meta = cityMeta(city)
@@ -116,6 +120,62 @@ write(
   }),
 )
 
+// Ready-made trips: the list, and a page per trip with its route, nights, journeys and day ideas.
+const cityName = (id) => cities.find((c) => c.id === id).name
+write(
+  'trip-ideas.html',
+  page({
+    ...IDEAS_META,
+    body: `<main class="prerender">${nav}<h1>Ready-made Europe trips</h1><p>${esc(IDEAS_META.description)}</p><ul>${tripTemplates
+      .map((t) => `<li><a href="${templatePath(t)}">${esc(t.title)}</a>: ${esc(t.stops.map((s) => cityName(s.cityId)).join(' → '))}. ${esc(t.description)}</li>`)
+      .join('')}</ul></main>`,
+    jsonLd: {
+      '@context': 'https://schema.org',
+      '@type': 'ItemList',
+      name: 'Ready-made Europe trips',
+      itemListElement: tripTemplates.map((t, i) => ({ '@type': 'ListItem', position: i + 1, url: SITE_URL + templatePath(t), name: t.title })),
+    },
+  }),
+)
+for (const t of tripTemplates) {
+  const meta = templateMeta(t)
+  const legs = tripLegs(t.stops.map((s) => s.cityId))
+  const details = TEMPLATE_DETAILS[t.id] || { intro: t.description, highlights: [] }
+  let day = 1
+  const stops = t.stops.map((s, i) => {
+    const from = day
+    const to = day + s.nights - 1
+    day += s.nights
+    const outline = (CITY_DAYS[s.cityId] || []).slice(0, s.nights)
+    const leg = legs[i]
+    return `<li><h3>${esc(cityName(s.cityId))}: ${from === to ? `day ${from}` : `days ${from}–${to}`} (${s.nights} night${s.nights === 1 ? '' : 's'})</h3><ul>${outline
+      .map((d) => `<li><strong>${esc(d.title)}</strong>${d.ideas.length ? `: ${esc(d.ideas.join(', '))}` : ''}</li>`)
+      .join('')}</ul>${leg ? `<p>Then ${leg.mode === 'bus' ? 'bus' : 'train'} to ${esc(leg.to.name)}, about ${formatDuration(leg.minutes)} (typical time).</p>` : ''}</li>`
+  })
+  const body = `<main class="prerender">${nav}
+<h1>${esc(t.title)}</h1>
+<p><strong>${esc(t.stops.map((s) => cityName(s.cityId)).join(' → '))}</strong> · ${templateDayCount(t)} days</p>
+<p>${esc(details.intro)}</p>
+${details.highlights.length ? `<h2>Highlights</h2><ul>${details.highlights.map((h) => `<li>${esc(h)}</li>`).join('')}</ul>` : ''}
+<h2>Day by day</h2><ol>${stops.join('')}<li><h3>Day ${templateDayCount(t)}</h3><p>Departure, or a free day.</p></li></ol>
+<p><a href="/trip-ideas">More trip ideas</a> · <a href="/build">Build your own trip</a></p></main>`
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'TouristTrip',
+        name: t.title,
+        description: meta.description,
+        url: SITE_URL + meta.path,
+        touristType: t.tags,
+        itinerary: { '@type': 'ItemList', itemListElement: t.stops.map((s, i) => ({ '@type': 'ListItem', position: i + 1, item: { '@type': 'City', name: cityName(s.cityId), url: `${SITE_URL}/city/${s.cityId}` } })) },
+      },
+      crumbs([['Eurowander', '/'], ['Trip ideas', '/trip-ideas'], [t.title, meta.path]]),
+    ],
+  }
+  write(`trip-ideas/${t.slug}.html`, page({ ...meta, body, jsonLd }))
+}
+
 // The app's private pages get a file too, so opening or refreshing them never depends on the
 // catch-all rewrite. They hold personal trip data, so search engines are asked to skip them.
 const noindex = (html) => html.replace('</head>', '    <meta name="robots" content="noindex" />\n  </head>')
@@ -138,7 +198,7 @@ write(
 )
 
 const today = new Date().toISOString().slice(0, 10)
-const urls = ['/', '/build', '/explore', ...countries.map((c) => countryMeta(c.code).path), ...cities.map((c) => cityMeta(c).path)]
+const urls = ['/', '/build', '/explore', '/trip-ideas', ...tripTemplates.map(templatePath), ...countries.map((c) => countryMeta(c.code).path), ...cities.map((c) => cityMeta(c).path)]
 write(
   'sitemap.xml',
   `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls
@@ -146,7 +206,8 @@ write(
     .join('\n')}\n</urlset>\n`,
 )
 // Shared trip links carry private notes and are never worth indexing.
-write('robots.txt', `User-agent: *\nAllow: /\nDisallow: /trip\n\nSitemap: ${SITE_URL}/sitemap.xml\n`)
+// `Disallow: /trip` would also match /trip-ideas, so the trip ideas are allowed by name (the longer rule wins).
+write('robots.txt', `User-agent: *\nAllow: /\nAllow: /trip-ideas\nDisallow: /trip\n\nSitemap: ${SITE_URL}/sitemap.xml\n`)
 
-console.log(`prerender: ${cities.length} city pages, ${countries.length} country pages, sitemap with ${urls.length} URLs`)
+console.log(`prerender: ${cities.length} city pages, ${countries.length} country pages, ${tripTemplates.length} trip ideas, sitemap with ${urls.length} URLs`)
 

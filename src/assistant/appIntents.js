@@ -313,10 +313,20 @@ export function parseAppIntent(text, ctx = {}) {
       return act('places_near', { category: CATEGORY_OF[interests[0]] || (/\blunch|dinner|eat\b/.test(t) ? 'food' : 'none'), day: /\b(saved)\b/.test(t) ? null : dayField })
     }
     if (after && /\b(add|something|find|lunch|dinner|coffee|what to do)\b/.test(t) && !cityIds.length) return act('places_near', { place: after[2], category: /\blunch|dinner|eat|coffee\b/.test(t) ? 'food' : CATEGORY_OF[interests[0]] || 'none' })
+    // "Make this 7 days", "shorten it to a week", "make my trip 2 weeks": the same route at a new length.
+    if (days && !memory.draft && !cityIds.length && /\b(make|cut|shorten|extend|lengthen|change|turn|reduce|trim|stretch)\b/.test(t) && !/\b(add|more|extra|another)\b.*\b(days?|nights?)\b.*\b(in|at)\b/.test(t)) {
+      return act('set_length', { tripDays: days })
+    }
     if (/\b(remove|drop|cut|skip) (a|one) (city|stop)\b/.test(t)) return act('remove_city')
     if (/\badd (a |one )?(hidden gem|gem|quieter (city|place))\b/.test(t)) return act('more_gems')
     if (/\bwhat'?s the weather\b|\bweather (during|for|on)\b|\bgoing to rain\b|\bwill it rain\b|\bforecast\b/.test(t)) return act('trip_question', { question: 'weather', day: dayField })
     if (notInTrip[0] && !inTrip.length && /\b(add|include|also visit|squeeze in|fit in)\b/.test(t)) return act('add_city', { city: name(notInTrip[0]) })
+    // "Keep Rome and Florence but add Switzerland", "add another country".
+    if (!notInTrip.length && /\b(add|include|also visit|squeeze in|fit in)\b/.test(t)) {
+      const fresh = codes.filter((c) => !tripIds.some((id) => cityById[id].country === c))
+      if (fresh.length) return act('add_city', { country: countries.find((c) => c.code === fresh[0]).name })
+      if (/\b(another|a different|a new|one more|second|extra) country\b/.test(t)) return act('add_city', { otherCountry: true })
+    }
     if (/\boptimi[sz]e (my |the )?(route|order)\b|\bbest order\b/.test(t)) return act('optimize_route')
     // The planner's older reader is for short commands; long, nuanced messages are left to the AI.
     const old = t.split(/\s+/).length <= 14 ? parseIntent(text, { plan: handle.plan, timeline: handle.days }) : { action: 'unknown' }

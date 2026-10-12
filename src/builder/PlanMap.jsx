@@ -12,25 +12,28 @@ const MODE_STYLE = {
   flight: { color: '#6a4c93', dashArray: '10 8' },
 }
 
-function FitRoute({ points }) {
+function FitRoute({ points, focus = null }) {
   const map = useMap()
   const key = points.map((p) => p.join(',')).join(';')
   useEffect(() => {
-    if (points.length === 1) map.setView(points[0], 7)
+    if (focus) map.setView(focus, 10)
+    else if (points.length === 1) map.setView(points[0], 7)
     else if (points.length > 1) map.fitBounds(points, { padding: [30, 30], maxZoom: 8 })
-  }, [key]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [key, focus?.join(',')]) // eslint-disable-line react-hooks/exhaustive-deps
   return null
 }
 
 // The generated route: numbered stops and one line per journey, styled by how you travel.
-export default function PlanMap({ stops, legs, overLimit = [] }) {
+// `focusId`: a stop to zoom to (otherwise the whole route fits).
+export default function PlanMap({ stops, legs, overLimit = [], focusId = null }) {
   const points = stops.map((c) => [c.lat, c.lng])
+  const focused = stops.find((c) => c.id === focusId)
   const over = new Set(overLimit.map((l) => `${l.from.id}-${l.to.id}`))
   return (
     <div className="plan-map">
       <MapContainer center={[48.5, 8]} zoom={4} className="map" scrollWheelZoom={false} aria-label="Map of the route">
         <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-        <FitRoute points={points} />
+        <FitRoute points={points} focus={focused ? [focused.lat, focused.lng] : null} />
         {legs.map((l) => {
           const style = MODE_STYLE[l.mode] || MODE_STYLE.train
           const tooLong = over.has(`${l.from.id}-${l.to.id}`)

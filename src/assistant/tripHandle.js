@@ -128,9 +128,10 @@ export function tripMode(handle, today) {
 // A key that changes whenever the trip does, so an old proposal can't be applied to a newer trip.
 export const tripKey = (handle) => (handle ? JSON.stringify([handle.kind, handle.plan.stops.map((s) => [s.cityId, s.nights]), handle.plan.prefs.startDate, handle.days.map((d) => d.items.map((it) => it.placeId))]) : '')
 
-// The open trip, or null. `builder` is what the Build page registered (assistant/bridge.js).
+// The open trip, or null. `builder` is what the Build page registered (assistant/bridge.js); a ready-made
+// trip's page registers its own copy of the trip the same way, so changes land there, never in the template.
 export function openTripHandle({ route, builder, trip = readSavedTrip(), budget } = {}) {
-  if (route?.name === 'build' && builder?.plan) {
+  if ((route?.name === 'build' || route?.name === 'tripIdea') && builder?.plan) {
     const plan = builder.plan
     return {
       kind: 'built',

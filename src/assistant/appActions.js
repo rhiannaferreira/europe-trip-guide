@@ -39,6 +39,8 @@ export const TRIP_ACTIONS = [
   'remove_city',
   'replace_city',
   'change_nights',
+  // A different length for the whole trip ("make it 7 days"): the same route, nights rescaled.
+  'set_length',
   'optimize_route',
   'make_relaxed',
   'reduce_travel',
@@ -85,7 +87,7 @@ export const APP_ACTION_SCHEMA = {
     category: { type: 'string', enum: [...CATEGORIES, 'none'], description: 'Kind of place: suggest_places, places_near, move_category_to_day' },
     hiddenGems: { type: 'boolean', description: 'They want less touristy / quieter / underrated' },
     month: num('A month 1-12 they mentioned, e.g. October = 10'),
-    tripDays: num('build_trip: trip length in days (weeks × 7)'),
+    tripDays: num('build_trip: trip length in days (weeks × 7); set_length: the new length of the open trip in days'),
     startDate: str('build_trip: YYYY-MM-DD for a specific date, else empty'),
     pace: { type: 'string', enum: [...PACE_IDS, 'none'] },
     budget: num('build_trip: total budget for everyone'),
@@ -252,6 +254,10 @@ export function validateAppAction(raw, ctx = {}) {
       if (a.startCity) a.cities = a.cities.filter((c) => c !== a.startCity)
       if (city && !a.cities.includes(city) && city !== a.startCity) a.cities.push(city)
       break
+    case 'set_length':
+      a.tripDays = int(raw.tripDays, 1, 45)
+      if (!a.tripDays) return { ok: false, error: 'How many days should the trip be?' }
+      break
     case 'save_place': {
       if (!given(raw.place)) return { ok: false, error: 'Which place?' }
       const place = resolvePlace(raw.place, { cityId: city, prefer: [...tripIds, pageCityId].filter(Boolean) })
@@ -264,9 +270,12 @@ export function validateAppAction(raw, ctx = {}) {
 
     // ----- Trip changes and questions -----
     case 'add_city':
-      if (!city && !a.interests.length && !a.hiddenGems) return { ok: false, error: 'Which city should I add?' }
       if (city && inTrip(city)) return { ok: false, error: `${cityById[city].name} is already in your trip.` }
       a.city = city
+      // With no city named: ideas, optionally in one country ("add Switzerland") or in a country the trip
+      // doesn't visit yet ("add another country", from the rules).
+      a.country = city ? null : country
+      a.otherCountry = !city && !country && raw.otherCountry === true
       a.nights = int(raw.nights, 1, 14)
       break
     case 'remove_city':

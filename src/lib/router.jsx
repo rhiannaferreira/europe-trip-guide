@@ -11,6 +11,8 @@ import { useEffect, useState } from 'react'
 //   /trip                  the planner, scrolled to My Trip
 //   /build                 Build My Europe Trip: generate a whole trip from preferences
 //   /travel                Travel Mode: My trip while you're on it (today, next up, nearby)
+//   /trip-ideas            ready-made trips (templates), with filters
+//   /trip-ideas/:slug      one ready-made trip
 //   /trip#share=...        a shared trip link (the trip is packed into the part after #, so it never reaches a server)
 export const HASH_MODE = Boolean(import.meta.env.VITE_PREVIEW)
 
@@ -34,6 +36,8 @@ export function parseRoute(fullPath) {
   if (parts[0] === 'explore' && parts.length === 1) return { name: 'explore' }
   if (parts[0] === 'build' && parts.length === 1) return { name: 'build' }
   if (parts[0] === 'travel' && parts.length === 1) return { name: 'travel' }
+  if (parts[0] === 'trip-ideas' && parts.length === 1) return { name: 'tripIdeas' }
+  if (parts[0] === 'trip-ideas' && parts.length === 2) return { name: 'tripIdea', slug: parts[1].toLowerCase() }
   if (parts[0] === 'city' && parts.length === 2) return { name: 'city', id: parts[1].toLowerCase() }
   if (parts[0] === 'country' && parts.length === 2) return { name: 'country', code: parts[1].toUpperCase() }
   if (parts[0] === 'trip' && parts.length === 1) return { name: 'trip', share }

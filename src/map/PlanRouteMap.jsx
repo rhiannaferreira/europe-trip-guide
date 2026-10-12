@@ -13,7 +13,7 @@ import { CardShell } from './MapCard.jsx'
 const BOLD = ['Noto Sans Bold']
 const z = (...stops) => ['interpolate', ['linear'], ['zoom'], ...stops]
 
-function Layers({ stops, legs, over, onPick, picked }) {
+function Layers({ stops, legs, over, onPick, picked, focusId }) {
   const { map } = useEWMap()
   const lines = useMemo(
     () => collection(legs.map((l, i) => line(arc(l.from, l.to), { i, mode: l.mode, home: Boolean(l.isReturn), over: over.has(`${l.from.id}-${l.to.id}`), picked: picked === i }))),
@@ -80,20 +80,23 @@ function Layers({ stops, legs, over, onPick, picked }) {
   ])
   useLayerEvents(['plan-train', 'plan-bus', 'plan-ferry', 'plan-flight'], { click: (f) => onPick(f.properties.i) })
   const key = stops.map((c) => c.id).join(',')
+  // A picked stop (focusId) gets the map to itself; otherwise the whole route fits.
+  const focused = focusId ? stops.find((c) => c.id === focusId) : null
   useEffect(() => {
-    frame(map, stops, { padding: { top: 56, bottom: 56, left: 64, right: 130 }, maxZoom: 8, single: 7 })
-  }, [key]) // eslint-disable-line react-hooks/exhaustive-deps
+    if (focused) frame(map, [focused], { single: 10 })
+    else frame(map, stops, { padding: { top: 56, bottom: 56, left: 64, right: 130 }, maxZoom: 8, single: 7 })
+  }, [key, focused?.id]) // eslint-disable-line react-hooks/exhaustive-deps
   return null
 }
 
-export default function PlanRouteMap({ stops, legs, overLimit = [] }) {
+export default function PlanRouteMap({ stops, legs, overLimit = [], focusId = null }) {
   const over = useMemo(() => new Set(overLimit.map((l) => `${l.from.id}-${l.to.id}`)), [overLimit])
   const [picked, setPicked] = useState(null)
   const leg = picked != null ? legs[picked] : null
   return (
     <div className="plan-map">
       <EuroWanderMap scrollZoom={false} label="Map of the route. Every stop and journey is also listed in the plan.">
-        <Layers stops={stops} legs={legs} over={over} picked={picked} onPick={setPicked} />
+        <Layers stops={stops} legs={legs} over={over} picked={picked} onPick={setPicked} focusId={focusId} />
         {leg && (
           <CardShell title={`${leg.from.name} to ${leg.to.name}`} onClose={() => setPicked(null)}>
             <div className="ew-card-head">

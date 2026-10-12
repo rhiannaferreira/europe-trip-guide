@@ -34,9 +34,27 @@ function load() {
     plan: validPlan(saved.plan) ? saved.plan : null,
     notes: Array.isArray(saved.notes) ? saved.notes : [],
     history: Array.isArray(saved.history) ? saved.history.filter(validPlan).slice(-HISTORY) : [],
+    message: typeof saved.message === 'string' ? saved.message : '',
     daysPlanned: Boolean(saved.daysPlanned),
     dayEdits: saved.dayEdits && typeof saved.dayEdits.key === 'string' && Array.isArray(saved.dayEdits.days) ? saved.dayEdits : null,
   }
+}
+
+// Open a plan made elsewhere (a ready-made trip) on the Build page, with its day plans. Whatever the Build
+// page held before goes into Undo, so nothing is lost. Call before navigating to /build.
+export function loadPlanIntoBuilder(plan, days = null, { message = '' } = {}) {
+  const current = load()
+  const input = { ...defaultPreferences(), ...current.input, days: plan.prefs.days, startDate: plan.prefs.startDate, endDate: '', interests: plan.prefs.interests, pace: plan.prefs.pace, transport: plan.prefs.transport, startCityId: plan.prefs.startCityId, endCityId: '', mustVisit: [], includeCountries: [] }
+  writeJSON(KEYS.builder, {
+    ...current,
+    input,
+    plan,
+    notes: [],
+    history: current.plan ? [...current.history, current.plan].slice(-HISTORY) : current.history,
+    message,
+    daysPlanned: Boolean(days),
+    dayEdits: days ? { key: planKey(plan), days } : null,
+  })
 }
 
 export function usePlanner() {

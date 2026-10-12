@@ -1,6 +1,7 @@
 import { Component, Suspense, lazy, useEffect } from 'react'
 import { cityById } from './data/cities.js'
 import { countryByCode } from './data/countries.js'
+import { templateBySlug } from './data/tripTemplates.js'
 import { useRoute } from './lib/router.jsx'
 import { setPageMeta } from './lib/meta.js'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
@@ -16,6 +17,9 @@ const App = lazy(() => import('./App.jsx'))
 const BuilderPage = lazy(() => import('./builder/BuilderPage.jsx'))
 // Travel Mode too: it loads the trip, today's places and (only when its Map tab opens) Leaflet.
 const TravelPage = lazy(() => import('./travel/TravelPage.jsx'))
+// Ready-made trips: the list, and one trip's page (with the planner rules and day ideas it needs).
+const TripIdeasPage = lazy(() => import('./templates/TripIdeasPage.jsx'))
+const TemplatePage = lazy(() => import('./templates/TemplatePage.jsx'))
 
 // What browsers (and Vite's preloader) say when a page's code or styles couldn't be downloaded.
 const isLoadError = (error) =>
@@ -58,13 +62,14 @@ function Missing({ route }) {
   useEffect(() => setPageMeta({ title: 'Not found', path: route.path || '/' }), [route.path])
   if (route.name === 'city') return <NotFound what="city" suggestion={`There's no city called “${route.id}” in the guide yet. Browse the cities we cover instead.`} />
   if (route.name === 'country') return <NotFound what="country" suggestion="That country isn't in the guide yet. Browse the countries we cover instead." />
+  if (route.name === 'tripIdea') return <NotFound what="trip idea" suggestion="That ready-made trip isn't here. See all the trip ideas instead." />
   return <NotFound />
 }
 
 export default function Root() {
   const route = useRoute()
   const known =
-    (route.name !== 'city' || cityById[route.id]) && (route.name !== 'country' || countryByCode[route.code]) && route.name !== 'notfound'
+    (route.name !== 'city' || cityById[route.id]) && (route.name !== 'country' || countryByCode[route.code]) && (route.name !== 'tripIdea' || templateBySlug[route.slug]) && route.name !== 'notfound'
 
   return (
     <ErrorBoundary>
@@ -83,6 +88,12 @@ export default function Root() {
           <ChunkBoundary>
             <Suspense fallback={<PageLoading />}>
               <TravelPage />
+            </Suspense>
+          </ChunkBoundary>
+        ) : (route.name === 'tripIdeas' || route.name === 'tripIdea') && known ? (
+          <ChunkBoundary>
+            <Suspense fallback={<PageLoading label="Loading trip ideas…" />}>
+              {route.name === 'tripIdeas' ? <TripIdeasPage /> : <TemplatePage slug={route.slug} />}
             </Suspense>
           </ChunkBoundary>
         ) : known ? (

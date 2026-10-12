@@ -14,7 +14,7 @@ import { runAction } from '../planner/assistant/run.js'
 import { planBudget } from '../planner/budget.js'
 import { dayCapacity, dayLoad, planDays } from '../planner/dayPlanner.js'
 import { computeStats, feasibilityWarnings } from '../planner/feasibility.js'
-import { addStop, applyChange, changeNights, removeStop, replaceStop } from '../planner/modify.js'
+import { addStop, applyChange, changeNights, fitToDays, removeStop, replaceStop } from '../planner/modify.js'
 import { planLegs, stopDays } from '../planner/plan.js'
 import { classifyForecast } from '../planner/weatherPlan.js'
 import { tripKey } from './tripHandle.js'
@@ -122,10 +122,20 @@ export function runTripAction(a, ctx) {
         if (!r.changed) return { text: r.summary }
         return { text: `Adding ${cityName(a.city)}. Here’s how the trip would look:`, blocks: [optionsBlock(handle, [option(handle, r.summary, r.plan)])], followUps: [keep], sources: ['estimate'] }
       }
-      const ideas = additionIdeas(plan, { interest: a.interests[0] || null, gemsOnly: a.hiddenGems, limit: 3 })
-      if (!ideas.length) return { text: 'No city fits this route well enough to add.' }
+      const have = new Set(plan.stops.map((s) => cityById[s.cityId].country))
+      const inCountry = (id) => (a.country ? cityById[id].country === a.country : a.otherCountry ? !have.has(cityById[id].country) : true)
+      let ideas = additionIdeas(plan, { interest: a.interests[0] || null, gemsOnly: a.hiddenGems, limit: 40 }).filter((i) => inCountry(i.cityId)).slice(0, 3)
+      // A named country the route's best ideas don't reach: its cities that add the least travel.
+      if (!ideas.length && a.country) {
+        ideas = Object.values(cityById)
+          .filter((c) => c.country === a.country && !plan.stops.some((s) => s.cityId === c.id))
+          .map((c) => ({ cityId: c.id, reasons: [], extra: computeStats(addStop(plan, c.id).plan).travelMinutes }))
+          .sort((x, y) => x.extra - y.extra)
+          .slice(0, 3)
+      }
+      if (!ideas.length) return { text: a.country ? `Eurowander has no cities in ${countryByCode[a.country].name} to add.` : 'No city fits this route well enough to add.' }
       return {
-        text: `${ideas.length === 1 ? 'One city fits' : `${ideas.length} cities fit`} your route:`,
+        text: `${ideas.length === 1 ? 'One city fits' : `${ideas.length} cities fit`} your route${a.country ? ` in ${countryByCode[a.country].name}` : a.otherCountry ? ' in another country' : ''}:`,
         blocks: [optionsBlock(handle, ideas.map((i) => { const r = addStop(plan, i.cityId); return option(handle, `Add ${cityName(i.cityId)}`, r.plan, null, i.reasons.join(' · ')) }))],
         followUps: [keep],
         sources: ['estimate'],
@@ -171,6 +181,17 @@ export function runTripAction(a, ctx) {
       if (!opts.length) return { text: main.summary }
       for (const o of opts) o.detail = [travelSaving(o), o.detail].filter(Boolean).join(' · ')
       return { text: `You have about ${hours(computeStats(plan).travelMinutes)} of travel between cities. Ways to cut it:`, blocks: [optionsBlock(handle, opts)], followUps: [keep], sources: ['estimate'] }
+    }
+    case 'set_length': {
+      // The same route at the new length. When that means dropping a city, the other option keeps every
+      // city with fewer nights each, so the traveller picks.
+      const main = fitToDays(plan, a.tripDays)
+      if (!main.changed) return { text: main.summary }
+      const opts = [option(handle, main.summary, main.plan)]
+      const all = main.plan.stops.length < plan.stops.length ? fitToDays(plan, a.tripDays, { keepAll: true }) : null
+      if (all?.changed) opts.push(option(handle, `Keep every city: ${all.summary.replace(/^Now /, '')}`, all.plan))
+      for (const o of opts) o.detail = [travelSaving(o), savingText(o, currency)].filter(Boolean).join(' · ')
+      return { text: `Here’s the trip at ${a.tripDays} days, keeping the route:`, blocks: [optionsBlock(handle, opts)], followUps: [keep], sources: ['estimate'] }
     }
     case 'plan_day':
       return planDay(handle, a.day)
