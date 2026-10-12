@@ -93,7 +93,7 @@ export const cities = [
     description: 'Renaissance art, Tuscan food and terracotta rooftops.',
     image: null, emoji: '🎨', interests: ['museums', 'history', 'food', 'shopping'], costLevel: 2,
     seasons: { bestWeather: [4, 5, 6, 9, 10], busy: [5, 6, 7, 8, 9], lowerCost: [1, 2, 11] },
-    hiddenGems: ['lucca'], hiddenGem: false,
+    hiddenGems: ['lucca', 'bologna'], hiddenGem: false,
     recommendedDays: [2, 3], beach: false, size: 'major',
   },
   {
@@ -134,8 +134,32 @@ export const cities = [
     description: 'Fashion, design and The Last Supper, with aperitivo along the canals and fast trains in every direction.',
     image: null, emoji: '🏙️', interests: ['shopping', 'museums', 'food', 'nightlife'], costLevel: 3,
     seasons: { bestWeather: [4, 5, 6, 9, 10], busy: [4, 9], lowerCost: [1, 2, 8] },
+    hiddenGems: ['bergamo'], hiddenGem: false,
+    recommendedDays: [1, 2], beach: false, size: 'major',
+  },
+  {
+    id: 'bologna', name: 'Bologna', country: 'IT', lat: 44.4949, lng: 11.3426,
+    description: 'Italy\'s food capital: miles of porticoes, medieval towers and a lively university crowd, 40 minutes from Florence.',
+    image: null, emoji: '🍝', interests: ['food', 'history', 'nightlife'], costLevel: 2,
+    seasons: { bestWeather: [4, 5, 6, 9, 10], busy: [5, 9, 10], lowerCost: [1, 2, 8, 11] },
+    hiddenGems: [], hiddenGem: true,
+    recommendedDays: [2, 3], beach: false, size: 'major',
+  },
+  {
+    id: 'verona', name: 'Verona', country: 'IT', lat: 45.4384, lng: 10.9916,
+    description: 'A Roman arena that still stages opera, pink marble piazzas and a castle by the river Adige.',
+    image: null, emoji: '🎭', interests: ['history', 'food', 'museums'], costLevel: 2,
+    seasons: { bestWeather: [4, 5, 6, 9, 10], busy: [6, 7, 8], lowerCost: [1, 2, 11], special: [{ label: 'Opera in the Arena', months: [6, 7, 8] }] },
     hiddenGems: [], hiddenGem: false,
     recommendedDays: [1, 2], beach: false, size: 'major',
+  },
+  {
+    id: 'bergamo', name: 'Bergamo', country: 'IT', lat: 45.6983, lng: 9.6773,
+    description: 'A walled upper town on a hill, reached by funicular, 50 minutes by train from Milan.',
+    image: null, emoji: '🏰', interests: ['history', 'food', 'outdoors'], costLevel: 2,
+    seasons: { bestWeather: [4, 5, 6, 9, 10], busy: [7, 8], lowerCost: [1, 2, 11] },
+    hiddenGems: [], hiddenGem: true,
+    recommendedDays: [1, 2], beach: false, size: 'small',
   },
 
   // Spain
@@ -294,6 +318,14 @@ export const cities = [
     hiddenGems: [], hiddenGem: false,
     recommendedDays: [1, 2], beach: false, size: 'small',
   },
+  {
+    id: 'interlaken', name: 'Interlaken', country: 'CH', lat: 46.6863, lng: 7.8632,
+    description: 'A town between two lakes under the Eiger, Mönch and Jungfrau, and the base for Lauterbrunnen and the high Alps.',
+    image: null, emoji: '🏞️', interests: ['outdoors'], costLevel: 3,
+    seasons: { bestWeather: [6, 7, 8, 9], busy: [7, 8], lowerCost: [4, 5, 11] },
+    hiddenGems: [], hiddenGem: false,
+    recommendedDays: [2, 3], beach: false, size: 'small',
+  },
 
   // Austria
   {
@@ -317,6 +349,14 @@ export const cities = [
     description: 'Mozart\'s birthplace: baroque domes under a hilltop fortress, with the Alps close by.',
     image: null, emoji: '🎶', interests: ['history', 'outdoors', 'museums'], costLevel: 3,
     seasons: { bestWeather: [5, 6, 7, 8, 9], busy: [7, 8, 12], lowerCost: [1, 2, 3, 11], special: [{ label: 'Salzburg Festival', months: [7, 8] }] },
+    hiddenGems: [], hiddenGem: false,
+    recommendedDays: [1, 2], beach: false, size: 'small',
+  },
+  {
+    id: 'innsbruck', name: 'Innsbruck', country: 'AT', lat: 47.2692, lng: 11.4041,
+    description: 'An old town with a golden roof, and a cable car from the centre straight up into the Alps.',
+    image: null, emoji: '🚠', interests: ['outdoors', 'history'], costLevel: 2,
+    seasons: { bestWeather: [6, 7, 8, 9], busy: [7, 8, 12], lowerCost: [4, 5, 11] },
     hiddenGems: [], hiddenGem: false,
     recommendedDays: [1, 2], beach: false, size: 'small',
   },

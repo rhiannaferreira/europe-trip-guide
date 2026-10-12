@@ -11,6 +11,7 @@ export const events = [
   { id: 'berlin-christmas', name: 'Christmas markets', cityId: 'berlin', start: '11-24', end: '12-31', emoji: '🎄', description: 'Dozens of markets, from Gendarmenmarkt to Charlottenburg.' },
   { id: 'keukenhof', name: 'Tulip season (Keukenhof)', cityId: 'amsterdam', start: '03-19', end: '05-10', emoji: '🌷', description: 'Bulb fields in bloom a short trip from the city.' },
   { id: 'kings-day', name: "King's Day", cityId: 'amsterdam', start: '04-27', end: '04-27', emoji: '👑', description: 'The whole city turns orange, with street markets and boat parties.' },
+  { id: 'verona-opera', name: 'Opera Festival in the Arena', cityId: 'verona', start: '06-13', end: '09-06', emoji: '🎭', description: 'Open-air opera in the Roman arena on summer evenings.' },
   { id: 'venice-carnival', name: 'Carnival', cityId: 'venice', start: '01-31', end: '02-17', emoji: '🎭', description: 'Masks, costumes and balls in the run-up to Lent.' },
   { id: 'feria-de-abril', name: 'Feria de Abril', cityId: 'seville', start: '04-19', end: '04-25', emoji: '💃', description: 'A week of flamenco dresses, horses and casetas.' },
   { id: 'la-merce', name: 'La Mercè', cityId: 'barcelona', start: '09-22', end: '09-25', emoji: '🎆', description: 'Human towers, fire runs and free concerts.' },

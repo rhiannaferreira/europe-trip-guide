@@ -40,6 +40,19 @@ export const CITY_DAYS = {
     { title: 'The little Venice', places: ['chioggia-fish-market'], ideas: ['Corso del Popolo', 'Canal-side evening walk'] },
     { title: 'Beach and lagoon', places: ['chioggia-sottomarina'], ideas: ['Boat across the lagoon to Pellestrina and the Lido'] },
   ],
+  bologna: [
+    { title: 'Piazza Maggiore and the towers', places: ['bologna-piazza-maggiore', 'bologna-two-towers'], ideas: ['Neptune Fountain', 'Walk under the porticoes'] },
+    { title: 'Markets and the old university', places: ['bologna-quadrilatero', 'bologna-archiginnasio', 'bologna-pratello'], ideas: ['Tagliatelle al ragù', 'Santo Stefano’s seven churches'] },
+    { title: 'Up to San Luca', places: ['bologna-san-luca'], ideas: ['Or a day trip to Modena or Parma for balsamic and Parmigiano'] },
+  ],
+  verona: [
+    { title: 'The arena and the old town', places: ['verona-arena', 'verona-piazza-erbe'], ideas: ['Piazza dei Signori', 'Opera in the arena on a summer night'] },
+    { title: 'Castles and the river', places: ['verona-castelvecchio', 'verona-castel-san-pietro'], ideas: ['Ponte Pietra', 'Or a day at Lake Garda, under an hour by train or bus'] },
+  ],
+  bergamo: [
+    { title: 'Up to the old town', places: ['bergamo-citta-alta', 'bergamo-santa-maria-maggiore'], ideas: ['The funicular from the lower town', 'Piazza Vecchia'] },
+    { title: 'Walls, views and art', places: ['bergamo-san-vigilio', 'bergamo-carrara'], ideas: ['Walk the Venetian walls', 'Polenta and casoncelli'] },
+  ],
   milan: [
     { title: 'Cathedral and arcade', places: ['milan-duomo', 'milan-galleria'], ideas: ['Duomo rooftop terraces'] },
     { title: 'Art and canals', places: ['milan-last-supper', 'milan-brera', 'milan-navigli'], ideas: ['Aperitivo by the Navigli'] },
@@ -49,6 +62,11 @@ export const CITY_DAYS = {
     { title: 'Mount Rigi', places: ['lucerne-rigi'], ideas: ['Boat to Vitznau, cog railway up, cable car down'] },
     { title: 'Trains, planes and boats', places: ['lucerne-transport-museum'], ideas: ['Lion Monument'] },
     { title: 'Another mountain', places: [], ideas: ['Pilatus by the world’s steepest cogwheel railway', 'Or a day trip to Engelberg and Titlis'] },
+  ],
+  interlaken: [
+    { title: 'Between the lakes', places: ['interlaken-harder-kulm'], ideas: ['Höhematte meadow with the Jungfrau view', 'Evening funicular for sunset'] },
+    { title: 'Lauterbrunnen and the high Alps', places: ['interlaken-lauterbrunnen', 'interlaken-jungfraujoch'], ideas: ['Staubbach Falls', 'Cable car to Mürren, or Jungfraujoch on a clear day'] },
+    { title: 'Lake Brienz', places: ['interlaken-lake-brienz'], ideas: ['Boat to Brienz, or the Giessbach Falls'] },
   ],
   zurich: [
     { title: 'Old town', places: ['zurich-grossmunster', 'zurich-niederdorf'], ideas: ['Lindenhof viewpoint'] },
@@ -115,6 +133,10 @@ export const CITY_DAYS = {
     { title: 'Markets and the Prater', places: ['vienna-naschmarkt', 'vienna-prater', 'vienna-bermuda'], ideas: ['Giant Ferris wheel', 'Opera standing tickets'] },
   ],
   graz: [{ title: 'Graz in a day', places: ['graz-schlossberg', 'graz-kunsthaus', 'graz-kaiser-josef-markt'], ideas: ['Murinsel island in the river'] }],
+  innsbruck: [
+    { title: 'The old town', places: ['innsbruck-golden-roof', 'innsbruck-hofburg', 'innsbruck-markthalle'], ideas: ['Colourful houses along the Inn'] },
+    { title: 'Into the mountains', places: ['innsbruck-nordkette', 'innsbruck-bergisel'], ideas: ['Hiking or a coffee at Seegrube', 'Swarovski Crystal Worlds by bus'] },
+  ],
   salzburg: [
     { title: 'Old town', places: ['salzburg-getreidegasse', 'salzburg-mozart'], ideas: ['Salzburg Cathedral'] },
     { title: 'Fortress and gardens', places: ['salzburg-hohensalzburg', 'salzburg-mirabell', 'salzburg-augustiner'], ideas: ['Hallstatt or the lakes as a day trip'] },
@@ -178,8 +200,8 @@ export const TEMPLATE_DETAILS = {
     highlights: ['Ancient Rome', 'Florence’s Duomo', 'St Mark’s and the Grand Canal'],
   },
   'hidden-italy-8': {
-    intro: 'Three smaller places with the food, history and canals of the famous cities, and far fewer crowds.',
-    highlights: ['Cycling Lucca’s Renaissance walls', 'Tiramisù in its home town', 'Chioggia’s fish market and lagoon'],
+    intro: 'Northern Italy beyond Rome, Florence and Venice: Bologna for food, Verona for its arena and Bergamo for its walled hilltop town.',
+    highlights: ['Pasta and markets in Bologna', 'Verona’s Roman arena', 'The funicular up to Bergamo’s Città Alta'],
   },
   'italy-switzerland-12': {
     intro: 'Start with Rome and Florence, stop in Milan, then cross the Alps by train to the Swiss lakes.',
@@ -206,12 +228,12 @@ export const TEMPLATE_DETAILS = {
     highlights: ['The Rijksmuseum', 'The Grand-Place', 'Bruges’ canals and belfry'],
   },
   'swiss-alps-7': {
-    intro: 'Zurich first, then four nights in Lucerne, the best base for day trips into the mountains by train and boat.',
-    highlights: ['Swimming in Lake Zurich', 'Mount Rigi by boat and cog railway', 'Pilatus or Titlis'],
+    intro: 'Zurich, then Lake Lucerne, then the scenic Luzern–Interlaken Express to the Jungfrau region, with boats and mountain railways along the way.',
+    highlights: ['Mount Rigi by boat and cog railway', 'The Luzern–Interlaken Express', 'Lauterbrunnen’s waterfalls'],
   },
   'austria-rail-7': {
-    intro: 'Vienna’s palaces and coffee houses, a night in student-town Graz, and Salzburg’s baroque old town.',
-    highlights: ['Schönbrunn and the Belvedere', 'The Schlossberg in Graz', 'Hohensalzburg Fortress'],
+    intro: 'Vienna’s palaces and coffee houses, Salzburg’s baroque old town, then west to Innsbruck in the Alps.',
+    highlights: ['Schönbrunn and the Belvedere', 'Hohensalzburg Fortress', 'From Innsbruck’s old town to the Nordkette by cable car'],
   },
   'central-europe-10': {
     intro: 'Four cities in three countries, with train rides of four hours or less between them.',

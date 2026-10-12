@@ -85,6 +85,24 @@ const raw = [
   { id: 'venice-campo-santa-margherita', cityId: 'venice', category: 'nightlife', type: 'neighbourhood', name: 'Campo Santa Margherita', lat: 45.4346, lng: 12.3230, rating: 4.4, costLevel: 1, description: 'The student square where Venice actually goes out.' },
   { id: 'venice-doges-palace', cityId: 'venice', category: 'history', type: 'palace', name: "Doge's Palace", lat: 45.4337, lng: 12.3404, rating: 4.7, costLevel: 3, description: 'The seat of the Republic, with its prisons and Bridge of Sighs.' },
   { id: 'venice-murano-glass', cityId: 'venice', category: 'shopping', type: 'shop', name: 'Murano glass studios', lat: 45.4580, lng: 12.3530, rating: 4.3, costLevel: 3, description: 'Watch glassblowers at work, then buy direct from the furnace.' },
+  // Bologna
+  { id: 'bologna-piazza-maggiore', cityId: 'bologna', category: 'history', type: 'landmark', name: 'Piazza Maggiore', lat: 44.4938, lng: 11.3430, costLevel: 0, description: 'The main square, with the unfinished front of San Petronio.' },
+  { id: 'bologna-two-towers', cityId: 'bologna', category: 'history', type: 'landmark', name: 'Two Towers', lat: 44.4943, lng: 11.3467, costLevel: 1, description: 'Two leaning medieval towers; check whether the Asinelli climb is open.' },
+  { id: 'bologna-quadrilatero', cityId: 'bologna', category: 'food', type: 'market', name: 'Quadrilatero', lat: 44.4934, lng: 11.3448, costLevel: 2, description: 'Old market lanes of delis, fresh pasta and mortadella.' },
+  { id: 'bologna-archiginnasio', cityId: 'bologna', category: 'museums', type: 'museum', name: 'Archiginnasio', lat: 44.4925, lng: 11.3436, costLevel: 1, description: 'The old university, with a wooden anatomical theatre.' },
+  { id: 'bologna-san-luca', cityId: 'bologna', category: 'outdoors', type: 'walk', name: 'Portico di San Luca', lat: 44.4794, lng: 11.2980, costLevel: 0, description: 'A covered walk of 666 arches up to a hilltop sanctuary.' },
+  { id: 'bologna-pratello', cityId: 'bologna', category: 'nightlife', type: 'neighbourhood', name: 'Via del Pratello', lat: 44.4936, lng: 11.3330, costLevel: 1, description: 'A street of student bars and osterie that fills up late.' },
+  // Verona
+  { id: 'verona-arena', cityId: 'verona', category: 'history', type: 'landmark', name: 'Verona Arena', lat: 45.4390, lng: 10.9944, costLevel: 2, description: 'A Roman amphitheatre that still hosts opera on summer nights.' },
+  { id: 'verona-piazza-erbe', cityId: 'verona', category: 'food', type: 'market', name: 'Piazza delle Erbe', lat: 45.4430, lng: 10.9975, costLevel: 1, description: 'The old forum, now a market square ringed by cafés.' },
+  { id: 'verona-castelvecchio', cityId: 'verona', category: 'museums', type: 'museum', name: 'Castelvecchio', lat: 45.4398, lng: 10.9878, costLevel: 2, description: 'A riverside castle and art museum with a fortified bridge.' },
+  { id: 'verona-castel-san-pietro', cityId: 'verona', category: 'outdoors', type: 'viewpoint', name: 'Castel San Pietro', lat: 45.4479, lng: 11.0035, costLevel: 0, description: 'A hilltop terrace over the river and rooftops, by funicular or steps.' },
+  { id: 'verona-juliet', cityId: 'verona', category: 'history', type: 'landmark', name: "Juliet's House", lat: 45.4419, lng: 10.9988, costLevel: 2, description: 'The courtyard and balcony linked to Romeo and Juliet. Very busy.' },
+  // Bergamo
+  { id: 'bergamo-citta-alta', cityId: 'bergamo', category: 'history', type: 'neighbourhood', name: 'Città Alta', lat: 45.7037, lng: 9.6625, costLevel: 0, description: 'The walled upper town, reached by funicular from the lower city.' },
+  { id: 'bergamo-santa-maria-maggiore', cityId: 'bergamo', category: 'history', type: 'church', name: 'Santa Maria Maggiore and Colleoni Chapel', lat: 45.7033, lng: 9.6622, costLevel: 1, description: 'A plain church outside, gilded inside, next to a marble chapel.' },
+  { id: 'bergamo-san-vigilio', cityId: 'bergamo', category: 'outdoors', type: 'viewpoint', name: 'San Vigilio', lat: 45.7068, lng: 9.6510, costLevel: 1, description: 'A second funicular up to a castle hill with views to the plain.' },
+  { id: 'bergamo-carrara', cityId: 'bergamo', category: 'museums', type: 'museum', name: 'Accademia Carrara', lat: 45.7058, lng: 9.6750, costLevel: 2, description: 'A fine collection of Italian painting from Raphael to Canaletto.' },
   // Chioggia
   { id: 'chioggia-fish-market', cityId: 'chioggia', category: 'food', type: 'market', name: 'Chioggia fish market', lat: 45.2190, lng: 12.2790, rating: 4.4, costLevel: 1, description: 'One of the busiest fish markets in Italy, with trattorie nearby.' },
   { id: 'chioggia-sottomarina', cityId: 'chioggia', category: 'outdoors', type: 'beach', name: 'Sottomarina beach', lat: 45.2050, lng: 12.3000, rating: 4.2, costLevel: 0, description: 'A long sandy Adriatic beach a short walk from the old town.' },
@@ -210,6 +228,12 @@ const raw = [
   { id: 'lucerne-rigi', cityId: 'lucerne', category: 'outdoors', type: 'viewpoint', name: 'Mount Rigi', lat: 47.0567, lng: 8.4850, rating: 4.8, costLevel: 3, description: 'Boat then cogwheel train to the "Queen of the Mountains".' },
   { id: 'lucerne-transport-museum', cityId: 'lucerne', category: 'museums', type: 'museum', name: 'Swiss Museum of Transport', lat: 47.0526, lng: 8.3355, rating: 4.6, costLevel: 3, description: 'Trains, planes and a huge Swiss rail history hall.' },
 
+  // Interlaken
+  { id: 'interlaken-harder-kulm', cityId: 'interlaken', category: 'outdoors', type: 'viewpoint', name: 'Harder Kulm', lat: 46.6970, lng: 7.8520, costLevel: 2, description: 'A funicular from town to a terrace facing the Eiger, Mönch and Jungfrau.' },
+  { id: 'interlaken-lauterbrunnen', cityId: 'interlaken', category: 'outdoors', type: 'walk', name: 'Lauterbrunnen valley', lat: 46.5935, lng: 7.9091, costLevel: 0, description: 'A cliff-lined valley of waterfalls, 20 minutes by train.' },
+  { id: 'interlaken-jungfraujoch', cityId: 'interlaken', category: 'outdoors', type: 'viewpoint', name: 'Jungfraujoch', lat: 46.5474, lng: 7.9853, costLevel: 3, description: 'A railway through the Eiger to a glacier at 3,454 m. Expensive; go on a clear day.' },
+  { id: 'interlaken-lake-brienz', cityId: 'interlaken', category: 'outdoors', type: 'lake', name: 'Lake Brienz', lat: 46.7108, lng: 7.9650, costLevel: 1, description: 'Turquoise water, boats and the lakeside village of Iseltwald.' },
+
   // Vienna
   { id: 'vienna-naschmarkt', cityId: 'vienna', category: 'food', type: 'market', name: 'Naschmarkt', lat: 48.1985, lng: 16.3630, rating: 4.4, costLevel: 2, description: "Vienna's best-known market, with stalls and small restaurants." },
   { id: 'vienna-prater', cityId: 'vienna', category: 'outdoors', type: 'park', name: 'Prater', lat: 48.2166, lng: 16.3960, rating: 4.5, costLevel: 0, description: 'Wide park with the giant Ferris wheel at one end.' },
@@ -228,6 +252,13 @@ const raw = [
   { id: 'salzburg-augustiner', cityId: 'salzburg', category: 'nightlife', type: 'bar', name: 'Augustiner Bräu Mülln', lat: 47.8060, lng: 13.0340, rating: 4.7, costLevel: 1, description: 'Monastery brewery with beer poured from wooden barrels.' },
   { id: 'salzburg-getreidegasse', cityId: 'salzburg', category: 'shopping', type: 'shop', name: 'Getreidegasse', lat: 47.7998, lng: 13.0425, rating: 4.4, costLevel: 3, description: 'A narrow lane of wrought-iron shop signs.' },
   { id: 'salzburg-stiegl', cityId: 'salzburg', category: 'food', type: 'restaurant', name: 'St. Peter Stiftskulinarium', lat: 47.7975, lng: 13.0460, rating: 4.5, costLevel: 3, description: 'Claims to be the oldest restaurant in Central Europe.' },
+
+  // Innsbruck
+  { id: 'innsbruck-golden-roof', cityId: 'innsbruck', category: 'history', type: 'landmark', name: 'Golden Roof', lat: 47.2686, lng: 11.3933, costLevel: 0, description: 'A balcony roofed in gilded tiles, at the heart of the old town.' },
+  { id: 'innsbruck-nordkette', cityId: 'innsbruck', category: 'outdoors', type: 'viewpoint', name: 'Nordkette', lat: 47.3125, lng: 11.3833, costLevel: 3, description: 'Funicular and cable cars from the centre up to 2,256 m.' },
+  { id: 'innsbruck-hofburg', cityId: 'innsbruck', category: 'history', type: 'palace', name: 'Hofburg Innsbruck', lat: 47.2690, lng: 11.3950, costLevel: 2, description: 'The Habsburgs\' Alpine palace, with rooms from Maria Theresa\'s time.' },
+  { id: 'innsbruck-bergisel', cityId: 'innsbruck', category: 'outdoors', type: 'viewpoint', name: 'Bergisel Ski Jump', lat: 47.2490, lng: 11.3990, costLevel: 2, description: 'Zaha Hadid\'s ski jump, with a café at the top.' },
+  { id: 'innsbruck-markthalle', cityId: 'innsbruck', category: 'food', type: 'market', name: 'Markthalle', lat: 47.2680, lng: 11.3905, costLevel: 1, description: 'The covered market by the river, for Tyrolean cheese and speck.' },
 
   // Prague
   { id: 'prague-naplavka', cityId: 'prague', category: 'food', type: 'market', name: 'Náplavka Farmers Market', lat: 50.0700, lng: 14.4140, rating: 4.5, costLevel: 1, description: 'Saturday riverside market with local food and drink.' },

@@ -10,6 +10,19 @@ export const cityWikiTitles = {
 }
 
 export const placeWikiTitles = {
+  'bologna-two-towers': 'Two Towers, Bologna',
+  'bologna-quadrilatero': null,
+  'bologna-archiginnasio': 'Archiginnasio of Bologna',
+  'verona-arena': 'Verona Arena',
+  'verona-piazza-erbe': 'Piazza delle Erbe (Verona)',
+  'verona-castelvecchio': 'Castelvecchio Museum',
+  'verona-juliet': "Juliet's House",
+  'bergamo-santa-maria-maggiore': 'Basilica of Santa Maria Maggiore, Bergamo',
+  'bergamo-san-vigilio': null,
+  'interlaken-lauterbrunnen': 'Lauterbrunnen',
+  'innsbruck-golden-roof': 'Goldenes Dachl',
+  'innsbruck-hofburg': 'Hofburg, Innsbruck',
+  'innsbruck-markthalle': null,
   'lyon-halles': 'Les Halles de Lyon-Paul Bocuse',
   'lyon-vieux-lyon': 'Vieux Lyon',
   'lyon-fourviere': 'Basilica of Notre-Dame de Fourvière',

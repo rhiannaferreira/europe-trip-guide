@@ -8,11 +8,12 @@ import { cityById } from './cities.js'
 const MAIN = {
   rouen: 'Rouen Rive Droite', reims: 'Reims', chartres: 'Chartres', lyon: 'Lyon Part-Dieu', strasbourg: 'Strasbourg', nice: 'Nice Ville',
   rome: 'Roma Termini', florence: 'Firenze Santa Maria Novella', lucca: 'Lucca', venice: 'Venezia Santa Lucia', chioggia: 'Chioggia', treviso: 'Treviso Centrale', milan: 'Milano Centrale',
+  bologna: 'Bologna Centrale', verona: 'Verona Porta Nuova', bergamo: 'Bergamo',
   barcelona: 'Barcelona Sants', girona: 'Girona', madrid: 'Madrid Puerta de Atocha', seville: 'Sevilla Santa Justa',
   lisbon: 'Lisboa Santa Apolónia', porto: 'Porto Campanhã', coimbra: 'Coimbra-B',
   berlin: 'Berlin Hbf', leipzig: 'Leipzig Hbf', munich: 'München Hbf', cologne: 'Köln Hbf',
   amsterdam: 'Amsterdam Centraal', utrecht: 'Utrecht Centraal', brussels: 'Bruxelles-Midi', bruges: 'Brugge', ghent: 'Gent-Sint-Pieters',
-  zurich: 'Zürich HB', lucerne: 'Luzern', vienna: 'Wien Hbf', graz: 'Graz Hbf', salzburg: 'Salzburg Hbf', prague: 'Praha hlavní nádraží', brno: 'Brno hlavní nádraží',
+  zurich: 'Zürich HB', lucerne: 'Luzern', interlaken: 'Interlaken Ost', innsbruck: 'Innsbruck Hbf', vienna: 'Wien Hbf', graz: 'Graz Hbf', salzburg: 'Salzburg Hbf', prague: 'Praha hlavní nádraží', brno: 'Brno hlavní nádraží',
   athens: 'Athens', thessaloniki: 'Thessaloniki', dubrovnik: null, sibenik: 'Šibenik', split: 'Split',
   york: 'York', edinburgh: 'Edinburgh', dublin: 'Dublin Heuston', galway: 'Galway Ceannt',
 }
