@@ -35,7 +35,7 @@ export default function Thumb({ id, image, emoji, alt, color, className = '', ki
       style={style}
       title={photo && credit === 'title' ? creditText(photo) : undefined}
     >
-      {showPhoto && loaded ? (
+      {(showPhoto && loaded) || !alt ? (
         <span aria-hidden="true">{emoji}</span>
       ) : (
         <span role="img" aria-label={alt}>

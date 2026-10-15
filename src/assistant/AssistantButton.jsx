@@ -18,6 +18,16 @@ function pendingHint() {
   return (readJSON(KEYS.copilot, {}) || {}).hintSeen === sig ? '' : sig
 }
 
+// A four-point spark, drawn so it takes the button's colours (an emoji wouldn't).
+function SparkIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" focusable="false">
+      <path d="M12 2.5c.5 4.6 2.9 7 7.5 7.5-4.6.5-7 2.9-7.5 7.5-.5-4.6-2.9-7-7.5-7.5 4.6-.5 7-2.9 7.5-7.5z" fill="currentColor" />
+      <path d="M19 15.5c.2 1.8 1.2 2.8 3 3-1.8.2-2.8 1.2-3 3-.2-1.8-1.2-2.8-3-3 1.8-.2 2.8-1.2 3-3z" fill="currentColor" opacity="0.8" />
+    </svg>
+  )
+}
+
 // The EuroWander button on every page. Once opened, the panel stays mounted (hidden when closed), so the
 // conversation survives closing it and moving between pages.
 export default function AssistantButton({ route }) {
@@ -61,12 +71,20 @@ export default function AssistantButton({ route }) {
         className={`ask-fab${open ? ' open' : ''}`}
         aria-expanded={open}
         aria-controls="ask-panel"
-        aria-label={open ? 'Close EuroWander travel assistant' : `Open EuroWander travel assistant${hint ? ' (has a suggestion for your trip)' : ''}`}
+        aria-label={open ? 'Close EuroWander travel assistant' : `Ask EuroWander, the travel assistant${hint ? ' (has a suggestion for your trip)' : ''}`}
         onClick={() => setAssistantOpen(!open)}
       >
-        <span aria-hidden="true">{open ? '✕' : '✨'}</span>
+        <span className="ask-fab-icon" aria-hidden="true">
+          {open ? '✕' : <SparkIcon />}
+        </span>
         <span className="ask-fab-label" aria-hidden="true">
-          {open ? 'Close' : 'EuroWander'}
+          {open ? (
+            'Close'
+          ) : (
+            <>
+              Ask<span className="ask-fab-long"> EuroWander</span>
+            </>
+          )}
         </span>
         {hint && !open && <span className="ask-fab-dot" aria-hidden="true" />}
       </button>

@@ -743,23 +743,9 @@ a:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent); ou
 .landing main { outline: none; }
 .landing h2 { font-family: var(--display); font-size: clamp(1.4rem, 3vw, 2rem); line-height: 1.15; }
 .landing section { max-width: 1120px; margin: 0 auto; padding: 48px 20px; }
-.landing-header { max-width: 1120px; margin: 0 auto; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
 .landing-brand { display: inline-flex; align-items: center; gap: 8px; font-family: var(--display); font-size: 1.3rem; font-weight: 700; color: var(--text); text-decoration: none; }
-.landing-header nav { display: flex; gap: 18px; }
-.landing-header nav a { color: var(--text); font-weight: 600; text-decoration: none; }
-.landing-header nav a:hover { text-decoration: underline; }
-.hero { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 40px; align-items: center; padding-top: 32px !important; }
 .eyebrow { color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.8rem; margin-bottom: 10px; }
-.hero h1 { font-family: var(--display); font-size: clamp(2.1rem, 5vw, 3.4rem); line-height: 1.05; letter-spacing: -0.02em; }
 .hero-sub { font-size: 1.12rem; color: var(--muted); margin-top: 16px; max-width: 52ch; line-height: 1.5; }
-.hero-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 26px; }
-.hero-stats { display: flex; gap: 22px; flex-wrap: wrap; margin-top: 26px; color: var(--muted); font-size: 0.9rem; }
-.hero-stats strong { color: var(--text); font-size: 1.15rem; font-family: var(--display); }
-.hero-photos { position: relative; height: 420px; }
-.hero-photo { position: absolute; border-radius: 20px; box-shadow: var(--shadow); font-size: 3.5rem; border: 4px solid var(--surface); }
-.hero-photo-0 { width: 62%; height: 62%; top: 0; left: 0; }
-.hero-photo-1 { width: 52%; height: 48%; top: 14%; right: 0; }
-.hero-photo-2 { width: 56%; height: 44%; bottom: 0; left: 20%; }
 .pillar-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 22px; }
 .pillar { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); display: grid; gap: 8px; align-content: start; }
 .pillar-icon { font-size: 1.8rem; }
@@ -790,16 +776,12 @@ a:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent); ou
 .landing-footer { border-top: 1px solid var(--border); max-width: 1120px; margin: 0 auto; padding: 24px 20px 40px; color: var(--muted); font-size: 0.82rem; display: grid; gap: 6px; }
 .landing-footer a { color: inherit; }
 @media (max-width: 900px) {
-  .hero { grid-template-columns: 1fr; }
-  .hero-photos { height: 260px; order: -1; }
   .pillar-grid, .step-list { grid-template-columns: 1fr 1fr; }
   .swap-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 560px) {
   .landing section { padding: 32px 16px; }
-  .landing-header { padding: 12px 16px; }
   .pillar-grid, .step-list { grid-template-columns: 1fr; }
-  .hero-actions .btn { width: 100%; justify-content: center; }
   .route-line { flex-direction: column; align-items: flex-start; }
   .route-line li { flex-direction: column; align-items: flex-start; }
   .route-leg { padding: 6px 0 6px 22px; }
@@ -1020,11 +1002,11 @@ a:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent); ou
 }
 
 /* ---------- Site-wide assistant ---------- */
-.ask-fab { position: fixed; right: 20px; bottom: 20px; z-index: 2000; display: inline-flex; align-items: center; gap: 8px; padding: 12px 18px; border: none; border-radius: 999px; background: var(--accent-fill); color: #fff; font-weight: 700; font-size: 0.95rem; box-shadow: 0 4px 18px rgb(0 0 0 / 0.25); }
-.ask-fab:hover { filter: brightness(1.07); }
-.ask-fab span[aria-hidden] { font-size: 1.1rem; line-height: 1; }
-.ask-fab { min-height: 48px; }
-.ask-fab-dot { position: absolute; top: 6px; right: 8px; width: 10px; height: 10px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 0 2px var(--accent-fill); }
+/* A compact glass pill: noticeable, but quieter than each page's main red button. */
+.ask-fab { position: fixed; right: 20px; bottom: 20px; z-index: 2000; display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 10px 18px 10px 14px; border: 1px solid color-mix(in srgb, var(--border-strong) 80%, transparent); border-radius: 999px; background: color-mix(in srgb, var(--panel) 80%, transparent); backdrop-filter: saturate(1.4) blur(14px); -webkit-backdrop-filter: saturate(1.4) blur(14px); color: var(--text); font-weight: 700; font-size: 0.95rem; box-shadow: 0 2px 6px rgb(0 0 0 / 0.08), 0 10px 28px -10px rgb(0 0 0 / 0.35); transition: border-color 0.15s, transform 0.15s; }
+.ask-fab:hover { border-color: var(--accent); transform: translateY(-1px); }
+.ask-fab-icon { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--accent-fill); color: #fff; flex: none; }
+.ask-fab-dot { position: absolute; top: 6px; right: 8px; width: 10px; height: 10px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 0 2px var(--panel); }
 .ask-fab.open { display: none; }
 
 /* EuroWander copilot: a side panel on wide screens, the whole screen on phones. Above the Leaflet map. */
@@ -1124,8 +1106,8 @@ a:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent); ou
 .cp-send { flex: none; width: 44px; height: 44px; border-radius: 50%; border: none; background: var(--accent-fill); color: #fff; font-size: 1.05rem; }
 .cp-send:disabled { opacity: 0.45; }
 @media (max-width: 700px) {
-  .ask-fab { right: 12px; bottom: 12px; padding: 12px 14px; }
-  .ask-fab .ask-fab-label { display: none; }
+  .ask-fab { right: 12px; bottom: 12px; padding: 8px 14px 8px 10px; }
+  .ask-fab .ask-fab-long { display: none; }
   .ask-panel { width: 100vw; height: 100dvh; bottom: auto; border-left: none; box-shadow: none; }
   .cp-back { display: inline-flex; }
   .cp-close { display: none; }

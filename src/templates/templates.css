@@ -1,29 +1,6 @@
 /* Ready-made trips: home page cards, the Trip ideas page and a trip's own page. Uses the app's colour
    tokens (styles.css), so light and dark themes follow automatically. */
 
-/* ---------- Home: two ways to begin ---------- */
-.start-options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 26px; max-width: 560px; }
-.start-option { display: grid; gap: 4px; align-content: start; padding: 16px 18px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface); color: var(--text); text-decoration: none; box-shadow: var(--shadow); transition: transform 0.15s, border-color 0.15s; }
-.start-option:hover { transform: translateY(-2px); border-color: var(--border-strong); }
-.start-option:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.start-option strong { font-family: var(--display); font-size: 1.15rem; }
-.start-option span:last-child { color: var(--muted); font-size: 0.92rem; line-height: 1.35; }
-.start-option-icon { font-size: 1.5rem; }
-.start-option-build { background: var(--accent-fill); border-color: var(--accent-fill); color: #fff; }
-.start-option-build span:last-child { color: rgb(255 255 255 / 0.88); }
-.hero-actions-small { margin-top: 14px; }
-
-/* ---------- Home: "Start with a trip" row ---------- */
-.landing section.tpl-home { padding-top: 24px; padding-bottom: 24px; }
-.tpl-home-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
-.tpl-home-head h2 { font-family: var(--display); font-size: clamp(1.6rem, 3.4vw, 2.2rem); letter-spacing: -0.01em; }
-.tpl-home-head .section-sub { margin-top: 6px; }
-.tpl-all-link { color: var(--accent); font-weight: 700; text-decoration: none; white-space: nowrap; }
-.tpl-all-link:hover { text-decoration: underline; }
-.tpl-row { list-style: none; margin: 20px -20px 0; padding: 4px 20px 14px; display: grid; grid-auto-flow: column; grid-auto-columns: calc((100% - 3 * 16px) / 4); gap: 16px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding: 0 20px; overscroll-behavior-x: contain; }
-.tpl-row > li { scroll-snap-align: start; display: flex; }
-.tpl-home-foot { display: none; margin-top: 6px; }
-
 /* ---------- A trip card ---------- */
 .tpl-card { display: grid; grid-template-rows: auto 1fr; width: 100%; border-radius: var(--radius); overflow: hidden; background: var(--surface); border: 1px solid var(--border); color: var(--text); text-decoration: none; box-shadow: var(--shadow); transition: transform 0.15s, border-color 0.15s; }
 .tpl-card:hover { transform: translateY(-2px); border-color: var(--border-strong); }
@@ -112,21 +89,12 @@ a.chip { text-decoration: none; display: inline-block; }
 .tpl-stats dd small { font-family: system-ui, sans-serif; font-weight: 500; color: var(--muted); font-size: 0.8rem; }
 .tpl-sticky { display: none; }
 
-@media (max-width: 1100px) {
-  .tpl-row { grid-auto-columns: calc((100% - 2 * 16px) / 3); }
-}
 @media (max-width: 900px) {
   .tpl-hero, .tpl-columns { grid-template-columns: 1fr; }
   .tpl-hero-photo { order: -1; aspect-ratio: 16 / 9; }
   .tpl-col-side { position: static; }
-  .tpl-row { grid-auto-columns: calc((100% - 16px) / 2.2); }
 }
 @media (max-width: 560px) {
-  .start-options { grid-template-columns: 1fr; }
-  .landing-header nav { flex-wrap: wrap; justify-content: flex-end; gap: 6px 14px; font-size: 0.92rem; }
-  .tpl-row { margin: 16px -16px 0; padding: 4px 16px 14px; grid-auto-columns: 78%; scroll-padding: 0 16px; }
-  .tpl-home-foot { display: block; }
-  .tpl-all-link { display: none; }
   .tpl-actions .btn { flex: 1 1 auto; }
   .tpl-filters select { min-width: 0; width: 100%; }
   .tpl-filters label { flex: 1 1 45%; }
@@ -137,8 +105,8 @@ a.chip { text-decoration: none; display: inline-block; }
   .tpl-sticky small { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .tpl-card, .start-option { transition: none; }
-  .tpl-card:hover, .start-option:hover { transform: none; }
+  .tpl-card { transition: none; }
+  .tpl-card:hover { transform: none; }
 }
 @media print {
   .tpl-sticky, .tpl-ai, .tpl-actions { display: none !important; }

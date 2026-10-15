@@ -13,6 +13,7 @@ import { setPageMeta } from '../lib/meta.js'
 import Thumb from '../components/Thumb.jsx'
 import InstallButton from '../components/InstallButton.jsx'
 import TemplateCards from '../templates/TemplateCards.jsx'
+import './landing.css'
 
 // Start downloading the planner while people read, so "Start exploring" opens instantly.
 const preloadPlanner = () => import('../App.jsx')
@@ -24,7 +25,8 @@ const GEM_SWAPS = [
   ['barcelona', 'girona'],
   ['prague', 'brno'],
 ]
-const HERO_CITIES = ['lisbon', 'florence', 'prague']
+// The first is the large photo in the collage.
+const HERO_CITIES = ['florence', 'lisbon', 'prague']
 
 const PILLARS = [
   {
@@ -60,7 +62,19 @@ function savedTripSummary() {
   const t = readJSON(KEYS.trip)
   const stops = Array.isArray(t?.stops) ? t.stops.filter((s) => cityById[s?.cityId]) : []
   if (stops.length === 0) return null
-  return { name: t.name?.trim() || 'your trip', count: stops.length }
+  return { name: t.name?.trim() || 'Your trip', count: stops.length, cities: stops.map((s) => cityById[s.cityId].name) }
+}
+
+// A small line-drawn train, in the text colour.
+function TrainIcon() {
+  return (
+    <svg className="home-icon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false">
+      <rect x="5" y="3" width="14" height="13" rx="3" fill="none" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M5 10h14M9 20l-2 2M15 20l2 2" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <circle cx="9" cy="13" r="1" fill="currentColor" />
+      <circle cx="15" cy="13" r="1" fill="currentColor" />
+    </svg>
+  )
 }
 
 export default function Landing() {
@@ -81,76 +95,107 @@ export default function Landing() {
         Skip to content
       </a>
       <header className="landing-header">
-        <Link to="/" className="landing-brand" aria-label="Eurowander home">
-          <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" width="28" height="28" /> Eurowander
-        </Link>
-        <nav aria-label="Main">
-          <Link to="/explore">Explore</Link>
-          <Link to="/build">Build a trip</Link>
-          <Link to="/trip-ideas">Trip ideas</Link>
-          <Link to="/trip">{saved ? `My trip (${saved.count})` : 'My trip'}</Link>
-          <InstallButton className="link-btn install-link" />
-        </nav>
+        <div className="landing-header-inner">
+          <Link to="/" className="landing-brand" aria-label="Eurowander home">
+            <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" width="30" height="30" /> Eurowander
+          </Link>
+          <nav aria-label="Main" className="home-nav">
+            <Link to="/explore">Explore</Link>
+            <Link to="/build" className="home-nav-build" onMouseEnter={preloadBuilder} onFocus={preloadBuilder}>
+              Build a trip
+            </Link>
+            <Link to="/trip-ideas">Trip ideas</Link>
+            <Link to="/trip" aria-label={saved ? `My trip, ${saved.count} ${saved.count === 1 ? 'city' : 'cities'}` : undefined}>
+              My trip
+              {saved && (
+                <span className="home-nav-count" aria-hidden="true">
+                  {saved.count}
+                </span>
+              )}
+            </Link>
+            <InstallButton className="link-btn install-link" />
+          </nav>
+        </div>
       </header>
 
       <main id="landing-main" tabIndex={-1}>
-        <section className="hero">
-          <div className="hero-text">
-            <TravelEntry trip={migrate(readJSON(KEYS.trip))} variant="landing" />
-            <p className="eyebrow">A trip guide for Europe</p>
-            <h1>See more of Europe, one train ride at a time.</h1>
-            <p className="hero-sub">
-              Find places worth seeing, swap the crowded favourites for hidden gems, and stitch cities in different countries into one trip, planned day by day.
-            </p>
-            <div className="start-options" role="group" aria-label="Two ways to begin">
-              <Link to="/build" className="start-option start-option-build" onMouseEnter={preloadBuilder} onFocus={preloadBuilder}>
-                <span className="start-option-icon" aria-hidden="true">
-                  ✨
-                </span>
-                <strong>Build my trip</strong>
-                <span>Tell Eurowander where you want to go.</span>
-              </Link>
-              <a href="#trip-ideas" className="start-option">
-                <span className="start-option-icon" aria-hidden="true">
-                  🗺️
-                </span>
-                <strong>Start with a trip</strong>
-                <span>Explore ready-made itineraries and customize them.</span>
-              </a>
-            </div>
-            <div className="hero-actions hero-actions-small">
-              <Link to="/explore" className="btn" onMouseEnter={preloadPlanner} onFocus={preloadPlanner}>
-                Start exploring
-              </Link>
-              {saved ? (
-                <Link to="/trip" className="btn">
-                  Continue {saved.name} ({saved.count} {saved.count === 1 ? 'city' : 'cities'})
+        <div className="home-band home-band-hero">
+          <svg className="home-hero-lines" aria-hidden="true" focusable="false" viewBox="0 0 1440 640" preserveAspectRatio="xMidYMid slice">
+            <path d="M-40 520 C 260 470, 420 600, 700 520 S 1120 300, 1480 360" />
+            <path d="M-40 140 C 300 210, 520 80, 820 150 S 1240 260, 1480 120" />
+          </svg>
+          <section className="hero">
+            <div className="hero-text">
+              <TravelEntry trip={migrate(readJSON(KEYS.trip))} variant="landing" />
+              <p className="home-eyebrow">
+                <TrainIcon /> A train-first trip guide for Europe
+              </p>
+              <h1>See more of Europe, one train ride at a time.</h1>
+              <p className="hero-sub">
+                Find places worth seeing, swap the crowded favourites for hidden gems, and stitch cities in different countries into one trip, planned day by day.
+              </p>
+              <div className="home-ctas">
+                <Link to="/build" className="home-cta home-cta-primary" onMouseEnter={preloadBuilder} onFocus={preloadBuilder}>
+                  <span aria-hidden="true">✨</span> Build my trip
                 </Link>
-              ) : (
-                <a href="#sample-route" className="btn">
-                  See a sample route
+                <a href="#trip-ideas" className="home-cta home-cta-secondary">
+                  Start with a ready-made trip
                 </a>
+              </div>
+              <p className="home-tertiary">
+                <Link to="/explore" className="home-text-link" onMouseEnter={preloadPlanner} onFocus={preloadPlanner}>
+                  Start exploring <span aria-hidden="true">→</span>
+                </Link>
+                {!saved && (
+                  <a href="#sample-route" className="home-text-link">
+                    See a sample route <span aria-hidden="true">→</span>
+                  </a>
+                )}
+              </p>
+              {saved && (
+                <Link to="/trip" className="home-continue">
+                  <span className="home-continue-label">Continue your trip</span>
+                  <span className="home-continue-name">{saved.name}</span>
+                  <span className="home-continue-route">
+                    {saved.cities.slice(0, 4).join(' — ')}
+                    {saved.cities.length > 4 ? ` +${saved.cities.length - 4}` : ''}
+                  </span>
+                  <span className="home-continue-meta">
+                    {saved.count} {saved.count === 1 ? 'city' : 'cities'} <span aria-hidden="true">→</span>
+                  </span>
+                </Link>
               )}
+              <ul className="home-stats" aria-label="What's in the guide">
+                <li>
+                  <strong>{countries.length}</strong> countries
+                </li>
+                <li>
+                  <strong>{cities.length}</strong> cities and towns
+                </li>
+                <li>
+                  <strong>{Math.floor(places.length / 10) * 10}+</strong> places, plus OpenStreetMap
+                </li>
+              </ul>
             </div>
-            <p className="hero-stats">
-              <span>
-                <strong>{countries.length}</strong> countries
-              </span>
-              <span>
-                <strong>{cities.length}</strong> cities and towns
-              </span>
-              <span>
-                <strong>{Math.floor(places.length / 10) * 10}+</strong> places, plus more from OpenStreetMap
-              </span>
-            </p>
-          </div>
-          <div className="hero-photos">
-            {HERO_CITIES.map((id, i) => {
-              const c = cityById[id]
-              return <Thumb key={id} id={id} emoji={c.emoji} alt={c.name} kind="city" item={c} width={500} className={`hero-photo hero-photo-${i}`} credit="badge" eager={i === 0} />
-            })}
-          </div>
-        </section>
+            <div className="hero-photos">
+              <svg className="hero-route" aria-hidden="true" focusable="false" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <path d="M12 30 C 30 8, 62 6, 84 22 S 92 70, 60 86 S 14 92, 10 70" />
+              </svg>
+              {HERO_CITIES.map((id, i) => {
+                const c = cityById[id]
+                return (
+                  <figure key={id} className={`hero-photo hero-photo-${i}`}>
+                    <Thumb id={id} emoji={c.emoji} alt={c.name} kind="city" item={c} width={i === 0 ? 960 : 500} credit="badge" eager={i === 0} />
+                    <figcaption className="hero-photo-label">
+                      <span className="hero-photo-city">{c.name}</span>
+                      <span className="hero-photo-country">{countryByCode[c.country].name}</span>
+                    </figcaption>
+                  </figure>
+                )
+              })}
+            </div>
+          </section>
+        </div>
 
         <TemplateCards />
 

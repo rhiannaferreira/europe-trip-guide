@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { cityById } from '../data/cities.js'
 import { templateDayCount, templatePath } from '../data/tripTemplates.js'
+import { tripLegs } from '../lib/trip.js'
+import { formatDuration } from '../lib/format.js'
 import { Link } from '../lib/router.jsx'
 import Thumb from '../components/Thumb.jsx'
 import { routeText, templateFlags } from './templateFacts.js'
@@ -22,11 +24,12 @@ function useNearScreen() {
 
 // One ready-made trip as a card: photo, days, flags, title, route, a few tags. Everything comes from the
 // template's own small record; nothing here calls the planner or a live service.
-export default function TemplateCard({ template: t, onOpen, headingLevel = 3 }) {
+export default function TemplateCard({ template: t, onOpen, headingLevel = 3, variant }) {
   const [ref, near] = useNearScreen()
   const hero = cityById[t.heroCityId] || cityById[t.stops[0].cityId]
   const H = `h${headingLevel}`
   const train = t.categories.includes('train')
+  if (variant === 'feature') return <FeatureCard t={t} hero={hero} H={H} train={train} onOpen={onOpen} photoRef={ref} near={near} />
   return (
     <Link to={templatePath(t)} className="tpl-card" onClick={() => onOpen?.(t)} aria-label={`${t.title}: ${routeText(t.stops)}`}>
       <div ref={ref} className="tpl-card-photo">
@@ -47,6 +50,59 @@ export default function TemplateCard({ template: t, onOpen, headingLevel = 3 }) 
           Explore trip →
         </span>
       </div>
+    </Link>
+  )
+}
+
+// The home page's larger card: the photo carries the days, name, title and route; the rail facts sit below.
+// No aria-label, so screen readers hear everything the card shows, in order.
+function FeatureCard({ t, hero, H, train, onOpen, photoRef, near }) {
+  const legs = tripLegs(t.stops.map((s) => s.cityId))
+  const railLegs = legs.filter((l) => l.mode === 'train')
+  const railMinutes = railLegs.reduce((n, l) => n + l.minutes, 0)
+  return (
+    <Link to={templatePath(t)} className="tpl-fcard" onClick={() => onOpen?.(t)}>
+      <div ref={photoRef} className="tpl-fcard-photo">
+        <Thumb id={hero.id} emoji={hero.emoji} alt="" kind={near ? 'city' : undefined} item={near ? hero : undefined} width={500} sizes="(max-width: 560px) 84vw, 380px" credit="title" />
+        <span className="tpl-fcard-top">
+          <span className="tpl-fcard-days">{templateDayCount(t)} days</span>
+          {train && <span className="tpl-fcard-train">By train</span>}
+        </span>
+        <div className="tpl-fcard-overlay">
+          <span className="tpl-fcard-kicker">{t.name}</span>
+          <H className="tpl-fcard-title">{t.title}</H>
+          <span className="tpl-fcard-route">
+            {t.stops.map((s, i) => (
+              <span key={s.cityId}>
+                {i > 0 && (
+                  <>
+                    {' '}
+                    <span className="tpl-fcard-sep" aria-hidden="true">
+                      →
+                    </span>{' '}
+                  </>
+                )}
+                {cityById[s.cityId]?.name}
+              </span>
+            ))}
+          </span>
+        </div>
+      </div>
+      <span className="tpl-fcard-body">
+        <span className="tpl-fcard-tags">{t.tags.filter((tag) => tag !== 'Train-friendly').slice(0, 3).join(' · ')}</span>
+        <span className="tpl-fcard-meta">
+          {railLegs.length > 0 ? (
+            <>
+              {railLegs.length} rail {railLegs.length === 1 ? 'leg' : 'legs'} · ~{formatDuration(railMinutes)}
+            </>
+          ) : (
+            <>{t.stops.length} stops</>
+          )}
+          <span className="tpl-fcard-cta">
+            Explore <span aria-hidden="true">→</span>
+          </span>
+        </span>
+      </span>
     </Link>
   )
 }
