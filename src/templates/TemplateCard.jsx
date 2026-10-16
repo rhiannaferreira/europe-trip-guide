@@ -2,10 +2,11 @@ import { useEffect, useRef, useState } from 'react'
 import { cityById } from '../data/cities.js'
 import { templateDayCount, templatePath } from '../data/tripTemplates.js'
 import { tripLegs } from '../lib/trip.js'
-import { formatDuration } from '../lib/format.js'
 import { Link } from '../lib/router.jsx'
 import Thumb from '../components/Thumb.jsx'
-import { routeText, templateFlags } from './templateFacts.js'
+import { routeText, templateCountries, templateFlags } from './templateFacts.js'
+import { countryByCode } from '../data/countries.js'
+import { JourneyMeta, RailRoute } from '../components/RailRoute.jsx'
 import './templates.css'
 
 // Whether an element has come near the screen. The card's photo is only looked up then, so a row of cards
@@ -54,55 +55,39 @@ export default function TemplateCard({ template: t, onOpen, headingLevel = 3, va
   )
 }
 
-// The home page's larger card: the photo carries the days, name, title and route; the rail facts sit below.
-// No aria-label, so screen readers hear everything the card shows, in order.
+// The home page's journey card: a photo, a ticket-style perforation, then the route as EuroWander draws it
+// (stations, train times between them), the trip's name and style. One link, so it works without hover.
 function FeatureCard({ t, hero, H, train, onOpen, photoRef, near }) {
   const legs = tripLegs(t.stops.map((s) => s.cityId))
-  const railLegs = legs.filter((l) => l.mode === 'train')
-  const railMinutes = railLegs.reduce((n, l) => n + l.minutes, 0)
+  const railLegs = legs.filter((l) => l.mode === 'train').length
+  const countryNames = templateCountries(t).map((c) => countryByCode[c].name)
+  const where = countryNames.length > 2 ? `${countryNames.length} countries` : countryNames.join(' & ')
   return (
-    <Link to={templatePath(t)} className="tpl-fcard" onClick={() => onOpen?.(t)}>
-      <div ref={photoRef} className="tpl-fcard-photo">
+    <Link to={templatePath(t)} className="jcard" onClick={() => onOpen?.(t)}>
+      <div ref={photoRef} className="jcard-photo">
         <Thumb id={hero.id} emoji={hero.emoji} alt="" kind={near ? 'city' : undefined} item={near ? hero : undefined} width={500} sizes="(max-width: 560px) 84vw, 380px" credit="title" />
-        <span className="tpl-fcard-top">
-          <span className="tpl-fcard-days">{templateDayCount(t)} days</span>
-          {train && <span className="tpl-fcard-train">By train</span>}
-        </span>
-        <div className="tpl-fcard-overlay">
-          <span className="tpl-fcard-kicker">{t.name}</span>
-          <H className="tpl-fcard-title">{t.title}</H>
-          <span className="tpl-fcard-route">
-            {t.stops.map((s, i) => (
-              <span key={s.cityId}>
-                {i > 0 && (
-                  <>
-                    {' '}
-                    <span className="tpl-fcard-sep" aria-hidden="true">
-                      →
-                    </span>{' '}
-                  </>
-                )}
-                {cityById[s.cityId]?.name}
-              </span>
-            ))}
-          </span>
-        </div>
+        <JourneyMeta className="jcard-tag" items={[where, `${templateDayCount(t)} days`]} />
       </div>
-      <span className="tpl-fcard-body">
-        <span className="tpl-fcard-tags">{t.tags.filter((tag) => tag !== 'Train-friendly').slice(0, 3).join(' · ')}</span>
-        <span className="tpl-fcard-meta">
-          {railLegs.length > 0 ? (
-            <>
-              {railLegs.length} rail {railLegs.length === 1 ? 'leg' : 'legs'} · ~{formatDuration(railMinutes)}
-            </>
-          ) : (
-            <>{t.stops.length} stops</>
-          )}
-          <span className="tpl-fcard-cta">
-            Explore <span aria-hidden="true">→</span>
+      <div className="jcard-body">
+        <RailRoute
+          className="jcard-route"
+          max={4}
+          label={`Route: ${t.stops.map((s) => cityById[s.cityId]?.name).join(', ')}`}
+          stops={t.stops.map((s) => ({ key: s.cityId, name: cityById[s.cityId]?.name }))}
+          legs={legs}
+        />
+        <div className="jcard-text">
+          <p className="jcard-kicker">{t.name}</p>
+          <H className="jcard-title">{t.title}</H>
+          <p className="jcard-tags">{t.tags.filter((tag) => tag !== 'Train-friendly').slice(0, 3).join(' · ')}</p>
+        </div>
+        <p className="jcard-foot">
+          <span className="jcard-rail">{train ? `${railLegs} rail ${railLegs === 1 ? 'leg' : 'legs'}` : `${t.stops.length} stops`}</span>
+          <span className="jcard-cta">
+            Explore journey <span aria-hidden="true">→</span>
           </span>
-        </span>
-      </span>
+        </p>
+      </div>
     </Link>
   )
 }

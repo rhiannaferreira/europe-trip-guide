@@ -3,7 +3,7 @@ import { cities, cityById } from '../data/cities.js'
 import { countries, countryByCode } from '../data/countries.js'
 import { places } from '../data/places.js'
 import { trainTimes } from '../data/trainTimes.js'
-import { tripLegs } from '../lib/trip.js'
+import { tripDays, tripLegs } from '../lib/trip.js'
 import { formatDuration } from '../lib/format.js'
 import { KEYS, readJSON } from '../lib/storage.js'
 import { migrate } from '../lib/tripModel.js'
@@ -13,6 +13,7 @@ import { setPageMeta } from '../lib/meta.js'
 import Thumb from '../components/Thumb.jsx'
 import InstallButton from '../components/InstallButton.jsx'
 import TemplateCards from '../templates/TemplateCards.jsx'
+import { JourneyMeta, RailRoute, SectionEyebrow, StationLabel } from '../components/RailRoute.jsx'
 import './landing.css'
 
 // Start downloading the planner while people read, so "Start exploring" opens instantly.
@@ -25,8 +26,12 @@ const GEM_SWAPS = [
   ['barcelona', 'girona'],
   ['prague', 'brno'],
 ]
-// The first is the large photo in the collage.
-const HERO_CITIES = ['florence', 'lisbon', 'prague']
+// The hero's example journey: real main stations; times come from the train-time data, not made up.
+const HERO_JOURNEY = [
+  { id: 'paris', station: 'Gare du Nord' },
+  { id: 'brussels', station: 'Bruxelles-Midi' },
+  { id: 'amsterdam', station: 'Amsterdam Centraal' },
+]
 
 const PILLARS = [
   {
@@ -62,17 +67,51 @@ function savedTripSummary() {
   const t = readJSON(KEYS.trip)
   const stops = Array.isArray(t?.stops) ? t.stops.filter((s) => cityById[s?.cityId]) : []
   if (stops.length === 0) return null
-  return { name: t.name?.trim() || 'Your trip', count: stops.length, cities: stops.map((s) => cityById[s.cityId].name) }
+  // Days only when the trip really says: its dates, or a length set on every stop.
+  const byDates = tripDays(t.startDate, t.endDate)
+  const byStops = stops.every((s) => Number.isInteger(s.days) && s.days > 0) ? stops.reduce((n, s) => n + s.days, 0) : null
+  return { name: t.name?.trim() || 'Your trip', stops: stops.map((s) => s.cityId), days: byDates || byStops }
 }
 
-// A small line-drawn train, in the text colour.
-function TrainIcon() {
+// "Your journey": the saved trip as a route strip, with real legs from the train-time data.
+function ContinueStrip({ saved }) {
+  const legs = tripLegs(saved.stops)
   return (
-    <svg className="home-icon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false">
-      <rect x="5" y="3" width="14" height="13" rx="3" fill="none" stroke="currentColor" strokeWidth="1.8" />
-      <path d="M5 10h14M9 20l-2 2M15 20l2 2" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      <circle cx="9" cy="13" r="1" fill="currentColor" />
-      <circle cx="15" cy="13" r="1" fill="currentColor" />
+    <section className="home-continue-wrap" aria-labelledby="continue-title">
+      <Link to="/trip" className="home-continue">
+        <span className="home-continue-head">
+          <span className="journey-meta">Your journey</span>
+          <span id="continue-title" className="home-continue-name">
+            {saved.name}
+          </span>
+        </span>
+        <RailRoute
+          direction="horizontal"
+          className="home-continue-route"
+          max={5}
+          stops={saved.stops.map((id) => ({ key: id, name: cityById[id].name }))}
+          legs={legs}
+        />
+        <span className="home-continue-end">
+          <JourneyMeta items={[`${saved.stops.length} ${saved.stops.length === 1 ? 'stop' : 'stops'}`, saved.days && `${saved.days} days`]} />
+          <span className="home-continue-go">
+            Continue <span aria-hidden="true">→</span>
+          </span>
+        </span>
+      </Link>
+    </section>
+  )
+}
+
+// A faint rail line that runs behind the hero and on into the journeys, with a few station nodes.
+function RailBackdrop() {
+  return (
+    <svg className="home-backdrop" aria-hidden="true" focusable="false" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMin slice">
+      <path className="home-backdrop-grid" d="M0 180H1440M0 450H1440M0 720H1440M360 0V900M720 0V900M1080 0V900" />
+      <path className="home-backdrop-line" d="M-20 40 H 670 Q 725 40 725 95 V 735 Q 725 790 780 790 H 1460" />
+      <circle cx="300" cy="40" r="5" />
+      <circle cx="725" cy="420" r="5" />
+      <circle cx="1120" cy="790" r="5" />
     </svg>
   )
 }
@@ -82,6 +121,9 @@ export default function Landing() {
   const legs = tripLegs(SAMPLE_ROUTE)
   const routeMinutes = legs.reduce((n, l) => n + l.minutes, 0)
   const routeCountries = new Set(SAMPLE_ROUTE.map((id) => cityById[id].country)).size
+  const heroLegs = tripLegs(HERO_JOURNEY.map((s) => s.id))
+  const heroMinutes = heroLegs.reduce((n, l) => n + l.minutes, 0)
+  const heroCountries = new Set(HERO_JOURNEY.map((s) => cityById[s.id].country)).size
 
   useEffect(() => {
     setPageMeta({ path: '/' })
@@ -96,20 +138,25 @@ export default function Landing() {
       </a>
       <header className="landing-header">
         <div className="landing-header-inner">
-          <Link to="/" className="landing-brand" aria-label="Eurowander home">
-            <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" width="30" height="30" /> Eurowander
-          </Link>
+          <div className="home-brand">
+            <Link to="/" className="landing-brand" aria-label="Eurowander home">
+              <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" width="28" height="28" /> Eurowander
+            </Link>
+            <span className="home-brand-meta" aria-hidden="true">
+              Europe · Train-first
+            </span>
+          </div>
           <nav aria-label="Main" className="home-nav">
             <Link to="/explore">Explore</Link>
             <Link to="/build" className="home-nav-build" onMouseEnter={preloadBuilder} onFocus={preloadBuilder}>
               Build a trip
             </Link>
             <Link to="/trip-ideas">Trip ideas</Link>
-            <Link to="/trip" aria-label={saved ? `My trip, ${saved.count} ${saved.count === 1 ? 'city' : 'cities'}` : undefined}>
+            <Link to="/trip" aria-label={saved ? `My trip, ${saved.stops.length} ${saved.stops.length === 1 ? 'stop' : 'stops'}` : undefined}>
               My trip
               {saved && (
                 <span className="home-nav-count" aria-hidden="true">
-                  {saved.count}
+                  · {saved.stops.length}
                 </span>
               )}
             </Link>
@@ -120,81 +167,74 @@ export default function Landing() {
 
       <main id="landing-main" tabIndex={-1}>
         <div className="home-band home-band-hero">
-          <svg className="home-hero-lines" aria-hidden="true" focusable="false" viewBox="0 0 1440 640" preserveAspectRatio="xMidYMid slice">
-            <path d="M-40 520 C 260 470, 420 600, 700 520 S 1120 300, 1480 360" />
-            <path d="M-40 140 C 300 210, 520 80, 820 150 S 1240 260, 1480 120" />
-          </svg>
-          <section className="hero">
+          <RailBackdrop />
+          <section className="hero" aria-labelledby="hero-title">
             <div className="hero-text">
               <TravelEntry trip={migrate(readJSON(KEYS.trip))} variant="landing" />
-              <p className="home-eyebrow">
-                <TrainIcon /> A train-first trip guide for Europe
-              </p>
-              <h1>See more of Europe, one train ride at a time.</h1>
+              <SectionEyebrow>Europe by rail</SectionEyebrow>
+              <h1 id="hero-title">
+                See more of Europe, <em>one train ride</em> at a time.
+              </h1>
               <p className="hero-sub">
                 Find places worth seeing, swap the crowded favourites for hidden gems, and stitch cities in different countries into one trip, planned day by day.
               </p>
               <div className="home-ctas">
-                <Link to="/build" className="home-cta home-cta-primary" onMouseEnter={preloadBuilder} onFocus={preloadBuilder}>
-                  <span aria-hidden="true">✨</span> Build my trip
+                <Link to="/build" className="home-cta" onMouseEnter={preloadBuilder} onFocus={preloadBuilder}>
+                  Build my trip <span aria-hidden="true">→</span>
                 </Link>
-                <a href="#trip-ideas" className="home-cta home-cta-secondary">
-                  Start with a ready-made trip
+                <a href="#trip-ideas" className="home-text-link home-text-link-strong">
+                  Start with a ready-made journey <span aria-hidden="true">→</span>
                 </a>
               </div>
               <p className="home-tertiary">
+                or{' '}
                 <Link to="/explore" className="home-text-link" onMouseEnter={preloadPlanner} onFocus={preloadPlanner}>
-                  Start exploring <span aria-hidden="true">→</span>
+                  explore the map
                 </Link>
                 {!saved && (
-                  <a href="#sample-route" className="home-text-link">
-                    See a sample route <span aria-hidden="true">→</span>
-                  </a>
+                  <>
+                    {' '}
+                    ·{' '}
+                    <a href="#sample-route" className="home-text-link">
+                      see a sample rail route
+                    </a>
+                  </>
                 )}
               </p>
-              {saved && (
-                <Link to="/trip" className="home-continue">
-                  <span className="home-continue-label">Continue your trip</span>
-                  <span className="home-continue-name">{saved.name}</span>
-                  <span className="home-continue-route">
-                    {saved.cities.slice(0, 4).join(' — ')}
-                    {saved.cities.length > 4 ? ` +${saved.cities.length - 4}` : ''}
-                  </span>
-                  <span className="home-continue-meta">
-                    {saved.count} {saved.count === 1 ? 'city' : 'cities'} <span aria-hidden="true">→</span>
-                  </span>
-                </Link>
-              )}
-              <ul className="home-stats" aria-label="What's in the guide">
-                <li>
-                  <strong>{countries.length}</strong> countries
-                </li>
-                <li>
-                  <strong>{cities.length}</strong> cities and towns
-                </li>
-                <li>
-                  <strong>{Math.floor(places.length / 10) * 10}+</strong> places, plus OpenStreetMap
-                </li>
-              </ul>
+              <p className="home-coverage">
+                <span className="home-coverage-label">EuroWander covers</span> {countries.length} countries · {cities.length} cities · {Math.floor(places.length / 10) * 10}+ curated places{' '}
+                <span className="home-coverage-live">+ live discoveries</span>
+              </p>
             </div>
-            <div className="hero-photos">
-              <svg className="hero-route" aria-hidden="true" focusable="false" viewBox="0 0 100 100" preserveAspectRatio="none">
-                <path d="M12 30 C 30 8, 62 6, 84 22 S 92 70, 60 86 S 14 92, 10 70" />
-              </svg>
-              {HERO_CITIES.map((id, i) => {
-                const c = cityById[id]
-                return (
-                  <figure key={id} className={`hero-photo hero-photo-${i}`}>
-                    <Thumb id={id} emoji={c.emoji} alt={c.name} kind="city" item={c} width={i === 0 ? 960 : 500} credit="badge" eager={i === 0} />
-                    <figcaption className="hero-photo-label">
-                      <span className="hero-photo-city">{c.name}</span>
-                      <span className="hero-photo-country">{countryByCode[c.country].name}</span>
-                    </figcaption>
-                  </figure>
-                )
-              })}
-            </div>
+
+            <figure className="hero-journey" aria-labelledby="hero-journey-title">
+              <figcaption className="hero-journey-head">
+                <span id="hero-journey-title" className="journey-meta">
+                  Example route · {HERO_JOURNEY.length} stops · {heroCountries} countries
+                </span>
+                <span className="journey-meta hero-journey-total">{formatDuration(heroMinutes)} on board</span>
+              </figcaption>
+              <RailRoute
+                className="hero-route"
+                label={`Example route: ${HERO_JOURNEY.map((s) => cityById[s.id].name).join(', ')}`}
+                stops={HERO_JOURNEY.map((s) => ({ key: s.id, name: cityById[s.id].name, sub: s.station }))}
+                legs={heroLegs}
+                renderStop={(stop, i) => {
+                  const c = cityById[stop.key]
+                  return (
+                    <div className={`hero-stop hero-stop-${i}`}>
+                      <StationLabel name={stop.name} sub={stop.sub} />
+                      <div className="hero-stop-photo">
+                        <Thumb id={c.id} emoji={c.emoji} alt={`${c.name}, ${countryByCode[c.country].name}`} kind="city" item={c} width={i === 0 ? 960 : 500} credit="badge" eager={i === 0} />
+                      </div>
+                    </div>
+                  )
+                }}
+              />
+            </figure>
           </section>
+
+          {saved && <ContinueStrip saved={saved} />}
         </div>
 
         <TemplateCards />

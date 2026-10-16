@@ -1,0 +1,36 @@
+/* EuroWander route language (RailRoute.jsx). Falls back to the app's own tokens, so it works on any page;
+   the home page sets the --rail-* tokens for its paper and night-train palettes. */
+:root {
+  --font-editorial: 'Instrument Serif', 'Iowan Old Style', Georgia, serif;
+  --font-transport: 'Barlow', 'Helvetica Neue', Arial, sans-serif;
+}
+
+.station-label { display: grid; gap: 1px; min-width: 0; line-height: 1.15; }
+.station-name { font-family: var(--font-transport); font-weight: 700; font-size: 0.86rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--rail-ink, var(--text)); }
+.station-sub { font-family: var(--font-transport); font-weight: 500; font-size: 0.78rem; color: var(--rail-muted, var(--muted)); }
+
+.route-node { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--rail-ink, var(--text)); background: var(--rail-bg, var(--surface)); flex: none; position: relative; z-index: 1; }
+.route-node-end { background: var(--rail-red, var(--accent)); border-color: var(--rail-red, var(--accent)); }
+
+.rail-route { list-style: none; margin: 0; padding: 0; font-family: var(--font-transport); }
+.rail-leg { font-family: var(--font-transport); font-size: 0.78rem; font-weight: 600; color: var(--rail-muted, var(--muted)); font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
+.rail-leg-more { font-style: italic; font-weight: 500; }
+
+/* Vertical: node column on the left, the line running from each node down to the next. */
+.rail-route-vertical .rail-stop { position: relative; display: grid; grid-template-columns: 12px minmax(0, 1fr); column-gap: 12px; align-items: start; padding-bottom: var(--rail-gap, 12px); }
+.rail-route-vertical .rail-stop:last-child { padding-bottom: 0; }
+.rail-route-vertical .route-node { margin-top: 2px; }
+.rail-route-vertical .rail-stop:not(:last-child)::before { content: ''; position: absolute; left: 5px; top: 8px; bottom: -4px; width: 2px; background: var(--rail-line, var(--rail-ink, var(--text))); }
+.rail-route-vertical .rail-stop > :not(.route-node) { grid-column: 2; }
+.rail-route-vertical .rail-leg { display: block; margin-top: 6px; padding-left: 0; }
+
+/* Horizontal: nodes on one line, names underneath, the time sitting on the line between stops. */
+.rail-route-horizontal { display: flex; }
+.rail-route-horizontal .rail-stop { position: relative; flex: 1 1 0; min-width: 0; display: grid; justify-items: start; gap: 8px; padding-right: 12px; }
+.rail-route-horizontal .rail-stop:last-child { flex: 0 0 auto; padding-right: 0; }
+.rail-route-horizontal .rail-stop:not(:last-child)::before { content: ''; position: absolute; top: 5px; left: 6px; right: -6px; height: 2px; background: var(--rail-line, var(--rail-ink, var(--text))); }
+.rail-route-horizontal .rail-leg { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); white-space: nowrap; }
+
+.journey-meta { margin: 0; font-family: var(--font-transport); font-weight: 600; font-size: 0.74rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--rail-muted, var(--muted)); }
+.section-eyebrow { display: flex; align-items: center; gap: 10px; margin: 0 0 14px; font-family: var(--font-transport); font-weight: 700; font-size: 0.78rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--rail-ink, var(--text)); }
+.section-eyebrow::before { content: ''; width: 28px; height: 2px; background: var(--rail-red, var(--accent)); }

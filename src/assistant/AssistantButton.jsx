@@ -18,12 +18,12 @@ function pendingHint() {
   return (readJSON(KEYS.copilot, {}) || {}).hintSeen === sig ? '' : sig
 }
 
-// A four-point spark, drawn so it takes the button's colours (an emoji wouldn't).
-function SparkIcon() {
+// A small compass, drawn so it takes the button's colours.
+function CompassIcon() {
   return (
-    <svg viewBox="0 0 24 24" width="16" height="16" focusable="false">
-      <path d="M12 2.5c.5 4.6 2.9 7 7.5 7.5-4.6.5-7 2.9-7.5 7.5-.5-4.6-2.9-7-7.5-7.5 4.6-.5 7-2.9 7.5-7.5z" fill="currentColor" />
-      <path d="M19 15.5c.2 1.8 1.2 2.8 3 3-1.8.2-2.8 1.2-3 3-.2-1.8-1.2-2.8-3-3 1.8-.2 2.8-1.2 3-3z" fill="currentColor" opacity="0.8" />
+    <svg viewBox="0 0 24 24" width="22" height="22" focusable="false">
+      <circle cx="12" cy="12" r="9.2" fill="none" stroke="currentColor" strokeWidth="1.6" />
+      <path d="M15.6 8.4 13.4 13.4 8.4 15.6 10.6 10.6z" fill="currentColor" />
     </svg>
   )
 }
@@ -75,14 +75,17 @@ export default function AssistantButton({ route }) {
         onClick={() => setAssistantOpen(!open)}
       >
         <span className="ask-fab-icon" aria-hidden="true">
-          {open ? '✕' : <SparkIcon />}
+          {open ? '✕' : <CompassIcon />}
         </span>
         <span className="ask-fab-label" aria-hidden="true">
           {open ? (
-            'Close'
+            <span className="ask-fab-title">Close</span>
           ) : (
             <>
-              Ask<span className="ask-fab-long"> EuroWander</span>
+              <span className="ask-fab-title">
+                Ask<span className="ask-fab-long"> EuroWander</span>
+              </span>
+              <span className="ask-fab-sub">Travel copilot</span>
             </>
           )}
         </span>

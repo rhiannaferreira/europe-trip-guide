@@ -1002,11 +1002,14 @@ a:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent); ou
 }
 
 /* ---------- Site-wide assistant ---------- */
-/* A compact glass pill: noticeable, but quieter than each page's main red button. */
-.ask-fab { position: fixed; right: 20px; bottom: 20px; z-index: 2000; display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 10px 18px 10px 14px; border: 1px solid color-mix(in srgb, var(--border-strong) 80%, transparent); border-radius: 999px; background: color-mix(in srgb, var(--panel) 80%, transparent); backdrop-filter: saturate(1.4) blur(14px); -webkit-backdrop-filter: saturate(1.4) blur(14px); color: var(--text); font-weight: 700; font-size: 0.95rem; box-shadow: 0 2px 6px rgb(0 0 0 / 0.08), 0 10px 28px -10px rgb(0 0 0 / 0.35); transition: border-color 0.15s, transform 0.15s; }
-.ask-fab:hover { border-color: var(--accent); transform: translateY(-1px); }
-.ask-fab-icon { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--accent-fill); color: #fff; flex: none; }
-.ask-fab-dot { position: absolute; top: 6px; right: 8px; width: 10px; height: 10px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 0 2px var(--panel); }
+/* A small station-sign tab: inverted ink with a rail-red edge, quieter than each page's main red button. */
+.ask-fab { position: fixed; right: 20px; bottom: 20px; z-index: 2000; display: inline-flex; align-items: center; gap: 10px; min-height: 48px; padding: 8px 16px 8px 12px; border: none; border-left: 4px solid var(--accent-fill); border-radius: 4px; background: var(--text); color: var(--panel); font-family: 'Barlow', system-ui, sans-serif; text-align: left; box-shadow: 0 6px 20px -8px rgb(0 0 0 / 0.45); transition: transform 0.15s; }
+.ask-fab:hover { transform: translateY(-1px); }
+.ask-fab-icon { display: grid; place-items: center; flex: none; }
+.ask-fab-label { display: grid; line-height: 1.1; }
+.ask-fab-title { font-weight: 700; font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; }
+.ask-fab-sub { font-weight: 500; font-size: 0.74rem; opacity: 0.75; }
+.ask-fab-dot { position: absolute; top: -4px; right: -4px; width: 12px; height: 12px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 0 2px var(--panel); }
 .ask-fab.open { display: none; }
 
 /* EuroWander copilot: a side panel on wide screens, the whole screen on phones. Above the Leaflet map. */
@@ -1107,7 +1110,7 @@ a:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent); ou
 .cp-send:disabled { opacity: 0.45; }
 @media (max-width: 700px) {
   .ask-fab { right: 12px; bottom: 12px; padding: 8px 14px 8px 10px; }
-  .ask-fab .ask-fab-long { display: none; }
+  .ask-fab .ask-fab-long, .ask-fab .ask-fab-sub { display: none; }
   .ask-panel { width: 100vw; height: 100dvh; bottom: auto; border-left: none; box-shadow: none; }
   .cp-back { display: inline-flex; }
   .cp-close { display: none; }
