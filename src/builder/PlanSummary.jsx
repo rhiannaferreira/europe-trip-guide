@@ -1,28 +1,43 @@
 import { cityById } from '../data/cities.js'
-import { countryByCode } from '../data/countries.js'
 import { formatDuration } from '../lib/format.js'
 import { paceById } from '../planner/preferences.js'
+import { JourneyMeta, RailRoute, SectionEyebrow } from '../components/RailRoute.jsx'
 
 const MODE_NAMES = { train: 'train', bus: 'bus', 'rail + ferry': 'rail + ferry', flight: 'flight' }
 
 // The plan at a glance: plain counts and sums from the route, and what might make it hard going.
 // There's deliberately no overall score; each number says what it is.
-export default function PlanSummary({ plan, stats, warnings, costly, onFix, onOpenStop }) {
+export default function PlanSummary({ plan, legs = [], stats, warnings, costly, onFix, onOpenStop }) {
   const route = plan.stops.map((s) => cityById[s.cityId].name)
+  const home = plan.prefs.roundTrip && plan.stops.length > 1 ? cityById[plan.prefs.startCityId] : null
+  const stops = [
+    ...plan.stops.map((s, i) => ({ key: `${s.cityId}-${i}`, name: cityById[s.cityId].name, sub: `${s.nights} night${s.nights === 1 ? '' : 's'}` })),
+    ...(home ? [{ key: 'home', name: home.name, sub: 'home' }] : []),
+  ]
+  const title = home ? `Round trip from ${home.name}` : route.length > 1 ? `${route[0]} to ${route[route.length - 1]}` : route[0]
   const modes = Object.entries(stats.modes)
     .map(([m, n]) => `${n} ${MODE_NAMES[m] || m}${n === 1 ? '' : m === 'bus' ? 'es' : 's'}`)
     .join(', ')
   return (
     <section className="plan-summary" aria-labelledby="plan-summary-title">
-      <h2 id="plan-summary-title" className="plan-route-title">
-        {route.join(' → ')}
-        {plan.prefs.roundTrip && ` → ${cityById[plan.prefs.startCityId].name}`}
+      <SectionEyebrow>Your journey</SectionEyebrow>
+      <h2 id="plan-summary-title" className="plan-route-title rail-title">
+        {title}
       </h2>
-      <p className="plan-sub">
-        {stats.days} day{stats.days === 1 ? '' : 's'}, {stats.nights} night{stats.nights === 1 ? '' : 's'} · {stats.countries.map((c) => countryByCode[c]?.flag).join(' ')}{' '}
-        {stats.countries.length} countr{stats.countries.length === 1 ? 'y' : 'ies'}
-        {plan.prefs.startDate && ` · ${plan.prefs.startDate} to ${plan.prefs.endDate}`}
-      </p>
+      <JourneyMeta
+        className="plan-sub"
+        items={[
+          `${stats.days} day${stats.days === 1 ? '' : 's'}`,
+          `${stats.nights} night${stats.nights === 1 ? '' : 's'}`,
+          `${stats.countries.length} countr${stats.countries.length === 1 ? 'y' : 'ies'}`,
+          plan.prefs.startDate && `${plan.prefs.startDate} to ${plan.prefs.endDate}`,
+        ]}
+      />
+      {stops.length > 1 && (
+        <div className="rail-scroll plan-rail">
+          <RailRoute direction="horizontal" label={`Route: ${stops.map((s) => s.name).join(', ')}`} stops={stops} legs={legs} />
+        </div>
+      )}
 
       <div className="stats plan-stats">
         <div className="stat">

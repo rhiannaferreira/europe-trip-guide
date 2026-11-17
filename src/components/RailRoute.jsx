@@ -8,6 +8,11 @@ import './rail.css'
 // "1h 25m", or "~4h" when the time is an estimate rather than a known fastest train.
 export const legTime = (leg) => (leg ? `${leg.estimated ? '~' : ''}${formatDuration(leg.minutes)}` : '')
 
+// Rail is the default, so only other ways of travelling are named on the line ("~3h bus").
+const MODE_WORD = { bus: 'bus', flight: 'flight', 'rail + ferry': 'rail + ferry', ferry: 'ferry' }
+export const legMode = (leg) => MODE_WORD[leg?.mode] || ''
+const legHow = (leg) => (leg?.mode === 'flight' ? 'by plane' : leg?.mode === 'bus' ? 'by bus' : leg?.mode?.includes('ferry') ? 'by train and ferry' : 'by train')
+
 // A city in station-board style: the name in tracked caps, a station or country underneath.
 export function StationLabel({ name, sub, as: Tag = 'span', className = '' }) {
   return (
@@ -39,10 +44,11 @@ export function RailRoute({ stops, legs = [], direction = 'vertical', max, label
             <RouteNode end={i === 0 || last} />
             {renderStop ? renderStop(s, i) : <StationLabel name={s.name} sub={s.sub} />}
             {leg && (
-              <span className="rail-leg">
+              <span className={`rail-leg${legMode(leg) ? ' rail-leg-road' : ''}`}>
                 <span className="visually-hidden">, then </span>
                 {legTime(leg)}
-                <span className="visually-hidden"> by train to the next stop</span>
+                {legMode(leg) && <span aria-hidden="true"> {legMode(leg)}</span>}
+                <span className="visually-hidden"> {legHow(leg)} to the next stop</span>
               </span>
             )}
             {skipped && (
@@ -56,6 +62,11 @@ export function RailRoute({ stops, legs = [], direction = 'vertical', max, label
     </ol>
   )
 }
+
+// The same route language for lists people work with (a trip's stops, the builder's route editor): a rail
+// line down the left edge with a station node at each stop, so cards, buttons and day plans sit beside it.
+// Put .rail-track on the <ol>, .rail-track-stop on each stop's <li> with a <RouteNode> first, and
+// .rail-track-leg on the journey between two stops (.is-road when it isn't by rail: the line is dashed).
 
 // Small tracked-caps metadata: ITALY · 10 DAYS · 2 RAIL LEGS
 export function JourneyMeta({ items, className = '' }) {

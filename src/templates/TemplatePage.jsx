@@ -21,17 +21,21 @@ import { planLegs } from '../planner/plan.js'
 import { modeIcon, sourceLabel } from '../planner/transport.js'
 import { hasRail } from '../services/live/trains.js'
 import { requestAsk, requestFocus, setAssistantOpen, setBuilder } from '../assistant/bridge.js'
-import { mapLibreOn } from '../map/config.js'
 import { budgetLevel, bestMonthsText, quieterSwaps, routeText, stopsWithDays, templateDays, templateFlags, templatePlan, whyItWorks, withStartDate } from './templatePlan.js'
 import { templateMeta } from './templateMeta.js'
 import TemplateSaveDialog from './TemplateSaveDialog.jsx'
+import { JourneyMeta, RailRoute, RouteNode, SectionEyebrow, StationLabel } from '../components/RailRoute.jsx'
 import './templates.css'
 
 // The route map loads after the rest of the page (it's the heaviest part), on the same map as Build My Trip.
-const RouteMap = lazy(() => (mapLibreOn() ? import('../map/PlanRouteMap.jsx') : import('../builder/PlanMap.jsx')))
+const RouteMap = lazy(() => import('../map/PlanRouteMap.jsx'))
 
 const stopsKey = (plan) => `${plan.prefs.startDate}|${plan.stops.map((s) => `${s.cityId}:${s.nights}`).join(',')}`
 const SLOT = { travel: 'Travel', morning: 'Morning', lunch: 'Lunch', afternoon: 'Afternoon', evening: 'Evening' }
+const railLegsText = (legs) => {
+  const n = legs.filter((l) => l.mode === 'train').length
+  return n ? `${n} rail ${n === 1 ? 'leg' : 'legs'}` : ''
+}
 const dayRange = (a, b) => (a === b ? `Day ${a}` : `Days ${a}–${b}`)
 const shortDate = (iso) => new Date(`${iso}T00:00:00`).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
 
@@ -55,11 +59,13 @@ function Leg({ leg, date }) {
   const railOn = useLiveEnabled('rail')
   // Real timetables only once there's a date, and only when asked: nothing is searched in the background.
   const canSearch = railOn && date && leg.mode !== 'flight' && hasRail(leg.from.id) && hasRail(leg.to.id)
+  const how = leg.mode === 'train' ? 'Train' : leg.mode === 'bus' ? 'Bus' : leg.mode === 'flight' ? 'Flight' : leg.mode
   return (
-    <li className="tpl-leg">
-      <span className="tpl-leg-line" aria-hidden="true" />
+    <div className={`tpl-leg rail-track-leg${leg.mode === 'train' ? '' : ' is-road'}`}>
       <span>
-        <span aria-hidden="true">{modeIcon(leg.mode)}</span> {leg.mode === 'train' ? 'Train' : leg.mode === 'bus' ? 'Bus' : leg.mode}, about {formatDuration(leg.minutes)}{' '}
+        <span className="leg-time">
+          <span aria-hidden="true">{modeIcon(leg.mode)}</span> {how} <span className="leg-time-sub">about {formatDuration(leg.minutes)}</span>
+        </span>{' '}
         <DataBadge kind="estimate" title={`${sourceLabel(leg.source)}. A typical journey time, not a live timetable.`} />
         {!date && <small className="tpl-leg-note">Typical time. Add a start date to check real trains.</small>}
       </span>
@@ -69,7 +75,7 @@ function Leg({ leg, date }) {
         </button>
       )}
       {open && <TrainSearchModal fromCityId={leg.from.id} toCityId={leg.to.id} date={date} estimate={leg} onClose={() => setOpen(false)} />}
-    </li>
+    </div>
   )
 }
 
@@ -253,15 +259,29 @@ export default function TemplatePage({ slug }) {
 
         <section className="tpl-hero" aria-labelledby="tpl-title">
           <div className="tpl-hero-text">
-            <p className="eyebrow">
+            <SectionEyebrow className="tpl-eyebrow">
               <span aria-hidden="true">{templateFlags(t)}</span> {t.name}
-            </p>
-            <h1 id="tpl-title">{t.title}</h1>
-            <p className="tpl-hero-route">{routeText(plan.stops)}</p>
-            <p className="tpl-hero-facts">
-              {stats.days} days · {stats.cities} {stats.cities === 1 ? 'city' : 'cities'} · {countries.length === 1 ? countries[0] : `${countries.length} countries`}
-              {allTrain ? ' · 🚆 by train' : ''}
-            </p>
+            </SectionEyebrow>
+            <h1 id="tpl-title" className="rail-title">
+              {t.title}
+            </h1>
+            <JourneyMeta
+              className="tpl-hero-facts"
+              items={[
+                `${stats.days} days`,
+                `${stats.cities} ${stats.cities === 1 ? 'city' : 'cities'}`,
+                countries.length === 1 ? countries[0] : `${countries.length} countries`,
+                allTrain ? 'all by train' : railLegsText(legs),
+              ]}
+            />
+            <div className="rail-scroll tpl-hero-rail">
+              <RailRoute
+                direction="horizontal"
+                label={`Route: ${routeText(plan.stops)}`}
+                stops={plan.stops.map((s) => ({ key: s.cityId, name: cityById[s.cityId].name, sub: `${s.nights} night${s.nights === 1 ? '' : 's'}` }))}
+                legs={legs}
+              />
+            </div>
             <p className="tpl-hero-intro">{details.intro}</p>
             <ul className="tpl-tags" aria-label="Good for">
               {t.tags.map((tag) => (
@@ -317,23 +337,20 @@ export default function TemplatePage({ slug }) {
                   <input type="date" value={plan.prefs.startDate} onChange={(e) => setDate(e.target.value)} />
                 </label>
               </div>
-              <ol className="tpl-route">
+              <ol className="tpl-route rail-track">
                 {groups.map((g, i) => (
-                  <li key={g.stop.cityId} className="tpl-stop-wrap">
+                  <li key={g.stop.cityId} className={`tpl-stop-wrap rail-track-stop${focus === g.stop.cityId ? ' is-focus' : ''}`}>
+                    <RouteNode end={i === 0 || i === groups.length - 1} />
                     <div className={`tpl-stop${focus === g.stop.cityId ? ' is-focus' : ''}`}>
-                      <button type="button" className="tpl-stop-main" onClick={() => pick(i)} aria-label={`Show ${g.city.name} on the map`}>
-                        <span className="tpl-stop-n" aria-hidden="true">
-                          {i + 1}
-                        </span>
-                        <span>
-                          <strong>
-                            {g.city.name} <span aria-hidden="true">{countryByCode[g.city.country].flag}</span>
-                          </strong>
-                          <small>
-                            {dayRange(g.from, g.to)} · {g.stop.nights} night{g.stop.nights === 1 ? '' : 's'}
-                            {g.city.hiddenGem ? ' · 💎 hidden gem' : ''}
-                          </small>
-                        </span>
+                      <button type="button" className="tpl-stop-main" onClick={() => pick(i)} aria-label={`Stop ${i + 1}, ${g.city.name}: show on the map`}>
+                        <StationLabel
+                          name={
+                            <>
+                              {g.city.name} <span aria-hidden="true">{countryByCode[g.city.country].flag}</span>
+                            </>
+                          }
+                          sub={`${dayRange(g.from, g.to)} · ${g.stop.nights} night${g.stop.nights === 1 ? '' : 's'}${g.city.hiddenGem ? ' · 💎 hidden gem' : ''}`}
+                        />
                       </button>
                       <button type="button" className="link-btn small" aria-expanded={openStops.has(i)} onClick={() => toggleStop(i)}>
                         {openStops.has(i) ? 'Hide days' : 'Show days'}

@@ -9,7 +9,6 @@ import SearchBar from './components/SearchBar.jsx'
 import CityExplorer from './components/CityExplorer.jsx'
 import Filters from './components/Filters.jsx'
 import PlaceCard from './components/PlaceCard.jsx'
-import { mapLibreOn } from './map/config.js'
 import TripBoard from './components/TripBoard.jsx'
 import TripSummary from './components/TripSummary.jsx'
 import CountryTips from './components/CountryTips.jsx'
@@ -50,10 +49,8 @@ import TravelEntry from './travel/TravelEntry.jsx'
 
 const PAGE = 24
 
-// The map loads after the page (it's the heaviest part), as MapLibre or, while both exist, the old
-// Leaflet map (?map=leaflet). The lists, trip and itinerary never wait for it.
-const USE_MAPLIBRE = mapLibreOn()
-const MapView = lazy(() => (USE_MAPLIBRE ? import('./map/ExploreMap.jsx') : import('./components/MapView.jsx')))
+// The map loads after the page (it's the heaviest part). The lists, trip and itinerary never wait for it.
+const MapView = lazy(() => import('./map/ExploreMap.jsx'))
 
 // Skip links move focus without changing the URL (the # would clash with routes in the preview build).
 const skipTo = (id) => (e) => {

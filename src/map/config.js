@@ -35,20 +35,3 @@ export function baseMap() {
     custom: Boolean(env.VITE_MAP_TILES),
   }
 }
-
-// Which renderer the planner uses. MapLibre unless the build turns it off (VITE_USE_MAPLIBRE=false) or
-// the address asks for the old map (?map=leaflet, remembered for the tab so links keep it).
-// Temporary: removed with Leaflet once the MapLibre map is approved.
-export function mapLibreOn() {
-  if (typeof window !== 'undefined') {
-    try {
-      const asked = new URLSearchParams(window.location.search).get('map')
-      if (asked === 'leaflet' || asked === 'maplibre') sessionStorage.setItem('ew-map', asked)
-      const chosen = sessionStorage.getItem('ew-map')
-      if (chosen) return chosen === 'maplibre'
-    } catch {
-      // Storage blocked: fall through to the build setting.
-    }
-  }
-  return env.VITE_USE_MAPLIBRE !== 'false'
-}

@@ -32,9 +32,10 @@
 .tpl-crumbs { font-size: 0.85rem; color: var(--muted); margin: 4px 0 14px; }
 .tpl-crumbs a { color: var(--muted); }
 .tpl-hero { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 32px; align-items: start; }
-.tpl-hero h1 { font-family: var(--display); font-size: clamp(2rem, 4.6vw, 3rem); line-height: 1.05; letter-spacing: -0.02em; }
-.tpl-hero-route { font-size: 1.15rem; font-weight: 700; margin-top: 10px; }
-.tpl-hero-facts { color: var(--muted); margin-top: 6px; }
+.tpl-hero h1 { font-size: clamp(2.4rem, 5.2vw, 3.6rem); text-wrap: balance; }
+.tpl-eyebrow { margin-bottom: 12px; }
+.tpl-hero .tpl-hero-facts { margin-top: 14px; }
+.tpl-hero-rail { margin-top: 10px; border-top: 2px solid var(--text); border-bottom: 1px solid var(--border); padding-top: 34px; padding-bottom: 14px; --rail-bg: var(--bg); }
 .tpl-hero-intro { margin-top: 14px; line-height: 1.5; max-width: 60ch; }
 .tpl-tags { list-style: none; padding: 0; margin: 14px 0 0; display: flex; flex-wrap: wrap; gap: 6px; }
 .tpl-tags li { border: 1px solid var(--border); border-radius: 999px; padding: 3px 10px; font-size: 0.8rem; color: var(--muted); background: var(--surface); }
@@ -50,14 +51,13 @@
 .tpl-route-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
 .tpl-date { display: grid; gap: 4px; font-size: 0.8rem; font-weight: 600; color: var(--muted); }
 .tpl-date input { padding: 6px 10px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text); }
-.tpl-route { list-style: none; padding: 0; margin: 14px 0 10px; }
-.tpl-stop { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+.tpl-route { margin: 14px 0 10px; --track-node-top: 21px; --rail-bg: var(--bg); }
+.tpl-stop { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); }
 .tpl-stop.is-focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
-.tpl-stop-main { display: flex; align-items: center; gap: 12px; background: none; border: 0; padding: 0; text-align: left; flex: 1; min-width: 0; }
-.tpl-stop-main strong { display: block; font-family: var(--display); font-size: 1.1rem; }
-.tpl-stop-main small { color: var(--muted); }
-.tpl-stop-n { width: 30px; height: 30px; flex: none; border-radius: 50%; display: grid; place-items: center; background: var(--accent-fill); color: #fff; font-weight: 800; font-size: 0.9rem; }
-.tpl-stop-days { padding: 6px 0 4px 18px; border-left: 2px solid var(--border); margin-left: 26px; }
+.tpl-stop-main { display: flex; align-items: center; gap: 12px; background: none; border: 0; padding: 0; text-align: left; flex: 1; min-width: 0; color: inherit; cursor: pointer; }
+.tpl-stop-main .station-name { font-size: 1rem; }
+.tpl-stop-main .station-sub { font-size: 0.82rem; }
+.tpl-stop-days { padding: 6px 0 4px; }
 .tpl-days { list-style: none; padding: 0; margin: 8px 0 0; display: grid; gap: 10px; }
 .tpl-day { padding: 10px 12px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--border); }
 .tpl-day h4 { margin: 0 0 6px; font-size: 1rem; display: grid; gap: 2px; }
@@ -70,9 +70,8 @@
 .tpl-day-travel { color: var(--muted); }
 .tpl-more { margin: 8px 0 4px; font-size: 0.88rem; }
 .tpl-more a { color: var(--accent); }
-.tpl-leg { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 0 10px 40px; color: var(--muted); font-size: 0.92rem; position: relative; }
-.tpl-leg-line { position: absolute; left: 26px; top: 0; bottom: 0; border-left: 2px dashed var(--border-strong); }
-.tpl-leg-note { display: block; font-size: 0.8rem; }
+.tpl-leg { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 14px 0; color: var(--muted); font-size: 0.92rem; }
+.tpl-leg-note { display: block; font-size: 0.8rem; margin-top: 2px; }
 .tpl-highlights, .tpl-why { list-style: none; padding: 0; margin: 10px 0 0; display: grid; gap: 6px; }
 .tpl-highlights li::before { content: '★ '; color: var(--gold); }
 .tpl-why li::before { content: '✓ '; color: var(--good); font-weight: 800; }

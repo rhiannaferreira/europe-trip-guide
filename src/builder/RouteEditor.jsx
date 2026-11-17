@@ -9,6 +9,7 @@ import DataBadge from './DataBadge.jsx'
 import TrainSearchModal from '../components/TrainSearch.jsx'
 import { hasRail } from '../services/live/trains.js'
 import { useLiveEnabled } from '../components/LiveBits.jsx'
+import { RouteNode, StationLabel } from '../components/RailRoute.jsx'
 
 const ROLE = { start: 'Your start', end: 'Your end', must: 'Your pick', user: 'You added' }
 const byName = [...cities].sort((a, b) => a.name.localeCompare(b.name))
@@ -29,10 +30,10 @@ function Leg({ leg, limit, date = '' }) {
   const canSearch = railOn && date && leg.mode !== 'flight' && hasRail(leg.from.id) && hasRail(leg.to.id)
   const over = limit && leg.minutes > limit
   return (
-    <li className={`plan-leg${over ? ' over' : ''}`}>
+    <li className={`plan-leg rail-track-leg${leg.mode === 'train' ? '' : ' is-road'}${over ? ' over is-over' : ''}`}>
       <span aria-hidden="true">{modeIcon(leg.mode)}</span>
       <span>
-        <strong>~{formatDuration(leg.minutes)}</strong> {leg.mode === 'flight' ? 'flight' : leg.mode}
+        <span className="leg-time">~{formatDuration(leg.minutes)}</span> {leg.mode === 'flight' ? 'flight' : leg.mode}
         {leg.km ? `, ${Math.round(leg.km)} km` : ''}
         {leg.isReturn && ` back to ${leg.to.name}`}
         {leg.note && <small className="leg-note">{leg.note}</small>}
@@ -151,82 +152,91 @@ export default function RouteEditor({ plan, legs, keepLength, openIndex, onOpen,
 
   return (
     <div className="route-editor">
-      <ol className="plan-stops">
+      <ol className="plan-stops rail-track" aria-label="Your route, stop by stop">
         {plan.stops.map((stop, i) => {
           const c = cityById[stop.cityId]
           const leg = i > 0 ? legs[i - 1] : null
           return [
             leg && <Leg key={`leg-${i}`} leg={leg} limit={limit} date={legDate(plan, i)} />,
-            <li key={stop.cityId} className="plan-stop">
-              <div className="plan-stop-head">
-                <span className="stop-number">{i + 1}</span>
-                <h3>
-                  {c.name} <span aria-hidden="true">{countryByCode[c.country]?.flag}</span>
-                  {c.hiddenGem && <span className="badge badge-gem">💎 Hidden gem</span>}
-                  {ROLE[stop.role] && <span className="badge badge-user">{ROLE[stop.role]}</span>}
-                </h3>
-                <div className="nights-stepper" role="group" aria-label={`Nights in ${c.name}`}>
-                  <button type="button" aria-label={`One night less in ${c.name}`} disabled={stop.nights <= (n === 1 ? 0 : 1)} onClick={() => change(changeNights(plan, i, -1, { keepLength }))}>
-                    −
-                  </button>
-                  <span>
-                    {stop.nights} night{stop.nights === 1 ? '' : 's'}
-                  </span>
-                  <button type="button" aria-label={`One night more in ${c.name}`} onClick={() => change(changeNights(plan, i, 1, { keepLength }))}>
-                    +
-                  </button>
+            <li key={stop.cityId} className="plan-stop-wrap rail-track-stop">
+              <RouteNode end={i === 0 || (i === n - 1 && !plan.prefs.roundTrip)} />
+              <div className="plan-stop">
+                <div className="plan-stop-head">
+                  <h3>
+                    <span className="visually-hidden">Stop {i + 1}: </span>
+                    <span className="station-name">{c.name}</span> <span aria-hidden="true">{countryByCode[c.country]?.flag}</span>
+                    {c.hiddenGem && <span className="badge badge-gem">💎 Hidden gem</span>}
+                    {ROLE[stop.role] && <span className="badge badge-user">{ROLE[stop.role]}</span>}
+                  </h3>
+                  <div className="nights-stepper" role="group" aria-label={`Nights in ${c.name}`}>
+                    <button type="button" aria-label={`One night less in ${c.name}`} disabled={stop.nights <= (n === 1 ? 0 : 1)} onClick={() => change(changeNights(plan, i, -1, { keepLength }))}>
+                      −
+                    </button>
+                    <span>
+                      {stop.nights} night{stop.nights === 1 ? '' : 's'}
+                    </span>
+                    <button type="button" aria-label={`One night more in ${c.name}`} onClick={() => change(changeNights(plan, i, 1, { keepLength }))}>
+                      +
+                    </button>
+                  </div>
                 </div>
-              </div>
-              {stop.why?.length > 0 && <p className="plan-why">Why it fits: {stop.why.join('; ')}</p>}
-              <div className="plan-stop-tools">
-                <button type="button" className="link-btn small" disabled={i === 0} onClick={() => change(moveStop(plan, i, -1))} aria-label={`Move ${c.name} earlier`}>
-                  ↑ Earlier
-                </button>
-                <button type="button" className="link-btn small" disabled={i === n - 1} onClick={() => change(moveStop(plan, i, 1))} aria-label={`Move ${c.name} later`}>
-                  ↓ Later
-                </button>
-                <button type="button" className="link-btn small" aria-expanded={openIndex === i} onClick={() => onOpen(openIndex === i ? null : i)}>
-                  Replace
-                </button>
-                <button
-                  type="button"
-                  className="link-btn small"
-                  onClick={() => {
-                    const list = [...(seen[i] || []), stop.cityId]
-                    setSeen((s) => ({ ...s, [i]: list }))
-                    change(anotherOption(plan, i, { seen: list }), { replaced: true })
-                  }}
-                >
-                  Another option
-                </button>
-                {n > 1 && (
-                  <button type="button" className="link-btn small" onClick={() => change(removeStop(plan, i, { keepLength }))}>
-                    Remove
+                {stop.why?.length > 0 && <p className="plan-why">Why it fits: {stop.why.join('; ')}</p>}
+                <div className="plan-stop-tools">
+                  <button type="button" className="link-btn small" disabled={i === 0} onClick={() => change(moveStop(plan, i, -1))} aria-label={`Move ${c.name} earlier`}>
+                    ↑ Earlier
                   </button>
-                )}
-                {i < n - 1 && (
-                  <button type="button" className="link-btn small" onClick={() => change(regenerateFrom(plan, i + 1))}>
-                    Re-plan after this
+                  <button type="button" className="link-btn small" disabled={i === n - 1} onClick={() => change(moveStop(plan, i, 1))} aria-label={`Move ${c.name} later`}>
+                    ↓ Later
                   </button>
+                  <button type="button" className="link-btn small" aria-expanded={openIndex === i} onClick={() => onOpen(openIndex === i ? null : i)}>
+                    Replace
+                  </button>
+                  <button
+                    type="button"
+                    className="link-btn small"
+                    onClick={() => {
+                      const list = [...(seen[i] || []), stop.cityId]
+                      setSeen((s) => ({ ...s, [i]: list }))
+                      change(anotherOption(plan, i, { seen: list }), { replaced: true })
+                    }}
+                  >
+                    Another option
+                  </button>
+                  {n > 1 && (
+                    <button type="button" className="link-btn small" onClick={() => change(removeStop(plan, i, { keepLength }))}>
+                      Remove
+                    </button>
+                  )}
+                  {i < n - 1 && (
+                    <button type="button" className="link-btn small" onClick={() => change(regenerateFrom(plan, i + 1))}>
+                      Re-plan after this
+                    </button>
+                  )}
+                </div>
+                {openIndex === i && (
+                  <ReplacePanel
+                    plan={plan}
+                    index={i}
+                    onClose={() => onOpen(null)}
+                    onPick={(cityId) => {
+                      onOpen(null)
+                      change(replaceStop(plan, i, cityId), { replaced: true })
+                    }}
+                  />
                 )}
               </div>
-              {openIndex === i && (
-                <ReplacePanel
-                  plan={plan}
-                  index={i}
-                  onClose={() => onOpen(null)}
-                  onPick={(cityId) => {
-                    onOpen(null)
-                    change(replaceStop(plan, i, cityId), { replaced: true })
-                  }}
-                />
-              )}
             </li>,
           ]
         })}
-        {legs.filter((l) => l.isReturn).map((l) => (
-          <Leg key="home" leg={l} limit={limit} />
-        ))}
+        {legs
+          .filter((l) => l.isReturn)
+          .flatMap((l) => [
+            <Leg key="home" leg={l} limit={limit} />,
+            <li key="home-stop" className="plan-stop-home rail-track-stop">
+              <RouteNode end />
+              <StationLabel name={`Back to ${l.to.name}`} sub="End of the trip" />
+            </li>,
+          ])}
       </ol>
       <div className="plan-add">
         <button type="button" className="btn" aria-expanded={openIndex === 'add'} onClick={() => onOpen(openIndex === 'add' ? null : 'add')}>

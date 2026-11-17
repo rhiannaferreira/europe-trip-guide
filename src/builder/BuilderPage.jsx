@@ -27,10 +27,9 @@ import PlanWeather from './PlanWeather.jsx'
 import Assistant from './Assistant.jsx'
 import SaveDialog from './SaveDialog.jsx'
 import DataBadge from './DataBadge.jsx'
-import { mapLibreOn } from '../map/config.js'
 
 // The map is the heaviest part, so it loads after the rest of the page.
-const PlanMap = lazy(() => (mapLibreOn() ? import('../map/PlanRouteMap.jsx') : import('./PlanMap.jsx')))
+const PlanMap = lazy(() => import('../map/PlanRouteMap.jsx'))
 
 const TABS = [
   { id: 'days', label: 'Days', icon: '📅' },
@@ -185,6 +184,7 @@ export default function BuilderPage() {
 
             <PlanSummary
               plan={plan}
+              legs={legs}
               stats={stats}
               warnings={warnings}
               costly={costly}

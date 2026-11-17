@@ -1,5 +1,5 @@
 // The planner's map (Explore, a country, a city, My trip, and the Days tab), on the shared MapLibre map.
-// Same props as the Leaflet MapView it replaces, plus `journeys` (saved trains) and `onAsk`.
+// Props: what to show, plus `journeys` (saved trains) and `onAsk`.
 //
 // Modes come from the props rather than separate maps:
 //   EXPLORE  cities and discovery places (clustered), live places when zoomed into a city

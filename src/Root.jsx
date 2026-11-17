@@ -11,11 +11,11 @@ import OfflineNotice from './components/OfflineNotice.jsx'
 import { AccountProvider } from './lib/account.jsx'
 import AssistantButton from './assistant/AssistantButton.jsx'
 
-// The planner (map, lists, trip) is its own download, so other pages open without Leaflet.
+// The planner (map, lists, trip) is its own download, so other pages open without the map.
 const App = lazy(() => import('./App.jsx'))
 // Build My Europe Trip is its own download too.
 const BuilderPage = lazy(() => import('./builder/BuilderPage.jsx'))
-// Travel Mode too: it loads the trip, today's places and (only when its Map tab opens) Leaflet.
+// Travel Mode too: it loads the trip, today's places and (only when its Map tab opens) the map.
 const TravelPage = lazy(() => import('./travel/TravelPage.jsx'))
 // Ready-made trips: the list, and one trip's page (with the planner rules and day ideas it needs).
 const TripIdeasPage = lazy(() => import('./templates/TripIdeasPage.jsx'))
