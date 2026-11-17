@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { cityById } from '../data/cities.js'
 import { placeById } from '../data/places.js'
 import { dayLoad, lightenDay, OPENING_HOURS_NOTE } from '../planner/dayPlanner.js'
@@ -5,11 +6,15 @@ import DataBadge from './DataBadge.jsx'
 
 const SLOT = { travel: 'Travel', morning: 'Morning', lunch: 'Lunch', afternoon: 'Afternoon', evening: 'Evening' }
 const KIND = { arrival: 'Travel day', first: 'First day', last: 'Last day', full: 'Full day' }
+// Long trips show the first few days, then the rest on request.
+const FIRST = 4
+
 export const dayTitle = (d) =>
   d.date ? new Date(`${d.date}T00:00:00`).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }) : `Day ${d.number}`
 
 // "Plan my days": what each day could look like, grouped by area, with lighter travel days.
 export default function DayPlans({ days, planned, edited, onPlan, onChangeDays, onReset }) {
+  const [all, setAll] = useState(false)
   if (!planned) {
     return (
       <div className="builder-empty">
@@ -30,7 +35,7 @@ export default function DayPlans({ days, planned, edited, onPlan, onChangeDays, 
           </button>
         )}
       </p>
-      {days.map((d) => {
+      {(all ? days : days.slice(0, FIRST)).map((d) => {
         const load = dayLoad(d)
         const city = cityById[d.cityId]
         return (
@@ -83,6 +88,11 @@ export default function DayPlans({ days, planned, edited, onPlan, onChangeDays, 
           </article>
         )
       })}
+      {days.length > FIRST && (
+        <button type="button" className="btn day-plans-more" aria-expanded={all} onClick={() => setAll((v) => !v)}>
+          {all ? 'Show fewer days' : `Show all ${days.length} days`}
+        </button>
+      )}
       <p className="rule">
         <DataBadge kind="estimate" /> Place picks and timings are suggestions, not bookings.
       </p>

@@ -152,22 +152,30 @@ export default function BuilderPage() {
       </header>
 
       <main className="builder-main" id="builder-main">
-        <section className="builder-intro">
-          <p className="eyebrow">Build my Europe trip</p>
-          <h1>Tell us how you like to travel. We’ll draft the route.</h1>
-          <p className="hero-sub">
-            Pick dates, interests and pace, or leave it all blank. You get cities in a sensible order, nights per stop, journey times, a day plan and a rough budget, and you can change any part of it.
-          </p>
-        </section>
-
         {plan && !formOpen ? (
-          <div className="builder-form-closed">
-            <button type="button" className="btn" onClick={() => setFormOpen(true)}>
-              Change preferences
-            </button>
+          // With a plan on screen the intro steps aside: one quiet line, the plan is the page.
+          <div className="builder-intro-compact">
+            <p className="eyebrow">Build my Europe trip</p>
+            <div className="builder-intro-actions">
+              <button type="button" className="btn btn-small" onClick={() => setFormOpen(true)}>
+                Change preferences
+              </button>
+              <button type="button" className="link-btn small" onClick={() => planner.startOver()}>
+                Start over
+              </button>
+            </div>
           </div>
         ) : (
-          <BuilderForm input={input} onChange={planner.setInput} onGenerate={() => generate()} hasPlan={Boolean(plan)} notes={planner.notes} />
+          <>
+            <section className="builder-intro">
+              <p className="eyebrow">Build my Europe trip</p>
+              <h1>Tell us how you like to travel. We’ll draft the route.</h1>
+              <p className="hero-sub">
+                Pick dates, interests and pace, or leave it all blank. You get cities in a sensible order, nights per stop, journey times, a day plan and a rough budget, and you can change any part of it.
+              </p>
+            </section>
+            <BuilderForm input={input} onChange={planner.setInput} onGenerate={() => generate()} hasPlan={Boolean(plan)} notes={planner.notes} />
+          </>
         )}
 
         {plan && (
@@ -193,46 +201,57 @@ export default function BuilderPage() {
                 setOpenStop(i)
                 setTimeout(() => document.querySelector('.stop-panel')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50)
               }}
-            />
+            >
+              <div className="builder-bar" role="toolbar" aria-label="Trip actions">
+                <button type="button" className="btn btn-primary" onClick={() => setSaving(true)}>
+                  Save as my trip
+                </button>
+                <button type="button" className="btn" onClick={makeShare} disabled={share.status === 'working'}>
+                  {share.status === 'copied' ? 'Link copied' : 'Share link'}
+                </button>
+                <button type="button" className="btn btn-quiet" disabled={!planner.canUndo} onClick={planner.undo}>
+                  ↶ Undo
+                </button>
+              </div>
+              {share.url && (
+                <label className="share-url">
+                  Link to this plan (anyone can open it; no account needed)
+                  <input type="text" readOnly value={share.url} onFocus={(e) => e.target.select()} />
+                </label>
+              )}
+              {share.status === 'error' && <p className="note note-warn">The share link couldn’t be made in this browser.</p>}
+            </PlanSummary>
 
-            <div className="builder-bar" role="toolbar" aria-label="Trip actions">
-              <button type="button" className="btn btn-primary" onClick={() => setSaving(true)}>
-                Save as my trip
-              </button>
-              <button type="button" className="btn" onClick={makeShare} disabled={share.status === 'working'}>
-                {share.status === 'copied' ? 'Link copied' : 'Share link'}
-              </button>
-              <button type="button" className="btn" disabled={!planner.canUndo} onClick={planner.undo}>
-                Undo
-              </button>
-              <button type="button" className="btn" onClick={() => planner.generate(input, { exclude: plan.stops.filter((s) => s.role === 'pick').map((s) => s.cityId) })}>
-                Different cities
-              </button>
-            </div>
-            {share.url && (
-              <label className="share-url">
-                Link to this plan (anyone can open it; no account needed)
-                <input type="text" readOnly value={share.url} onFocus={(e) => e.target.select()} />
-              </label>
-            )}
-            {share.status === 'error' && <p className="note note-warn">The share link couldn’t be made in this browser.</p>}
             {planner.message && (
               <p className="note note-good builder-message" role="status">
                 {planner.message}
               </p>
             )}
 
-            <div className="quick-chips interest-chips" role="group" aria-label="Quick changes">
-              {QUICK.map((q) => (
-                <button key={q.label} type="button" className="chip" onClick={() => fix(q.change)}>
-                  {q.label}
+            <div className="builder-adjust">
+              <span className="journey-meta" id="quick-changes-label">
+                Adjust
+              </span>
+              <div className="quick-chips" role="group" aria-labelledby="quick-changes-label">
+                {QUICK.map((q) => (
+                  <button key={q.label} type="button" className="chip" onClick={() => fix(q.change)}>
+                    {q.label}
+                  </button>
+                ))}
+                <button type="button" className="chip" onClick={() => planner.generate(input, { exclude: plan.stops.filter((s) => s.role === 'pick').map((s) => s.cityId) })}>
+                  Different cities
                 </button>
-              ))}
+              </div>
             </div>
 
             <div className="builder-columns">
               <div>
-                <h2 className="section-title">Route</h2>
+                <div className="builder-route-head">
+                  <h2 className="section-title">Route</h2>
+                  <span className="rule">
+                    <DataBadge kind="estimate" /> Journey times are typical, not live timetables.
+                  </span>
+                </div>
                 <RouteEditor plan={plan} legs={legs} keepLength={keepLength} openIndex={openStop} onOpen={setOpenStop} onChange={onChange} />
               </div>
               <div className="builder-map-col">
@@ -283,11 +302,6 @@ export default function BuilderPage() {
               </TripPanel>
             </div>
 
-            <div className="builder-bottom">
-              <button type="button" className="link-btn small" onClick={() => planner.startOver()}>
-                Start over
-              </button>
-            </div>
           </section>
         )}
       </main>

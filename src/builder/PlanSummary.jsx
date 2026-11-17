@@ -7,7 +7,7 @@ const MODE_NAMES = { train: 'train', bus: 'bus', 'rail + ferry': 'rail + ferry',
 
 // The plan at a glance: plain counts and sums from the route, and what might make it hard going.
 // There's deliberately no overall score; each number says what it is.
-export default function PlanSummary({ plan, legs = [], stats, warnings, costly, onFix, onOpenStop }) {
+export default function PlanSummary({ plan, legs = [], stats, warnings, costly, onFix, onOpenStop, children }) {
   const route = plan.stops.map((s) => cityById[s.cityId].name)
   const home = plan.prefs.roundTrip && plan.stops.length > 1 ? cityById[plan.prefs.startCityId] : null
   const stops = [
@@ -39,40 +39,56 @@ export default function PlanSummary({ plan, legs = [], stats, warnings, costly, 
         </div>
       )}
 
-      <div className="stats plan-stats">
-        <div className="stat">
-          <span className="stat-label">Cities</span>
-          <span className="stat-value">{stats.cities}</span>
+      {/* The three numbers that decide whether a trip feels good; the rest wait behind "All the numbers". */}
+      <dl className="plan-keys">
+        <div>
+          <dt>Travel time</dt>
+          <dd>~{formatDuration(stats.travelMinutes)}</dd>
         </div>
-        <div className="stat">
-          <span className="stat-label">Journeys</span>
-          <span className="stat-value">
-            {stats.transfers} {modes && <small>{modes}</small>}
-          </span>
+        <div>
+          <dt>Longest leg</dt>
+          <dd>{legs.length ? `~${formatDuration(Math.max(...legs.map((l) => l.minutes)))}` : '—'}</dd>
         </div>
-        <div className="stat">
-          <span className="stat-label">Travel time</span>
-          <span className="stat-value">
-            ~{formatDuration(stats.travelMinutes)} <small>{Math.round(stats.wakingShare * 100)}% of waking hours</small>
-          </span>
+        <div>
+          <dt>Pace</dt>
+          <dd className={`pace-${stats.pace?.id || ''}`}>{stats.pace ? stats.pace.label : '—'}</dd>
         </div>
-        <div className="stat">
-          <span className="stat-label">Average journey</span>
-          <span className="stat-value">{stats.transfers ? `~${formatDuration(stats.avgTransferMinutes)}` : '—'}</span>
-        </div>
-        <div className="stat">
-          <span className="stat-label">Over 4 hours</span>
-          <span className="stat-value">{stats.longTransfers}</span>
-        </div>
-        <div className="stat">
-          <span className="stat-label">Pace</span>
-          <span className={`stat-value pace-${stats.pace?.id || ''}`}>
-            {stats.pace ? stats.pace.label : '—'} <small>{stats.daysPerCity.toFixed(1)} days/city</small>
-          </span>
-        </div>
-      </div>
+      </dl>
+
       <details className="how-calculated">
-        <summary>How these are worked out</summary>
+        <summary>All the numbers</summary>
+        <div className="stats plan-stats">
+          <div className="stat">
+            <span className="stat-label">Cities</span>
+            <span className="stat-value">{stats.cities}</span>
+          </div>
+          <div className="stat">
+            <span className="stat-label">Journeys</span>
+            <span className="stat-value">
+              {stats.transfers} {modes && <small>{modes}</small>}
+            </span>
+          </div>
+          <div className="stat">
+            <span className="stat-label">Travel time</span>
+            <span className="stat-value">
+              ~{formatDuration(stats.travelMinutes)} <small>{Math.round(stats.wakingShare * 100)}% of waking hours</small>
+            </span>
+          </div>
+          <div className="stat">
+            <span className="stat-label">Average journey</span>
+            <span className="stat-value">{stats.transfers ? `~${formatDuration(stats.avgTransferMinutes)}` : '—'}</span>
+          </div>
+          <div className="stat">
+            <span className="stat-label">Over 4 hours</span>
+            <span className="stat-value">{stats.longTransfers}</span>
+          </div>
+          <div className="stat">
+            <span className="stat-label">Pace</span>
+            <span className={`stat-value pace-${stats.pace?.id || ''}`}>
+              {stats.pace ? stats.pace.label : '—'} <small>{stats.daysPerCity.toFixed(1)} days/city</small>
+            </span>
+          </div>
+        </div>
         <ul>
           <li>A trip of N days has N − 1 nights. The first day at each new stop is a travel day.</li>
           <li>Journey times are sample fastest trains where Eurowander has them, otherwise estimated from the distance; flights are rough door-to-door estimates including airports.</li>
@@ -109,6 +125,7 @@ export default function PlanSummary({ plan, legs = [], stats, warnings, costly, 
           ))}
         </ul>
       )}
+      {children}
     </section>
   )
 }
