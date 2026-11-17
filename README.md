@@ -73,7 +73,7 @@ To change a provider, write a new adapter in `server/live/providers/` that retur
 - **Explore**: country chips, city cards and a city page (description, cost, popular interests, coordinates).
 - **Search**: countries, cities and places, including words like "museum", "restaurant" or "park". Typing also filters the list and map.
 - **Interest filters**: Food, Outdoors, Museums, Nightlife, History, Shopping. Pick several at once, or none to see everything.
-- **Map**: Leaflet with OpenStreetMap tiles. City and place markers, popups with a save button, and the trip route drawn stop to stop.
+- **Map**: MapLibre GL with OpenFreeMap vector tiles (OpenStreetMap data). City and place markers, place cards with a save button, and the trip route drawn stop to stop.
 - **Place cards**: image tile, category, city, rating, cost ($ to $$$, or Free), a heart to save, and "Show on map".
 - **My Trip**: add cities (+) or places (♡) from any country, reorder, remove, clear. Saved in localStorage.
 - **Train-first travel**: sample train times for 60+ city pairs. Pairs without data get a clearly labelled rough estimate from distance.

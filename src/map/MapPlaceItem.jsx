@@ -1,5 +1,5 @@
 // What a live place looks like inside a map card: photo or icon, name, what it is, hours, and
-// Save / Directions / Website. Shared by the MapLibre map and (until it's removed) the Leaflet one.
+// Save / Directions / Website.
 import { registerPlaces } from '../lib/extraPlacesCore.js'
 import { track } from '../lib/analytics.js'
 import { LivePlaceFacts, SourceLabel } from '../components/LiveBits.jsx'

@@ -1,6 +1,7 @@
 import { cityById } from '../data/cities.js'
 import { formatDuration } from '../lib/format.js'
 import { PACE_RULE } from '../lib/trip.js'
+import { RailRoute } from './RailRoute.jsx'
 
 function Stat({ label, value, sub, className = '' }) {
   return (
@@ -26,6 +27,17 @@ export default function TripSummary({ cityIds, legs, days, pace, suggestions, ch
       <h2 className="section-title" id="summary-title">
         Trip summary
       </h2>
+      {cityIds.length > 1 && (
+        <div className="trip-rail">
+          <RailRoute
+            direction="horizontal"
+            max={4}
+            label={`Route: ${cityIds.map((id) => cityById[id].name).join(', ')}`}
+            stops={cityIds.map((id, i) => ({ key: `${id}-${i}`, name: cityById[id].name }))}
+            legs={legs}
+          />
+        </div>
+      )}
       <div className="stats">
         <Stat label="Cities" value={cityIds.length} />
         <Stat label="Countries" value={countries} />

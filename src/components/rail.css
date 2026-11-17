@@ -34,3 +34,31 @@
 .journey-meta { margin: 0; font-family: var(--font-transport); font-weight: 600; font-size: 0.74rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--rail-muted, var(--muted)); }
 .section-eyebrow { display: flex; align-items: center; gap: 10px; margin: 0 0 14px; font-family: var(--font-transport); font-weight: 700; font-size: 0.78rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--rail-ink, var(--text)); }
 .section-eyebrow::before { content: ''; width: 28px; height: 2px; background: var(--rail-red, var(--accent)); }
+.rail-leg-road { font-style: italic; }
+
+/* A horizontal route that may have more stops than fit: it scrolls sideways inside its own box
+   (never the page), each stop keeping room for its name. */
+.rail-scroll { overflow-x: auto; padding: 24px 2px 6px; scrollbar-width: thin; }
+.rail-scroll .rail-route-horizontal .rail-stop { min-width: 104px; }
+.rail-scroll .station-name { white-space: nowrap; }
+
+/* .rail-track: a list people work with (cards, buttons, day plans) beside a rail line with station nodes. */
+.rail-track { --track-x: 13px; --track-node-top: 20px; --track-pad: 34px; list-style: none; margin: 0; padding: 0; }
+.rail-track-stop, .rail-track-leg { position: relative; padding-left: var(--track-pad); }
+.rail-track-stop > .route-node { position: absolute; left: calc(var(--track-x) - 6px); top: var(--track-node-top); }
+.rail-track-stop::before, .rail-track-leg::before { content: ''; position: absolute; left: calc(var(--track-x) - 1px); top: 0; bottom: 0; width: 2px; background: var(--rail-line, var(--rail-ink, var(--text))); }
+.rail-track-stop:first-child::before { top: var(--track-node-top); }
+.rail-track-stop:last-child::before { bottom: auto; height: var(--track-node-top); }
+.rail-track-stop:only-child::before { display: none; }
+.rail-track-leg.is-road::before { background: repeating-linear-gradient(to bottom, var(--rail-line, var(--rail-ink, var(--text))) 0 6px, transparent 6px 11px); }
+.rail-track-leg.is-over::before { background: var(--warn, var(--rail-red, var(--accent))); }
+/* A stop's own leg (inside its <li>) draws a dashed segment over the stop's solid line. */
+.rail-track-stop .rail-track-leg { padding-left: 0; }
+.rail-track-stop .rail-track-leg::before { left: calc(var(--track-x) - 1px - var(--track-pad)); z-index: 1; }
+.rail-track-stop .rail-track-leg.is-road::before { background-color: var(--rail-bg, var(--bg)); }
+.rail-track-stop.is-focus > .route-node { background: var(--rail-red, var(--accent)); border-color: var(--rail-red, var(--accent)); box-shadow: 0 0 0 4px var(--accent-soft); }
+.leg-time { font-family: var(--font-transport); font-weight: 700; font-size: 0.86rem; letter-spacing: 0.02em; color: var(--rail-ink, var(--text)); font-variant-numeric: tabular-nums; }
+.leg-time-sub { font-family: var(--font-transport); font-weight: 500; color: var(--rail-muted, var(--muted)); }
+
+/* Editorial heading voice for trip pages, matching the home page. */
+.rail-title { font-family: var(--font-editorial); font-weight: 400; letter-spacing: -0.005em; line-height: 1.02; }

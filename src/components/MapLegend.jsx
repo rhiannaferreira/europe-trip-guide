@@ -12,8 +12,6 @@ export default function MapLegend({ kinds, onKinds, bestOnly, onBestOnly, liveOn
   useEffect(() => {
     const el = box.current
     if (!el) return undefined
-    // Clicks still bubble (React handles them at the root); Leaflet skips them by this flag instead.
-    el._leaflet_disable_click = true
     const stop = (e) => e.stopPropagation()
     const types = ['dblclick', 'mousedown', 'touchstart', 'pointerdown', 'wheel', 'contextmenu']
     types.forEach((t) => el.addEventListener(t, stop))
