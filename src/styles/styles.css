@@ -897,7 +897,7 @@ a:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent); ou
 .plan-stop-head h3 .station-name { font-size: 0.98rem; }
 .plan-stop-home { padding-top: 14px; padding-bottom: 4px; --track-node-top: 16px; }
 .plan-stop-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.plan-stop-head h3 { flex: 1; font-family: var(--display); font-size: 1.05rem; min-width: 140px; }
+.plan-stop-head h3 { flex: 1; font-family: var(--display); font-size: 1.05rem; min-width: 140px; margin: 0; }
 .plan-stop-head .badge { margin-left: 6px; }
 .badge-user { background: var(--surface-2); color: var(--muted); border: 1px solid var(--border); }
 .nights-stepper { display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; font-weight: 600; }
@@ -966,11 +966,41 @@ a:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent); ou
 .save-form label.check { flex-direction: row; align-items: center; gap: 8px; font-weight: 400; }
 .save-form label.check input { width: auto; min-height: 0; }
 .save-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-.builder-bottom { display: flex; justify-content: flex-end; }
+.btn-small { padding: 4px 10px; font-size: 0.82rem; border-radius: 8px; }
+.btn-quiet { background: transparent; border-color: transparent; color: var(--muted); }
+.btn-quiet:hover:not(:disabled) { color: var(--text); border-color: var(--border); }
+.btn-quiet:disabled { opacity: 0.45; }
+
+/* ---------- Build My Trip, with a plan: one card, one adjust row, the route ---------- */
+.builder-main:has(.builder-intro-compact) { gap: 28px; }
+.builder-intro-compact { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+.builder-intro-compact .eyebrow { margin: 0; }
+.builder-intro-actions { display: flex; align-items: center; gap: 14px; }
+.plan-summary { padding: 22px 24px; display: flex; flex-direction: column; gap: 0; }
+.plan-keys { display: grid; grid-template-columns: repeat(3, max-content); gap: 36px; margin: 0 0 12px; }
+.plan-keys dt { font-family: var(--font-transport); font-weight: 600; font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+.plan-keys dd { margin: 2px 0 0; font-family: var(--font-transport); font-weight: 700; font-size: 1.25rem; font-variant-numeric: tabular-nums; }
+.plan-summary .how-calculated { margin-bottom: 4px; }
+.plan-summary .how-calculated .plan-stats { margin: 10px 0 6px; }
+.plan-summary .plan-warnings { margin: 10px 0 0; }
+.plan-summary .builder-bar { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+.plan-summary .share-url { margin-top: 10px; }
+.builder-message { margin: -12px 0 0; }
+.builder-adjust { display: flex; align-items: center; gap: 14px; }
+.builder-adjust .quick-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.builder-route-head { display: flex; align-items: baseline; justify-content: space-between; gap: 6px 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.builder-route-head .section-title { margin: 0; }
+.builder-route-head .rule { margin: 0; font-size: 0.78rem; }
+.plan-stop-edit { margin-left: auto; }
+.plan-stop-edit.is-open { color: var(--text); border-color: var(--border); }
+.plan-stop-tools { padding-top: 8px; margin-top: 8px; border-top: 1px dashed var(--border); }
+.plan-leg .leg-note { display: inline; font-size: 0.78rem; }
+.plan-leg .leg-note.warn-text { display: block; }
+.day-plans-more { align-self: center; }
 
 @media (max-width: 900px) {
   .builder-columns { grid-template-columns: minmax(0, 1fr); }
-  .builder-map-col { position: static; order: -1; }
+  .builder-map-col { position: static; }
   .plan-map { height: 340px; }
 }
 @media (max-width: 760px) {
@@ -989,7 +1019,17 @@ a:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent); ou
   .builder-step-nav .btn { min-height: 44px; min-width: 88px; }
   .builder-cta { width: 100%; min-height: 50px; }
   .field-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-  .builder-bar .btn { flex: 1 1 40%; min-height: 44px; }
+  .builder-bar .btn { flex: 1 1 auto; min-height: 44px; }
+  .builder-bar .btn-primary { flex-basis: 100%; }
+  /* Quick changes stay on one line and slide sideways rather than stacking into a block of chips. */
+  .builder-adjust { flex-direction: column; align-items: stretch; gap: 8px; }
+  .builder-adjust .quick-chips { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin: 0 -16px; padding: 0 16px 2px; }
+  .builder-adjust .quick-chips::-webkit-scrollbar { display: none; }
+  .builder-adjust .chip { white-space: nowrap; min-height: 38px; }
+  .plan-keys { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  .plan-keys dd { font-size: 1.05rem; }
+  .plan-summary { padding: 16px; }
+  .plan-stop-head h3 { min-width: 0; flex-basis: 100%; }
   .plan-stop-tools .link-btn { min-height: 36px; }
   .plan-day-items li { grid-template-columns: minmax(0, 1fr); gap: 0; }
   .assistant-q, .assistant-a { max-width: 100%; }

@@ -5,7 +5,6 @@ import { formatDuration } from '../lib/format.js'
 import { additionIdeas, alternativesFor } from '../planner/alternatives.js'
 import { addStop, anotherOption, changeNights, moveStop, regenerateFrom, removeStop, replaceStop } from '../planner/modify.js'
 import { modeIcon, sourceLabel } from '../planner/transport.js'
-import DataBadge from './DataBadge.jsx'
 import TrainSearchModal from '../components/TrainSearch.jsx'
 import { hasRail } from '../services/live/trains.js'
 import { useLiveEnabled } from '../components/LiveBits.jsx'
@@ -32,14 +31,13 @@ function Leg({ leg, limit, date = '' }) {
   return (
     <li className={`plan-leg rail-track-leg${leg.mode === 'train' ? '' : ' is-road'}${over ? ' over is-over' : ''}`}>
       <span aria-hidden="true">{modeIcon(leg.mode)}</span>
-      <span>
+      <span title={`${sourceLabel(leg.source)}. Not a live timetable.`}>
         <span className="leg-time">~{formatDuration(leg.minutes)}</span> {leg.mode === 'flight' ? 'flight' : leg.mode}
-        {leg.km ? `, ${Math.round(leg.km)} km` : ''}
         {leg.isReturn && ` back to ${leg.to.name}`}
-        {leg.note && <small className="leg-note">{leg.note}</small>}
+        {/* Train names and real caveats only; "estimated from distance" is said once above the route. */}
+        {leg.note && leg.source === 'sample' && <span className="leg-note"> · {leg.note}</span>}
         {over && <small className="leg-note warn-text">Longer than your {formatDuration(limit)} limit</small>}
       </span>
-      <DataBadge kind="estimate" title={`${sourceLabel(leg.source)}. Not a live timetable.`} />
       {canSearch && (
         <button type="button" className="btn btn-small leg-trains" onClick={() => setTrains(true)}>
           🚆 Real trains
@@ -146,6 +144,8 @@ function AddPanel({ plan, onAdd, onClose }) {
 // Every change goes through modify.js and comes back with a summary; nothing is changed in place.
 export default function RouteEditor({ plan, legs, keepLength, openIndex, onOpen, onChange }) {
   const [seen, setSeen] = useState({})
+  // One stop's tools open at a time, so the route reads as a route rather than a wall of links.
+  const [tools, setTools] = useState(null)
   const limit = plan.prefs.maxLegMinutes
   const change = (result, meta) => onChange(result, meta)
   const n = plan.stops.length
@@ -156,6 +156,7 @@ export default function RouteEditor({ plan, legs, keepLength, openIndex, onOpen,
         {plan.stops.map((stop, i) => {
           const c = cityById[stop.cityId]
           const leg = i > 0 ? legs[i - 1] : null
+          const editing = tools === i || openIndex === i
           return [
             leg && <Leg key={`leg-${i}`} leg={leg} limit={limit} date={legDate(plan, i)} />,
             <li key={stop.cityId} className="plan-stop-wrap rail-track-stop">
@@ -179,40 +180,55 @@ export default function RouteEditor({ plan, legs, keepLength, openIndex, onOpen,
                       +
                     </button>
                   </div>
-                </div>
-                {stop.why?.length > 0 && <p className="plan-why">Why it fits: {stop.why.join('; ')}</p>}
-                <div className="plan-stop-tools">
-                  <button type="button" className="link-btn small" disabled={i === 0} onClick={() => change(moveStop(plan, i, -1))} aria-label={`Move ${c.name} earlier`}>
-                    ↑ Earlier
-                  </button>
-                  <button type="button" className="link-btn small" disabled={i === n - 1} onClick={() => change(moveStop(plan, i, 1))} aria-label={`Move ${c.name} later`}>
-                    ↓ Later
-                  </button>
-                  <button type="button" className="link-btn small" aria-expanded={openIndex === i} onClick={() => onOpen(openIndex === i ? null : i)}>
-                    Replace
-                  </button>
                   <button
                     type="button"
-                    className="link-btn small"
+                    className={`btn btn-small btn-quiet plan-stop-edit${editing ? ' is-open' : ''}`}
+                    aria-expanded={editing}
+                    aria-controls={`stop-tools-${i}`}
+                    aria-label={`${editing ? 'Close' : 'Change'} ${c.name}`}
                     onClick={() => {
-                      const list = [...(seen[i] || []), stop.cityId]
-                      setSeen((s) => ({ ...s, [i]: list }))
-                      change(anotherOption(plan, i, { seen: list }), { replaced: true })
+                      setTools(editing ? null : i)
+                      if (editing && openIndex === i) onOpen(null)
                     }}
                   >
-                    Another option
+                    {editing ? 'Done' : 'Change'}
                   </button>
-                  {n > 1 && (
-                    <button type="button" className="link-btn small" onClick={() => change(removeStop(plan, i, { keepLength }))}>
-                      Remove
-                    </button>
-                  )}
-                  {i < n - 1 && (
-                    <button type="button" className="link-btn small" onClick={() => change(regenerateFrom(plan, i + 1))}>
-                      Re-plan after this
-                    </button>
-                  )}
                 </div>
+                {editing && stop.why?.length > 0 && <p className="plan-why">Why it fits: {stop.why.join('; ')}</p>}
+                {editing && (
+                  <div className="plan-stop-tools" id={`stop-tools-${i}`}>
+                    <button type="button" className="link-btn small" disabled={i === 0} onClick={() => change(moveStop(plan, i, -1))} aria-label={`Move ${c.name} earlier`}>
+                      ↑ Earlier
+                    </button>
+                    <button type="button" className="link-btn small" disabled={i === n - 1} onClick={() => change(moveStop(plan, i, 1))} aria-label={`Move ${c.name} later`}>
+                      ↓ Later
+                    </button>
+                    <button type="button" className="link-btn small" aria-expanded={openIndex === i} onClick={() => onOpen(openIndex === i ? null : i)}>
+                      Replace
+                    </button>
+                    <button
+                      type="button"
+                      className="link-btn small"
+                      onClick={() => {
+                        const list = [...(seen[i] || []), stop.cityId]
+                        setSeen((s) => ({ ...s, [i]: list }))
+                        change(anotherOption(plan, i, { seen: list }), { replaced: true })
+                      }}
+                    >
+                      Another option
+                    </button>
+                    {n > 1 && (
+                      <button type="button" className="link-btn small" onClick={() => change(removeStop(plan, i, { keepLength }))}>
+                        Remove
+                      </button>
+                    )}
+                    {i < n - 1 && (
+                      <button type="button" className="link-btn small" onClick={() => change(regenerateFrom(plan, i + 1))}>
+                        Re-plan after this
+                      </button>
+                    )}
+                  </div>
+                )}
                 {openIndex === i && (
                   <ReplacePanel
                     plan={plan}
