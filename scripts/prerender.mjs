@@ -49,7 +49,7 @@ const crumbs = (items) => ({
   itemListElement: items.map(([name, p], i) => ({ '@type': 'ListItem', position: i + 1, name, item: SITE_URL + p })),
 })
 
-const nav = `<nav class="prerender-nav"><a href="/">Eurowander</a> · <a href="/explore">Explore</a> · <a href="/build">Build a trip</a> · <a href="/trip-ideas">Trip ideas</a> · <a href="/trip">My trip</a></nav>`
+const nav = `<nav class="prerender-nav"><a href="/">Eurowander</a> · <a href="/explore">Explore</a> · <a href="/build">Build a trip</a> · <a href="/trip-ideas">Trip ideas</a> · <a href="/how-it-works">How it works</a> · <a href="/trip">My trip</a></nav>`
 
 for (const city of cities) {
   const meta = cityMeta(city)
@@ -117,6 +117,16 @@ write(
     description: 'Get a Europe trip drafted from your dates, interests and pace: cities in a sensible order, nights per stop, train times, day plans and a rough budget, all editable.',
     path: '/build',
     body: `<main class="prerender">${nav}<h1>Build my Europe trip</h1><p>Tell Eurowander your dates, interests, pace and budget, or leave them blank, and get a whole route: cities in order, nights in each, journey times, a plan for every day and a rough budget. Then replace cities, change nights or ask for a more relaxed version.</p></main>`,
+  }),
+)
+
+write(
+  'how-it-works.html',
+  page({
+    title: 'How it works',
+    description: 'A two-minute tour of Eurowander: browse places by interest, get a whole Europe rail trip drafted from your dates, fine-tune it with the copilot, then use Travel Mode on the road.',
+    path: '/how-it-works',
+    body: `<main class="prerender">${nav}<h1>How Eurowander works</h1><ol><li><strong>Explore.</strong> Browse cities and places by food, outdoors, museums, nightlife, history or shopping, with hidden gems near famous cities. Save what you like.</li><li><strong>Build.</strong> Get a whole rail route drafted from your days, interests and pace, or start from a <a href="/trip-ideas">ready-made trip</a>.</li><li><strong>Adjust.</strong> Plan each day, check the weather and a rough budget, or ask the copilot for changes in plain words.</li><li><strong>Travel.</strong> Travel Mode shows today's plan, the next train and places nearby, and works offline once installed.</li></ol><p><a href="/build">Build my trip</a></p></main>`,
   }),
 )
 
@@ -198,7 +208,7 @@ write(
 )
 
 const today = new Date().toISOString().slice(0, 10)
-const urls = ['/', '/build', '/explore', '/trip-ideas', ...tripTemplates.map(templatePath), ...countries.map((c) => countryMeta(c.code).path), ...cities.map((c) => cityMeta(c).path)]
+const urls = ['/', '/build', '/explore', '/how-it-works', '/trip-ideas', ...tripTemplates.map(templatePath), ...countries.map((c) => countryMeta(c.code).path), ...cities.map((c) => cityMeta(c).path)]
 write(
   'sitemap.xml',
   `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls

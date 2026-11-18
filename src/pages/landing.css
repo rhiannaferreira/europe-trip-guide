@@ -192,8 +192,13 @@
 .landing .country-chip { border-radius: 4px; }
 .landing .btn-primary { border-radius: 4px; font-family: var(--font-transport); letter-spacing: 0.1em; text-transform: uppercase; }
 
+/* The "How it works" teaser links to the full tour. */
+.landing .steps-more { margin-top: 24px; }
+
 /* ---------- Breakpoints ---------- */
 @media (max-width: 1100px) {
+  /* Five links don't fit beside the brand: How it works stays in the page itself, and on its own page. */
+  .home-nav .home-nav-how:not([aria-current]) { display: none; }
   .landing .hero { gap: 44px; }
   .hero-stop { grid-template-columns: 120px minmax(0, 1fr); }
 }
@@ -218,7 +223,7 @@
   .landing-header-inner { flex-wrap: wrap; gap: 4px 12px; min-height: 0; padding-top: 12px; }
   .home-nav { width: 100%; justify-content: space-between; gap: 8px; }
   .home-nav a { min-height: 44px; font-size: 0.74rem; letter-spacing: 0.1em; }
-  .home-nav .install-link { display: none; }
+  .home-nav .install-link, .home-nav .home-nav-how { display: none; }
   .landing .hero { padding-top: 30px; padding-bottom: 36px; gap: 36px; }
   .landing .hero h1 { font-size: clamp(2.7rem, 12.5vw, 3.4rem); }
   .landing .hero-sub { font-size: 1.02rem; margin-top: 16px; }

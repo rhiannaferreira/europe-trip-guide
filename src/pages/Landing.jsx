@@ -11,9 +11,9 @@ import TravelEntry from '../travel/TravelEntry.jsx'
 import { Link, cityPath, countryPath } from '../lib/router.jsx'
 import { setPageMeta } from '../lib/meta.js'
 import Thumb from '../components/Thumb.jsx'
-import InstallButton from '../components/InstallButton.jsx'
 import TemplateCards from '../templates/TemplateCards.jsx'
 import { JourneyMeta, RailRoute, SectionEyebrow, StationLabel } from '../components/RailRoute.jsx'
+import SiteHeader from './SiteHeader.jsx'
 import './landing.css'
 
 // Start downloading the planner while people read, so "Start exploring" opens instantly.
@@ -63,7 +63,7 @@ const STEPS = [
   ['Share', 'Send the whole trip as a link. No account needed.'],
 ]
 
-function savedTripSummary() {
+export function savedTripSummary() {
   const t = readJSON(KEYS.trip)
   const stops = Array.isArray(t?.stops) ? t.stops.filter((s) => cityById[s?.cityId]) : []
   if (stops.length === 0) return null
@@ -136,34 +136,7 @@ export default function Landing() {
       <a className="skip-link" href="#landing-main">
         Skip to content
       </a>
-      <header className="landing-header">
-        <div className="landing-header-inner">
-          <div className="home-brand">
-            <Link to="/" className="landing-brand" aria-label="Eurowander home">
-              <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" width="28" height="28" /> Eurowander
-            </Link>
-            <span className="home-brand-meta" aria-hidden="true">
-              Europe · Train-first
-            </span>
-          </div>
-          <nav aria-label="Main" className="home-nav">
-            <Link to="/explore">Explore</Link>
-            <Link to="/build" className="home-nav-build" onMouseEnter={preloadBuilder} onFocus={preloadBuilder}>
-              Build a trip
-            </Link>
-            <Link to="/trip-ideas">Trip ideas</Link>
-            <Link to="/trip" aria-label={saved ? `My trip, ${saved.stops.length} ${saved.stops.length === 1 ? 'stop' : 'stops'}` : undefined}>
-              My trip
-              {saved && (
-                <span className="home-nav-count" aria-hidden="true">
-                  · {saved.stops.length}
-                </span>
-              )}
-            </Link>
-            <InstallButton className="link-btn install-link" />
-          </nav>
-        </div>
-      </header>
+      <SiteHeader saved={saved} />
 
       <main id="landing-main" tabIndex={-1}>
         <div className="home-band home-band-hero">
@@ -319,6 +292,11 @@ export default function Landing() {
               </li>
             ))}
           </ol>
+          <p className="steps-more">
+            <Link to="/how-it-works" className="home-text-link home-text-link-strong">
+              Take the full tour, with live demos <span aria-hidden="true">→</span>
+            </Link>
+          </p>
         </section>
 
         <section className="country-list" aria-labelledby="countries-title">

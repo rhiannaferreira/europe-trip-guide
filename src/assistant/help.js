@@ -2,8 +2,8 @@
 export const HELP = {
   general: {
     text: 'Eurowander helps you find places across Europe, save them to a trip, and plan the days. Browse the map and filter by interest, save places with the heart, and see your cities, dates, days and budget under My trip. Build my trip makes a whole route from your preferences. I can open cities, suggest places, add things to your trip, or start a new trip for you.',
-    to: '/explore',
-    label: 'Explore the map',
+    to: '/how-it-works',
+    label: 'See how it works',
   },
   share: { text: 'Open My trip and press “Create share link”. The whole trip is packed into the link, so nothing is uploaded; whoever opens it is asked before it replaces their own trip. Built trips have their own Share button on the Build page.', to: '/trip', label: 'Open My trip' },
   accounts: { text: 'Your trip is saved in this browser automatically. Signing in to save trips to an account is optional and appears in the header when it’s switched on for the site.', to: '/trip', label: 'Open My trip' },

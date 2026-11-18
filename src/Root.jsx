@@ -20,6 +20,8 @@ const TravelPage = lazy(() => import('./travel/TravelPage.jsx'))
 // Ready-made trips: the list, and one trip's page (with the planner rules and day ideas it needs).
 const TripIdeasPage = lazy(() => import('./templates/TripIdeasPage.jsx'))
 const TemplatePage = lazy(() => import('./templates/TemplatePage.jsx'))
+// How it works: the guided tour (it runs the trip planner for its demo).
+const HowItWorks = lazy(() => import('./pages/HowItWorks.jsx'))
 
 // What browsers (and Vite's preloader) say when a page's code or styles couldn't be downloaded.
 const isLoadError = (error) =>
@@ -88,6 +90,12 @@ export default function Root() {
           <ChunkBoundary>
             <Suspense fallback={<PageLoading />}>
               <TravelPage />
+            </Suspense>
+          </ChunkBoundary>
+        ) : route.name === 'howItWorks' ? (
+          <ChunkBoundary>
+            <Suspense fallback={<PageLoading />}>
+              <HowItWorks />
             </Suspense>
           </ChunkBoundary>
         ) : (route.name === 'tripIdeas' || route.name === 'tripIdea') && known ? (
